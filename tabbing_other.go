@@ -2,6 +2,6 @@
 
 package main
 
-var onSelectAll func()
+var onSelectAll, onCopyAll func()
 
 func routeSelectAll() {}

@@ -11,6 +11,16 @@ import "C"
 // its own tabs, and the system's bar only shows the window title, so switch them off.
 func init() { C.disableWindowTabbing() }
 
+// onCopyAll runs when Edit > Copy All is chosen; main sets it.
+var onCopyAll func()
+
+//export goCopyAll
+func goCopyAll() {
+	if onCopyAll != nil {
+		onCopyAll()
+	}
+}
+
 // onSelectAll runs when Edit > Select All is chosen; main sets it.
 var onSelectAll func()
 
@@ -21,5 +31,5 @@ func goSelectAll() {
 	}
 }
 
-// routeSelectAll sends Edit > Select All to onSelectAll instead of the web view.
+// routeSelectAll sends Edit > Select All to onSelectAll instead of the web view, and puts Copy All below Copy.
 func routeSelectAll() { C.routeSelectAll() }

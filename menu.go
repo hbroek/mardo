@@ -64,13 +64,14 @@ func (a *App) appMenu() *menu.Menu {
 
 	file := bar.AddSubmenu("File")
 	item(file, "New Tab", "new-tab", cmd("t"))
-	item(file, "New Document", "new-document", cmd("n"))
-	item(file, "Close Tab", "close-tab", cmd("w"))
+	item(file, "New Page", "new-document", cmd("n"))
+	item(file, "Open Page…", "open-file", cmd("o"))
 	file.AddSeparator()
-	item(file, "Open File…", "open-file", cmd("o"))
 	item(file, "Edit Page", "edit-page", cmd("e"))
 	item(file, "Save Page…", "save-page", cmd("s"))
-	item(file, "Copy Markdown", "copy-markdown", cmdShift("c"))
+	file.AddSeparator()
+	item(file, "Close Page", "close-page", nil)
+	item(file, "Close Tab", "close-tab", cmd("w"))
 	if !onMac {
 		file.AddSeparator()
 		file.AddText("Exit", nil, func(*menu.CallbackData) { runtime.Quit(a.ctx) })
@@ -82,6 +83,7 @@ func (a *App) appMenu() *menu.Menu {
 		// Cut, copy and paste work in the page's own fields; Select All depends on where you are.
 		edit := bar.AddSubmenu("Edit")
 		item(edit, "Select All", "select-all", cmd("a"))
+		item(edit, "Copy All", "copy-markdown", cmdShift("c"))
 	}
 
 	view := bar.AddSubmenu("View")
@@ -143,6 +145,7 @@ func (a *App) appMenu() *menu.Menu {
 func (a *App) domReady(context.Context) {
 	// A goroutine: Wails cannot talk to the page from inside the menu's own callback, which runs on the UI thread.
 	onSelectAll = func() { go runtime.EventsEmit(a.ctx, "menu", "select-all") }
+	onCopyAll = func() { go runtime.EventsEmit(a.ctx, "menu", "copy-markdown") }
 	routeSelectAll()
 }
 

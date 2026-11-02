@@ -22,7 +22,7 @@ func Edit(ctx context.Context, c Completer, title, current, instruction string) 
 		return "", errors.New("that instruction is too long")
 	}
 	if utf8.RuneCountInString(current) > MaxEditRunes {
-		return "", errors.New("this document is too long to change with AI; select less, or edit it by hand")
+		return "", errors.New("this page is too long to change with AI; edit it by hand")
 	}
 	system := "You edit one markdown document for its author. Apply the author's instruction and reply with the complete revised document in Markdown, " +
 		"and nothing else: no explanation, no code fence around it. Change only what the instruction asks for; keep every other line exactly as it is, " +

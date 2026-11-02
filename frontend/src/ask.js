@@ -69,7 +69,7 @@ export function refreshAsk() {
         children.push(el('p', {className: 'note', textContent: 'Open a page, then ask questions about it here.'}));
     } else if (!chat || (!chat.turns.length && !chat.pending)) {
         children.push(el('p', {className: 'note', textContent: editing(tab)
-            ? 'Describe a change to make to this document. It appears as a draft you review before saving. The text of the document and your messages are sent to your AI provider.'
+            ? 'Describe a change to make to this page. It appears as a draft you review before saving. The text of the page and your messages are sent to your AI provider.'
             : editable(tab)
                 ? 'Ask a question about this page. To have the AI change it, click the pencil to edit, then describe the change here. The text of the page and your questions are sent to your AI provider.'
                 : 'Ask a question about this page. The text of the page and your questions are sent to your AI provider.'}));
@@ -155,7 +155,7 @@ async function send(forceAsk = false) {
             const closed = tab.draft == null; // editing ended while the model worked: do not start it again
             if (!same && !closed) host.draft(tab, r.text);
             chat.turns.push({role: 'assistant', html: '', source: r.source, millis: r.millis,
-                text: same ? 'That would not change the document. Try describing the change differently.'
+                text: same ? 'That would not change the page. Try describing the change differently.'
                     : closed ? 'Editing was closed before the draft was ready, so it was dropped.'
                     : 'I drafted the change in the page. Review it, then Save; Cancel discards it.'});
         } else {

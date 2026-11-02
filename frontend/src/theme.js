@@ -88,8 +88,8 @@ export function initMenu(actions) {
         const creds = item('menuitem', credentials.saved ? 'Site credentials (saved for this site)' : 'Site credentials\u2026', null,
             () => { close(); actions.credentials(); }, span('menu-icon', '\u{1F511}'));
         const aiEntry = item('menuitem', 'AI assistant\u2026', null, () => { close(); actions.ai(); }, span('menu-icon', '\u2728'));
-        const newEntry = item('menuitem', 'New document', null, () => { close(); actions.newDocument(); }, span('menu-icon', '\u{1F4C4}'));
-        const openEntry = item('menuitem', 'Open file\u2026', null, () => { close(); actions.openFile(); }, span('menu-icon', '\u{1F4C2}'));
+        const newEntry = item('menuitem', 'New page', null, () => { close(); actions.newDocument(); }, span('menu-icon', '\u{1F4C4}'));
+        const openEntry = item('menuitem', 'Open page\u2026', null, () => { close(); actions.openFile(); }, span('menu-icon', '\u{1F4C2}'));
         const saveEntry = item('menuitem', 'Save page\u2026', null, () => { close(); actions.savePage(); }, span('menu-icon', '\u{1F4BE}'));
         const historyEntry = item('menuitem', 'History', null, () => { close(); actions.history(); }, span('menu-icon', '\u{1F552}'));
         const clearEntry = item('menuitem', 'Clear history', null, async () => { close(); await actions.clearHistory(); }, span('menu-icon', '\u{1F9F9}'));

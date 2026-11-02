@@ -80,7 +80,7 @@ export function source(p, ed) {
     if (ed.draft === null) {
         return el('div', {className: 'source-wrap'},
             el('div', {className: 'edit-bar'},
-                el('span', {className: 'note', textContent: 'The server lets you change this document.'}),
+                el('span', {className: 'note', textContent: 'The server lets you change this page.'}),
                 el('button', {type: 'button', textContent: 'Edit', onclick: ed.onEdit})),
             el('pre', {className: 'source'}, el('code', {textContent: p.source})));
     }

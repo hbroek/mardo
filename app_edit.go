@@ -24,7 +24,7 @@ type NewDocumentResult struct {
 // chooses, then opens that file in the tab. Canceling the dialog is not an error: the document stays a draft.
 func (a *App) SaveNewDocument(tab int, text string) (NewDocumentResult, error) {
 	if len(text) > fetch.MaxBody {
-		return NewDocumentResult{}, fmt.Errorf("document larger than %d MB", fetch.MaxBody>>20)
+		return NewDocumentResult{}, fmt.Errorf("page larger than %d MB", fetch.MaxBody>>20)
 	}
 	start, _ := os.UserHomeDir()
 	if docs := filepath.Join(start, "Documents"); start != "" {
@@ -33,7 +33,7 @@ func (a *App) SaveNewDocument(tab int, text string) (NewDocumentResult, error) {
 		}
 	}
 	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:            "Save new document",
+		Title:            "Save new page",
 		DefaultDirectory: start,
 		DefaultFilename:  "untitled.md",
 		Filters:          []runtime.FileFilter{{DisplayName: "Markdown (*.md)", Pattern: "*.md"}},
@@ -66,10 +66,10 @@ func (a *App) SaveSource(tab int, pageURL, editURL, etag, text string) (page.Pag
 	eu, err2 := url.Parse(editURL)
 	if err1 == nil && err2 == nil && pu.Scheme == "file" {
 		if eu.String() != pu.String() {
-			return page.Page{}, errors.New("this file can only be saved where it was opened from")
+			return page.Page{}, errors.New("this page can only be saved where it was opened from")
 		}
 		if len(text) > fetch.MaxBody {
-			return page.Page{}, fmt.Errorf("document larger than %d MB", fetch.MaxBody>>20)
+			return page.Page{}, fmt.Errorf("page larger than %d MB", fetch.MaxBody>>20)
 		}
 		if err := fetch.PutFile(editURL, []byte(text), etag); err != nil {
 			return page.Page{}, err
@@ -80,10 +80,10 @@ func (a *App) SaveSource(tab int, pageURL, editURL, etag, text string) (page.Pag
 		return a.browser.Reload(a.ctx, tab), nil
 	}
 	if err := errors.Join(err1, err2); err != nil || pu.Host == "" || pu.Scheme != eu.Scheme || pu.Host != eu.Host {
-		return page.Page{}, errors.New("this document can only be saved to the server it came from")
+		return page.Page{}, errors.New("this page can only be saved to the server it came from")
 	}
 	if len(text) > fetch.MaxBody {
-		return page.Page{}, fmt.Errorf("document larger than %d MB", fetch.MaxBody>>20)
+		return page.Page{}, fmt.Errorf("page larger than %d MB", fetch.MaxBody>>20)
 	}
 	if err := a.fetcher.Put(a.ctx, editURL, []byte(text), etag); err != nil {
 		return page.Page{}, err

@@ -238,7 +238,7 @@ func readCapped(r io.Reader) ([]byte, error) {
 		return nil, err
 	}
 	if len(body) > MaxBody {
-		return nil, fmt.Errorf("document larger than %d MB", MaxBody>>20)
+		return nil, fmt.Errorf("page larger than %d MB", MaxBody>>20)
 	}
 	return body, nil
 }

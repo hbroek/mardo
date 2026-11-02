@@ -104,8 +104,43 @@ function toggleEdit() {
     const dialog = $('unsaved-dialog');
     if (!dialog.open) dialog.showModal();
 }
-for (const [id, act] of [['unsaved-keep', () => {}], ['unsaved-discard', () => endEdit(active)], ['unsaved-save', () => saveEdit()]]) {
+let closeAfter = null; // the tab whose page is to be closed once its unsaved changes are settled
+for (const [id, act] of [
+    ['unsaved-keep', () => { closeAfter = null; }],
+    ['unsaved-discard', () => { const tab = active; const clear = closeAfter === tab; closeAfter = null; endEdit(tab); if (clear && tabs.includes(tab)) clearPage(tab); }],
+    ['unsaved-save', async () => { const tab = active; const clear = closeAfter === tab; closeAfter = null; await saveEdit(); if (clear && tab.draft == null && tabs.includes(tab)) clearPage(tab); }],
+]) {
     $(id).addEventListener('click', () => { $('unsaved-dialog').close(); act(); });
+}
+
+/** Empties the tab, which stays open at the start page. */
+function clearPage(tab) {
+    tab.page = null;
+    tab.pending = '';
+    tab.summary = null;
+    tab.chat = null;
+    tab.chatTried = '';
+    tab.showSource = false;
+    tab.draft = null;
+    tab.showDiff = false;
+    tab.aiDraft = false;
+    tab.saveError = '';
+    if (tab === active) { display(); address.focus(); }
+    renderTabs();
+}
+
+/** File > Close Page: closes the page in this tab and keeps the tab; unsaved changes are asked about first. */
+function closePage() {
+    const tab = active;
+    if (!tab || tab.saving || (!tab.page && !tab.pending)) return;
+    if (tab.draft != null && tab.draft !== tab.page?.source) {
+        closeAfter = tab;
+        const dialog = $('unsaved-dialog');
+        if (!dialog.open) dialog.showModal();
+        return;
+    }
+    if (tab.page?.url === NEW_DOC) closeTab(tab); // a new page that was never saved has nothing left to show
+    else clearPage(tab);
 }
 
 /** Saves the edited source to the server; the tab then shows what is stored. */
@@ -154,7 +189,7 @@ function render() {
     sourceBtn.title = !editable ? 'Show source' : editing ? 'Stop editing (Ctrl/Cmd+E)' : 'Edit this page (Ctrl/Cmd+E)';
     sourceBtn.setAttribute('aria-label', !editable ? 'Show source' : editing ? 'Stop editing' : 'Edit this page');
     if (editable) sourceBtn.setAttribute('aria-pressed', String(editing)); // the pencil stays lit while editing
-    $('summarize').disabled = !p?.url || p.kind === 'error' || isSearch(p.url) || p.url === NEW_DOC;
+    $('reading').disabled = !p?.url || p.kind === 'error' || isSearch(p.url) || p.url === NEW_DOC;
     if (!editable) sourceBtn.setAttribute('aria-pressed', String(showSource && !sourceBtn.disabled));
     const body = (
         !p ? view.welcome()
@@ -193,7 +228,7 @@ async function newDocument() {
     $('content').querySelector('.source-edit')?.focus();
 }
 
-/** Opens a local file chosen in the system's dialog, in the current tab. */
+/** Opens a local page (a file) chosen in the system's dialog, in the current tab. */
 async function openFile() {
     try {
         const path = await PickFile();
@@ -271,6 +306,9 @@ function copyBar(p) {
 // Searches by meaning ("@ ...") live at "bookmarks:meaning?q=..." and are shown as "@query".
 const SEARCH_PREFIX = 'bookmarks:search?q=';
 const MEANING_PREFIX = 'bookmarks:meaning?q=';
+/** The window title, in full wherever it appears. */
+const APP_TITLE = 'Mardo - Markdown Browser & Author';
+
 /** The address of a new document that is not on disk yet; it is only in this window until it is saved. */
 const NEW_DOC = 'new:document';
 const isSearch = (url) => url.startsWith(SEARCH_PREFIX) || url.startsWith(MEANING_PREFIX);
@@ -304,7 +342,7 @@ function display() {
     const p = currentPage();
     const url = p?.url ?? active?.pending ?? '';
     address.value = url ? displayAddress(url) : '';
-    document.title = p?.title ? `${p.title} - Mardo` : 'Mardo - Markdown Browser & Author';
+    document.title = p?.title ? `${p.title} - ${APP_TITLE}` : APP_TITLE;
     $('back').disabled = !p?.canBack;
     $('forward').disabled = !p?.canForward;
     $('reload').disabled = !p?.url || p.url === NEW_DOC;
@@ -517,7 +555,7 @@ function cancelSummary() {
 export async function readPage(tool, option = '') {
     const tab = active;
     const url = tab?.page?.url;
-    if (!url || $('summarize').disabled) return;
+    if (!url || $('reading').disabled) return;
     if (!(await aiReady())) return openAI(); // first use: choose a provider
     const requestId = newRequestId();
     const label = {
@@ -541,7 +579,6 @@ export async function readPage(tool, option = '') {
     if (tab === active) render();
 }
 const summarize = () => readPage('summary');
-$('summarize').addEventListener('click', summarize);
 
 function toggleSource() {
     if (sourceBtn.disabled) return;
@@ -602,6 +639,7 @@ async function bookmarkTool(button) {
 // What the macOS menu bar does: its items have the shortcuts, and send their id here.
 const menuActions = {
     'new-tab': () => openTab(),
+    'close-page': closePage,
     'close-tab': () => closeTab(active),
     'new-document': newDocument,
     'open-file': openFile,

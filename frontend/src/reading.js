@@ -1,4 +1,4 @@
-// The reading tools menu: outline, translate, a digest of a feed, and explaining or
+// The AI tools menu (the sparkle button): summary, outline, translate, a digest of a feed, and explaining or
 // simplifying the text the reader has selected. Outline, translate and digest show their
 // result in the card above the page (see readPage in main.js); explaining a selection goes
 // through the Ask panel, so it has the conversation, the cancel button and the saved history.
@@ -72,6 +72,7 @@ export function initReading(host) {
         const note = selection ? '' : 'Select some text on the page first';
         const heading = (t) => Object.assign(document.createElement('div'), {className: 'menu-heading', textContent: t});
         menu.replaceChildren(
+            row('Summarize this page', () => { close(); host.run('summary'); }),
             row('Outline of this page', () => { close(); host.run('outline'); }),
             translate,
             row('Compare open tabs\u2026', () => { close(); host.compare(); }),
@@ -105,7 +106,4 @@ export function initReading(host) {
             rows[(i + (e.key === 'ArrowDown' ? 1 : -1) + rows.length) % rows.length].focus();
         }
     });
-    // Enabled with the summarize button: there has to be a page to read.
-    new MutationObserver(() => { btn.disabled = $('summarize').disabled; }).observe($('summarize'), {attributes: true, attributeFilter: ['disabled']});
-    btn.disabled = $('summarize').disabled;
 }

@@ -14,7 +14,7 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 - A native menu bar (File, Edit, View, Bookmarks, Tools; plus the app and Window menus on macOS) has the same actions as the toolbar and
   shortcuts; Edit > Select All selects the field, bookmarks, chat or page you are in. On Windows and Linux it lists the shortcuts and the
   page handles the keys; the ☰ menu stays everywhere
-- **File > New Document** (Cmd/Ctrl+N) opens an empty markdown document in edit mode. It is only in the window until you press Save, which asks where to put the file; Cancel, or the pencil, closes it without leaving anything on disk. The AI panel can draft its first text
+- **File > New Page** (Cmd/Ctrl+N) opens an empty markdown page in edit mode; **File > Open Page…** (Cmd/Ctrl+O) opens a file from disk. A new page is only in the window until you press Save, which asks where to put the file; Cancel, or the pencil, closes it without leaving anything on disk. The AI panel can draft its first text
 - Not markdown? Shows the page title and the links found on it
 - RSS and Atom feeds render as a list of posts; an item's `<source:markdown>` is used when present
 - `http`, `https` and `file://`; drop a `.md` file on the window to open it. Relative links and images work,
@@ -76,7 +76,7 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 
 ## AI assistant
 
-The sparkle button (✨) in the toolbar summarizes the current page in a card above it, and **Suggest from the page**
+The sparkle button (✨) in the toolbar opens the AI tools; **Summarize this page** shows a summary of the current page in a card above it, and **Suggest from the page**
 in the bookmark dialog fills in an empty title, description and keywords for you to edit. Choose a provider under
 ☰ → **AI assistant**; the first click on either button opens that dialog if nothing is set up.
 
@@ -108,7 +108,7 @@ model's reason. Unlike the other features it sends not the text of a page but th
 bookmark and history entry**, so it needs the same permission for servers outside your computer. The results page says what was sent and where. A
 keyword results page has a button to rerun the search by meaning, and the other way round. Searches by meaning are not recorded in history.
 
-**Reading tools** (the book button in the toolbar) work on the page in the active tab. **Outline** lists the page's sections with a line on each;
+**Reading tools** (in the same sparkle menu) work on the page in the active tab. **Outline** lists the page's sections with a line on each;
 **Translate into** a language you pick keeps the headings, lists, links and code and translates the text (up to the first 30,000 characters);
 on a feed, **Digest** groups the entries by topic with links. They appear in the card above the page, like the summary, with a cancel button. Select
 some text first and **Explain the selection** or **Simplify the selection** asks the Interact panel about that passage, so you can follow up and the
@@ -123,7 +123,7 @@ path creates it), untick what you do not want, and only then are bookmarks moved
 sorts them into subfolders of it, preferring the ones that exist, and proposes new ones where several bookmarks share a topic. It never moves a
 bookmark outside that folder, and you review the table before anything moves.
 
-**Compare open tabs** (in the reading tools menu) opens a dialog listing your open tabs. Tick two to six, optionally say what to compare, and the
+**Compare open tabs** (in the sparkle menu) opens a dialog listing your open tabs. Tick two to six, optionally say what to compare, and the
 AI writes what the pages have in common and where they differ, with a table when the pages describe comparable things. The tab bar itself has no
 checkboxes; the choosing happens in the dialog. The pages share one budget of text, so long pages are cut short.
 

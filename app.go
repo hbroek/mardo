@@ -268,7 +268,7 @@ const maxImportBytes = 64 << 20
 // PickFile asks for a local file to open and returns its path, or "" if the dialog is canceled.
 func (a *App) PickFile() (string, error) {
 	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Open file",
+		Title: "Open page",
 		Filters: []runtime.FileFilter{
 			{DisplayName: "Markdown and text (*.md, *.markdown, *.txt)", Pattern: "*.md;*.markdown;*.txt"},
 			{DisplayName: "All files", Pattern: "*"},

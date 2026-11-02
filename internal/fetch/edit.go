@@ -116,7 +116,7 @@ func hasRel(rels, want string) bool {
 }
 
 // ErrChanged means the document changed on the server after it was loaded.
-var ErrChanged = errors.New("the document changed after you opened it (someone else saved it); reload to see the new version")
+var ErrChanged = errors.New("the page changed after you opened it (someone else saved it); reload to see the new version")
 
 // Put replaces the document at rawURL with body, sending the saved credentials. etag is the
 // ETag the page was loaded with; the server refuses the save if the document has changed since.
