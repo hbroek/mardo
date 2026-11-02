@@ -238,7 +238,7 @@ function display() {
     const p = currentPage();
     const url = p?.url ?? active?.pending ?? '';
     address.value = url ? displayAddress(url) : '';
-    document.title = p?.title ? `${p.title} - Mardo` : 'Mardo - Markdown Browser';
+    document.title = p?.title ? `${p.title} - Mardo` : 'Mardo - Markdown Browser & Author';
     $('back').disabled = !p?.canBack;
     $('forward').disabled = !p?.canForward;
     $('reload').disabled = !p?.url;
