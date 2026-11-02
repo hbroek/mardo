@@ -127,12 +127,30 @@ func (a *App) appMenu() *menu.Menu {
 	item(marks, "Bookmark Storage…", "bookmarks-storage", nil)
 
 	tools := bar.AddSubmenu("Tools")
-	item(tools, "Summarize Page", "summary", nil)
-	item(tools, "AI Assistant…", "ai", nil)
-	item(tools, "Site Credentials…", "credentials", nil)
-	tools.AddSeparator()
+	if !onMac { // on macOS these two are in the Mardo menu, see tabbing_darwin.m
+		item(tools, "Site Credentials…", "credentials", nil)
+		tools.AddSeparator()
+	}
 	item(tools, "History", "history", nil)
 	item(tools, "Clear History", "clear-history", nil)
+	tools.AddSeparator()
+	a.markdownItem = tools.AddCheckbox("Look for Markdown Versions", a.browser.MarkdownVersions(), nil, func(*menu.CallbackData) {
+		go a.SetMarkdownVersions(!a.browser.MarkdownVersions())
+	})
+	tools.AddSeparator()
+	// The same tools as the sparkle button. They tell you when the page or a selection does not suit them.
+	tools.AddText("AI Tools", nil, nil).Disabled = true
+	item(tools, "Summarize Page", "summary", nil)
+	item(tools, "Outline of Page", "ai-outline", nil)
+	item(tools, "Translate Page", "ai-translate", nil) // into the language chosen in the sparkle menu
+	item(tools, "Compare Open Tabs…", "ai-compare", nil)
+	item(tools, "Digest of This Feed", "ai-digest", nil)
+	item(tools, "Explain Selection", "ai-explain", nil)
+	item(tools, "Simplify Selection", "ai-simplify", nil)
+	if !onMac {
+		tools.AddSeparator()
+		item(tools, "AI Assistant…", "ai", nil)
+	}
 
 	if onMac {
 		bar.Append(menu.WindowMenu())
@@ -145,12 +163,23 @@ func (a *App) appMenu() *menu.Menu {
 func (a *App) domReady(context.Context) {
 	// A goroutine: Wails cannot talk to the page from inside the menu's own callback, which runs on the UI thread.
 	onSelectAll = func() { go runtime.EventsEmit(a.ctx, "menu", "select-all") }
+	onMenu = func(id string) { go runtime.EventsEmit(a.ctx, "menu", id) }
 	onCopyAll = func() { go runtime.EventsEmit(a.ctx, "menu", "copy-markdown") }
 	routeSelectAll()
 }
 
 // viewKeys remembers each toggle's shortcut, for relabelling it.
 var viewKeys = map[string]*keys.Accelerator{}
+
+// checkMenu sets a checkbox item of the menu bar to on.
+func (a *App) checkMenu(item *menu.MenuItem, on bool) {
+	if item == nil || item.Checked == on {
+		return
+	}
+	item.Checked = on
+	runtime.MenuUpdateApplicationMenu(a.ctx)
+	routeSelectAll() // the update builds the menu bar again
+}
 
 // viewNames is what each View menu toggle is called after "Show " / "Hide ".
 var viewNames = map[string]string{"bookmarks": "Bookmarks", "console": "Console", "source": "Source", "ask": "Interact Panel"}

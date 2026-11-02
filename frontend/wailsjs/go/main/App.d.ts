@@ -64,7 +64,11 @@ export function ImportCookiesTxt(arg1:string,arg2:string):Promise<number>;
 
 export function LinkaGoGoFolders(arg1:string):Promise<Array<bookmarks.Folder>>;
 
+export function MarkdownVersions():Promise<boolean>;
+
 export function Navigate(arg1:number,arg2:string):Promise<page.Page>;
+
+export function NavigateAsIs(arg1:number,arg2:string):Promise<page.Page>;
 
 export function NetworkLog():Promise<Array<fetch.Entry>>;
 
@@ -95,6 +99,8 @@ export function SaveSource(arg1:number,arg2:string,arg3:string,arg4:string,arg5:
 export function SavedConversation(arg1:string):Promise<Array<main.ChatTurn>>;
 
 export function SearchBookmarks(arg1:string):Promise<Array<bookmarks.Bookmark>>;
+
+export function SetMarkdownVersions(arg1:boolean):Promise<void>;
 
 export function SetViewShown(arg1:string,arg2:boolean):Promise<void>;
 

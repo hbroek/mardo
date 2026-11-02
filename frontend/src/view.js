@@ -1,4 +1,5 @@
 // Builds the DOM for each kind of page. No state lives here.
+import {svgIcon} from './icons.js';
 import {diffLines, withContext} from './diff.js';
 
 function el(tag, props = {}, ...children) {
@@ -19,16 +20,23 @@ function originOf(url) {
 export function welcome() {
     const shortcuts = [
         ['Ctrl/Cmd + L', 'Focus the address bar'],
+        ['Ctrl/Cmd + N', 'New page: write markdown from scratch'],
+        ['Ctrl/Cmd + O', 'Open a page from disk'],
+        ['Ctrl/Cmd + E', 'Edit this page, when you are allowed to change it'],
+        ['Ctrl/Cmd + S', 'Save the page (or your edit)'],
         ['Ctrl/Cmd + T / W', 'New tab / close tab'],
         ['Ctrl + Tab, Ctrl/Cmd + 1-9', 'Switch tabs'],
         ['Ctrl/Cmd + R', 'Reload'],
-        ['Alt + ← / →', 'Back / forward'],
+        ['Alt + ← / →', 'Back / forward (Cmd + [ / ] on a Mac)'],
         ['Ctrl/Cmd + U', 'Toggle markdown source'],
+        ['Ctrl/Cmd + B / D', 'Bookmarks panel / bookmark this page'],
+        ['Ctrl/Cmd + Shift + A', 'Interact with this page: ask, or describe a change'],
+        ['Ctrl/Cmd + Shift + C', 'Copy the page\'s markdown (Copy All)'],
         ['Ctrl/Cmd + J', 'Show / hide the network console'],
     ];
     return el('section', {className: 'welcome'},
         el('h1', {textContent: 'Mardo - Markdown Browser & Author'}),
-        el('p', {textContent: 'Enter an http, https or file address above. Pages are requested as markdown and rendered here. Anything else shows its title and links.'}),
+        el('p', {textContent: 'Enter an http, https or file address above, or start a new markdown page with File > New Page. Pages are requested as markdown and rendered here. Anything else shows its title and links.'}),
         el('dl', {}, ...shortcuts.flatMap(([k, v]) => [el('dt', {textContent: k}), el('dd', {textContent: v})])),
     );
 }
@@ -65,7 +73,7 @@ export function summary(s, onClose, onCancel) {
         : el('div', {className: 'markdown', innerHTML: s.html}); // sanitized by the backend
     return el('aside', {className: 'summary', ariaLabel: s.title ?? 'AI summary'},
         el('div', {className: 'summary-head'},
-            el('strong', {textContent: `\u2728 ${s.title ?? 'Summary'}`}),
+            el('strong', {}, svgIcon('sparkle'), ` ${s.title ?? 'Summary'}`),
             el('button', {type: 'button', className: 'summary-close', title: 'Close', textContent: '\u00D7', onclick: onClose})),
         body,
         s.state === 'done' ? el('p', {className: 'note', textContent: `Written by ${s.source} in ${seconds(s.millis)}; it can be wrong.`}) : '');
@@ -96,7 +104,7 @@ export function source(p, ed) {
             el('button', {type: 'button', className: 'primary', textContent: ed.saving ? 'Saving\u2026' : 'Save', disabled: ed.saving, onclick: ed.onSave}),
             el('button', {type: 'button', textContent: 'Cancel', disabled: ed.saving, onclick: ed.onCancel}),
             el('button', {type: 'button', textContent: ed.diff ? 'Back to editing' : 'Show changes', disabled: ed.saving || (!changed && !ed.diff), onclick: ed.onDiff}),
-            el('span', {className: 'note', textContent: ed.aiDraft ? 'Drafted by AI. Review the changes, then Save; Cancel discards them.' : 'Ctrl/Cmd+Enter saves, Esc cancels.'})),
+            el('span', {className: 'note', textContent: ed.aiDraft ? 'Drafted by AI. Review the changes, then Save; Cancel discards them.' : 'Ctrl/Cmd+S saves, Esc cancels.'})),
         ed.error ? el('p', {className: 'error-text', textContent: ed.error}) : '',
         ed.diff ? changes(p.source, ed.draft) : area);
 }

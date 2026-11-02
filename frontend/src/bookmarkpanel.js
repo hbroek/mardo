@@ -1,6 +1,7 @@
 // The bookmarks side panel: folders with their bookmarks, a pencil on each
 // row to edit it. Folder contents are fetched only while a folder is open.
 // The tree is keyboard driven (arrows, Enter, "e" to edit); see onTreeKey.
+import {svgIcon} from './icons.js';
 import {BookmarkFolders, BookmarksIn, SaveBookmark, SaveBookmarkFolder, ImportBookmarks, ExportBookmarks} from '../wailsjs/go/main/App';
 import {openBookmark, openFolder, setFolderHint} from './bookmarks.js';
 import {openStorage} from './storage.js';
@@ -89,7 +90,7 @@ function folderRow(f, depth) {
     const edit = () => openFolder({folder: f});
     const label = el('button', {type: 'button', className: 'tree-label', tabIndex: -1, title: f.name, onclick: toggleFolder},
         el('span', {className: 'caret', textContent: isOpen ? '▾' : '▸'}),
-        el('span', {textContent: `📁 ${f.name}`}));
+        el('span', {className: 'folder-name'}, svgIcon('folder'), f.name));
     const row = newRow(`f:${f.id}`, f.id, depth, label, pencil(`Edit folder ${f.name}`, edit));
     row.classList.add('folder');
     row.addEventListener('contextmenu', (e) => { // right click: AI tools for this folder
@@ -328,7 +329,7 @@ function onDragMove(e) {
         drag.started = true;
         tree.classList.add('dragging');
         const name = drag.item.folder?.name ?? drag.item.bookmark.title;
-        drag.ghost = el('div', {className: 'drag-ghost', textContent: (drag.item.folder ? '\u{1F4C1} ' : '') + name});
+        drag.ghost = el('div', {className: 'drag-ghost folder-name'}, ...(drag.item.folder ? [svgIcon('folder')] : []), name);
         document.body.append(drag.ghost);
     }
     drag.ghost.style.left = `${e.clientX + 12}px`;

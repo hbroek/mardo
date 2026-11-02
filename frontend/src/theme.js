@@ -1,6 +1,8 @@
 // The menu at the far right of the toolbar: site credentials, theme and color
 // scheme. Theme is System, Light or Dark; the palettes of the color schemes live
 // in schemes.css and `swatch` is only the preview shown here.
+import {svgIcon} from './icons.js';
+
 const $ = (id) => document.getElementById(id);
 const root = document.documentElement;
 
@@ -72,6 +74,8 @@ function heading(text) {
     return h;
 }
 
+/** The icon in front of a menu row. */
+const icon = (name) => { const s = span('menu-icon'); s.append(svgIcon(name)); return s; };
 const span = (className, text = '') => Object.assign(document.createElement('span'), {className, textContent: text});
 
 /** `actions` has the functions behind the menu's first entries: credentials, ai, savePage, history and clearHistory. */
@@ -86,13 +90,14 @@ export function initMenu(actions) {
 
     function build() {
         const creds = item('menuitem', credentials.saved ? 'Site credentials (saved for this site)' : 'Site credentials\u2026', null,
-            () => { close(); actions.credentials(); }, span('menu-icon', '\u{1F511}'));
-        const aiEntry = item('menuitem', 'AI assistant\u2026', null, () => { close(); actions.ai(); }, span('menu-icon', '\u2728'));
-        const newEntry = item('menuitem', 'New page', null, () => { close(); actions.newDocument(); }, span('menu-icon', '\u{1F4C4}'));
-        const openEntry = item('menuitem', 'Open page\u2026', null, () => { close(); actions.openFile(); }, span('menu-icon', '\u{1F4C2}'));
-        const saveEntry = item('menuitem', 'Save page\u2026', null, () => { close(); actions.savePage(); }, span('menu-icon', '\u{1F4BE}'));
-        const historyEntry = item('menuitem', 'History', null, () => { close(); actions.history(); }, span('menu-icon', '\u{1F552}'));
-        const clearEntry = item('menuitem', 'Clear history', null, async () => { close(); await actions.clearHistory(); }, span('menu-icon', '\u{1F9F9}'));
+            () => { close(); actions.credentials(); }, icon('key'));
+        const markdownEntry = item('menuitemcheckbox', 'Look for markdown versions of pages', markdownVersions, async () => { markdownVersions = !markdownVersions; try { await actions.setMarkdownVersions(markdownVersions); } catch { markdownVersions = !markdownVersions; } build(); });
+        const aiEntry = item('menuitem', 'AI assistant\u2026', null, () => { close(); actions.ai(); }, icon('sparkle'));
+        const newEntry = item('menuitem', 'New page', null, () => { close(); actions.newDocument(); }, icon('page'));
+        const openEntry = item('menuitem', 'Open page\u2026', null, () => { close(); actions.openFile(); }, icon('folder'));
+        const saveEntry = item('menuitem', 'Save page\u2026', null, () => { close(); actions.savePage(); }, icon('save'));
+        const historyEntry = item('menuitem', 'History', null, () => { close(); actions.history(); }, icon('clock'));
+        const clearEntry = item('menuitem', 'Clear history', null, async () => { close(); await actions.clearHistory(); }, icon('trash'));
         menu.replaceChildren(
             creds,
             aiEntry,
@@ -101,6 +106,7 @@ export function initMenu(actions) {
             saveEntry,
             historyEntry,
             clearEntry,
+            markdownEntry,
             heading('Theme'),
             ...themes.map((t) => item('menuitemradio', t.name, t.id === theme, () => { applyTheme(t.id); build(); }, span('menu-icon', t.icon))),
             heading('Color scheme'),
@@ -112,8 +118,11 @@ export function initMenu(actions) {
         );
     }
 
+    let markdownVersions = true; // whether .md versions of web pages are looked for; the menu bar can change it too
+
     function open() {
         build();
+        actions.markdownVersions().then((on) => { if (on !== markdownVersions) { markdownVersions = on; if (!menu.hidden) build(); } }).catch(() => {});
         menu.hidden = false;
         btn.setAttribute('aria-expanded', 'true');
         menu.querySelector('button')?.focus();

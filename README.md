@@ -15,7 +15,9 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
   shortcuts; Edit > Select All selects the field, bookmarks, chat or page you are in. On Windows and Linux it lists the shortcuts and the
   page handles the keys; the ☰ menu stays everywhere
 - **File > New Page** (Cmd/Ctrl+N) opens an empty markdown page in edit mode; **File > Open Page…** (Cmd/Ctrl+O) opens a file from disk. A new page is only in the window until you press Save, which asks where to put the file; Cancel, or the pencil, closes it without leaving anything on disk. The AI panel can draft its first text
-- Not markdown? Shows the page title and the links found on it
+- Not markdown? Shows the page title and the links found on it. Before that, a web page (HTML) is checked for a markdown version by the
+  convention that `/about` has one at `/about.md` (`/docs/` at `/docs/index.md`, `/guide.html` at `/guide.md`; a site's root also tries `/llms.txt`); if the server has it, you get that, with a
+  note and a link to the original page. Addresses with a query are not checked. Turn this off under ☰ or Tools > Look for Markdown Versions
 - RSS and Atom feeds render as a list of posts; an item's `<source:markdown>` is used when present
 - `http`, `https` and `file://`; drop a `.md` file on the window to open it. Relative links and images work,
   including local images for pages opened from disk
@@ -34,8 +36,10 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 | Cmd/Ctrl+R | Reload |
 | Alt+← / Alt+→ (Cmd+[ / Cmd+] on Mac) | Back / forward |
 | Cmd/Ctrl+U | Toggle markdown source |
-| Cmd/Ctrl+S | Save the page as a markdown file (also in the ☰ menu) |
-| Cmd/Ctrl+Shift+C | Copy the page's markdown to the clipboard (the button at the page's top right does the same) |
+| Cmd/Ctrl+N, Cmd/Ctrl+O | New page (an empty markdown page in edit mode), open a page from disk |
+| Cmd/Ctrl+E | Edit this page, when it can be changed; again to stop |
+| Cmd/Ctrl+S | Save the page as a markdown file, or save your edit while editing (also in the ☰ menu) |
+| Cmd/Ctrl+Shift+C | Copy the page's markdown to the clipboard (Edit > Copy All; the button at the page's top right does the same) |
 | Cmd/Ctrl+D | Add or edit the bookmark for this page |
 | Cmd/Ctrl+B | Open the bookmarks panel and move into it (again to close it) |
 | Cmd/Ctrl+J | Show / hide the network console |
@@ -47,7 +51,7 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 
 - The ribbon next to the address bar saves the current page (filled when it is already saved). The dialog takes a
   title, address, description, keywords and a folder. The panel button at the far left (Cmd/Ctrl+B) shows folders
-  and bookmarks as a tree; the pencil on a row edits or deletes it, and **New folder** adds folders. Drag a bookmark or folder onto a folder to move it, or onto empty space for the top level (Esc cancels).
+  and bookmarks as a tree; the pencil on a row edits or deletes it, and Bookmarks > New Folder… adds folders. Drag a bookmark or folder onto a folder to move it, or onto empty space for the top level (Esc cancels).
   In the panel, use ↑/↓ to move, → / ← to open and close folders, Enter to open a bookmark, **e** to edit and
   Esc to go back to the address bar.
 - **Search** by typing in the address bar: several words (`rust async`), a single bare word (`rust`), or anything

@@ -632,3 +632,15 @@ dialog .stack[hidden] { display: none; } /* display: flex would otherwise win ov
 .diff-add { background: rgba(46, 160, 67, 0.22); }
 .diff-del { background: rgba(248, 81, 73, 0.22); text-decoration: line-through; text-decoration-color: rgba(248, 81, 73, 0.5); }
 .diff-gap { color: var(--muted, gray); opacity: 0.7; }
+
+/* drawn icons next to text (see icons.js) */
+.inline-icon { width: 1.1em; height: 1.1em; flex: none; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.folder-name { display: inline-flex; align-items: center; gap: 6px; }
+.menu-icon .inline-icon { vertical-align: middle; }
+
+/* the bookmark tools are in the Bookmarks menu; their buttons stay for it to press */
+button[hidden] { display: none; }
+.panel-foot:has(#bookmarks-msg:empty) { display: none; }
+
+/* on the markdown version of a web page */
+.variant-bar { max-width: 52rem; margin: 0 auto 12px; }

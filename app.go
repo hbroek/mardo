@@ -33,12 +33,13 @@ import (
 
 // App holds the state shared with the frontend through Wails bindings.
 type App struct {
-	ctx       context.Context
-	viewItems map[string]*menu.MenuItem // the View menu's show/hide items (macOS)
-	browser   *browser.Browser
-	auth      *auth.Manager
-	jar       *cookies.Jar
-	fetcher   *fetch.Fetcher
+	ctx          context.Context
+	markdownItem *menu.MenuItem            // Tools > Look for Markdown Versions
+	viewItems    map[string]*menu.MenuItem // the View menu's show/hide items (macOS)
+	browser      *browser.Browser
+	auth         *auth.Manager
+	jar          *cookies.Jar
+	fetcher      *fetch.Fetcher
 
 	bmMu         sync.RWMutex
 	bookmarks    bookmarks.Store // nil when the backend failed to open
@@ -82,6 +83,7 @@ func NewApp() *App {
 
 	a.settingsPath = file("settings.json")
 	a.settings = settings.Load(a.settingsPath, dir)
+	a.browser.SetMarkdownVersions(!a.settings.Browsing.NoMarkdownVersion)
 	a.bookmarks, a.bookmarksErr = bookmarks.Open(a.settings.Bookmarks.Backend, a.settings.Bookmarks.Config, bookmarks.Deps{Authorize: a.auth.Apply})
 	a.browser.SetSearcher(a.searchPage)
 	a.browser.SetMeaningSearcher(a.meaningPage)
@@ -96,6 +98,29 @@ func (a *App) startup(ctx context.Context) {
 }
 
 // Each page-level call names the tab it acts on; NewTab hands out the ids.
+// NavigateAsIs opens a page without looking for its .md version.
+func (a *App) NavigateAsIs(tab int, url string) page.Page {
+	return a.browser.NavigateAsIs(a.ctx, tab, url)
+}
+
+// MarkdownVersions says whether web pages that are not markdown are checked for a .md version.
+func (a *App) MarkdownVersions() bool { return a.browser.MarkdownVersions() }
+
+// SetMarkdownVersions turns that check on or off and remembers the choice.
+func (a *App) SetMarkdownVersions(on bool) error {
+	a.browser.SetMarkdownVersions(on)
+	a.bmMu.Lock()
+	a.settings.Browsing.NoMarkdownVersion = !on
+	a.bmMu.Unlock()
+	a.checkMenu(a.markdownItem, on)
+	if a.settingsPath == "" {
+		return nil
+	}
+	raw := settings.LoadRaw(a.settingsPath) // not the resolved copy, which would pin defaults
+	raw.Browsing.NoMarkdownVersion = !on
+	return settings.Save(a.settingsPath, raw)
+}
+
 func (a *App) NewTab() int                            { return a.browser.NewTab() }
 func (a *App) CloseTab(tab int)                       { a.browser.CloseTab(tab) }
 func (a *App) Navigate(tab int, url string) page.Page { return a.browser.Navigate(a.ctx, tab, url) }
@@ -461,7 +486,7 @@ func (a *App) switchBookmarks(backend string, cfg bookmarks.Config) error {
 	a.bmMu.RLock()
 	aiCfg := a.settings.AI
 	a.bmMu.RUnlock()
-	next := settings.Settings{Bookmarks: settings.Backend{Backend: backend, Config: cfg}, AI: aiCfg}
+	next := settings.Settings{Bookmarks: settings.Backend{Backend: backend, Config: cfg}, AI: aiCfg, Browsing: a.settings.Browsing}
 	dir := ""
 	if a.settingsPath != "" {
 		dir = filepath.Dir(a.settingsPath)

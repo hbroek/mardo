@@ -114,8 +114,16 @@ export function LinkaGoGoFolders(arg1) {
   return window['go']['main']['App']['LinkaGoGoFolders'](arg1);
 }
 
+export function MarkdownVersions() {
+  return window['go']['main']['App']['MarkdownVersions']();
+}
+
 export function Navigate(arg1, arg2) {
   return window['go']['main']['App']['Navigate'](arg1, arg2);
+}
+
+export function NavigateAsIs(arg1, arg2) {
+  return window['go']['main']['App']['NavigateAsIs'](arg1, arg2);
 }
 
 export function NetworkLog() {
@@ -176,6 +184,10 @@ export function SavedConversation(arg1) {
 
 export function SearchBookmarks(arg1) {
   return window['go']['main']['App']['SearchBookmarks'](arg1);
+}
+
+export function SetMarkdownVersions(arg1) {
+  return window['go']['main']['App']['SetMarkdownVersions'](arg1);
 }
 
 export function SetViewShown(arg1, arg2) {

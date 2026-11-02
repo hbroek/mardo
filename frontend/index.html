@@ -39,16 +39,17 @@
             <strong>Bookmarks</strong>
             <span class="spacer"></span>
             <button type="button" id="storage-open" title="Where bookmarks are stored" aria-haspopup="dialog">&#9881;</button>
-            <button type="button" id="folder-new" title="New folder">New folder</button>
+            <button type="button" id="folder-new" title="New folder" hidden>New folder</button>
             <button type="button" id="bookmarks-close" title="Hide bookmarks (Ctrl/Cmd+B)">&times;</button>
         </div>
         <div id="bookmarks-tree" role="tree" aria-label="Bookmarks"></div>
+        <!-- The bookmark tools live in the Bookmarks menu, which presses these buttons; only the gear stays in the panel. -->
         <div class="panel-foot">
-            <button type="button" id="bookmarks-import" title="Add bookmarks from an HTML export or a markdown list">Import&hellip;</button>
-            <button type="button" id="bookmarks-export" title="Save all bookmarks as a browser-compatible HTML file">Export HTML&hellip;</button>
-            <button type="button" id="bookmarks-tag" title="Let the AI suggest titles, descriptions and keywords for bookmarks, which you review before anything is saved">Tag with AI&hellip;</button>
-            <button type="button" id="bookmarks-organize" title="Let the AI suggest folders for bookmarks that are not in any folder, which you review before anything is moved">Sort unfiled&hellip;</button>
-            <button type="button" id="bookmarks-export-md" title="Save all bookmarks as a markdown list">Export Markdown&hellip;</button>
+            <button type="button" id="bookmarks-import" hidden title="Add bookmarks from an HTML export or a markdown list">Import&hellip;</button>
+            <button type="button" id="bookmarks-export" hidden title="Save all bookmarks as a browser-compatible HTML file">Export HTML&hellip;</button>
+            <button type="button" id="bookmarks-tag" hidden title="Let the AI suggest titles, descriptions and keywords for bookmarks, which you review before anything is saved">Tag with AI&hellip;</button>
+            <button type="button" id="bookmarks-organize" hidden title="Let the AI suggest folders for bookmarks that are not in any folder, which you review before anything is moved">Sort unfiled&hellip;</button>
+            <button type="button" id="bookmarks-export-md" hidden title="Save all bookmarks as a markdown list">Export Markdown&hellip;</button>
             <span id="bookmarks-msg" role="status"></span>
         </div>
     </aside>
@@ -57,7 +58,7 @@
     <div id="ask-splitter" class="splitter" title="Drag to resize (double-click to reset)" hidden></div>
     <aside id="ask-panel" aria-label="Interact with this page" hidden>
         <div class="panel-head">
-            <strong>&#10024; Interact with this page</strong>
+            <strong><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8z"/><path d="M18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></svg> Interact with this page</strong>
             <span class="spacer"></span>
             <button type="button" id="ask-clear" title="Delete this conversation">Clear</button>
             <button type="button" id="ask-close" title="Hide (Ctrl/Cmd+Shift+A)">&times;</button>
@@ -134,7 +135,7 @@
         <label>Keywords <input id="bookmark-keywords" type="text" placeholder="comma, separated"></label>
         <label>Folder <select id="bookmark-folder"></select></label>
         <div class="dialog-actions">
-            <button type="button" id="bookmark-suggest" title="Fill in the title, description and keywords from the page with AI">&#10024; Suggest from the page</button>
+            <button type="button" id="bookmark-suggest" title="Fill in the title, description and keywords from the page with AI"><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8z"/><path d="M18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></svg> Suggest from the page</button>
         </div>
         <p id="bookmark-status" role="status"></p>
         <div class="dialog-actions">

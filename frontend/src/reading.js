@@ -50,8 +50,26 @@ const row = (label, onClick, {disabled = false, title = ''} = {}) => {
     return b;
 };
 
-/** `host.page()` gives the page of the active tab; `host.run(tool, option)` runs a tool on it; `host.compare()` opens the tab comparison. */
+/**
+ * `host.page()` gives the page of the active tab; `host.run(tool, option)` runs a tool on it; `host.compare()` opens the tab
+ * comparison; `host.toast(text, isError)` says why a tool cannot run. Returns the tools, for the Tools menu to run as well.
+ */
 export function initReading(host) {
+    const needSelection = (use) => () => {
+        const selection = selectedText();
+        if (!selection) return host.toast('Select some text on the page first.', true);
+        use(selection);
+    };
+    const tools = {
+        summary: () => host.run('summary'),
+        outline: () => host.run('outline'),
+        translate: () => host.run('translate', language), // the language chosen in the sparkle menu
+        compare: () => host.compare(),
+        digest: () => (isFeed(host.page()) ? host.run('digest') : host.toast('This page is not a feed.', true)),
+        explain: needSelection((s) => askNow(`Explain this passage from the page, in plain language and with the context of the page:\n\n"${s}"`)),
+        simplify: needSelection((s) => askNow(`Rewrite this passage from the page in simpler words, keeping its meaning:\n\n"${s}"`)),
+    };
+
     const btn = $('reading');
     const menu = $('reading-menu');
 
@@ -67,19 +85,19 @@ export function initReading(host) {
         for (const l of LANGUAGES) select.append(Object.assign(document.createElement('option'), {value: l, textContent: l, selected: l === language}));
         select.addEventListener('change', () => { language = select.value; write('translate.lang', language); });
         const translate = Object.assign(document.createElement('div'), {className: 'menu-line'});
-        translate.append(row('Translate into', () => { close(); host.run('translate', language); }), select);
+        translate.append(row('Translate into', () => { close(); tools.translate(); }), select);
 
         const note = selection ? '' : 'Select some text on the page first';
         const heading = (t) => Object.assign(document.createElement('div'), {className: 'menu-heading', textContent: t});
         menu.replaceChildren(
-            row('Summarize this page', () => { close(); host.run('summary'); }),
-            row('Outline of this page', () => { close(); host.run('outline'); }),
+            row('Summarize this page', () => { close(); tools.summary(); }),
+            row('Outline of this page', () => { close(); tools.outline(); }),
             translate,
-            row('Compare open tabs\u2026', () => { close(); host.compare(); }),
-            ...(isFeed(p) ? [row('Digest of this feed', () => { close(); host.run('digest'); })] : []),
+            row('Compare open tabs\u2026', () => { close(); tools.compare(); }),
+            ...(isFeed(p) ? [row('Digest of this feed', () => { close(); tools.digest(); })] : []),
             heading('Selected text'),
-            row('Explain the selection', () => { close(); askNow(`Explain this passage from the page, in plain language and with the context of the page:\n\n"${selection}"`); }, {disabled: !selection, title: note}),
-            row('Simplify the selection', () => { close(); askNow(`Rewrite this passage from the page in simpler words, keeping its meaning:\n\n"${selection}"`); }, {disabled: !selection, title: note}),
+            row('Explain the selection', () => { close(); tools.explain(); }, {disabled: !selection, title: note}),
+            row('Simplify the selection', () => { close(); tools.simplify(); }, {disabled: !selection, title: note}),
         );
     }
 
@@ -106,4 +124,5 @@ export function initReading(host) {
             rows[(i + (e.key === 'ArrowDown' ? 1 : -1) + rows.length) % rows.length].focus();
         }
     });
+    return tools;
 }

@@ -7,6 +7,16 @@ void routeSelectAll(void);
 */
 import "C"
 
+// onMenu runs a menu item that is only in the macOS system menus; main sets it.
+var onMenu func(id string)
+
+//export goMenu
+func goMenu(id *C.char) {
+	if onMenu != nil {
+		onMenu(C.GoString(id))
+	}
+}
+
 // macOS adds "Show Tab Bar" and "Merge All Windows" for its own window tabs. The browser has
 // its own tabs, and the system's bar only shows the window title, so switch them off.
 func init() { C.disableWindowTabbing() }

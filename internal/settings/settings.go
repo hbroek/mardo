@@ -12,8 +12,15 @@ import (
 // Settings is the content of settings.json. A missing or unreadable file
 // gives the defaults, so the file is only needed to change something.
 type Settings struct {
-	Bookmarks Backend `json:"bookmarks"`
-	AI        AI      `json:"ai"`
+	Bookmarks Backend  `json:"bookmarks"`
+	AI        AI       `json:"ai"`
+	Browsing  Browsing `json:"browsing"`
+}
+
+// Browsing is how pages are fetched. The zero value is the default.
+type Browsing struct {
+	// NoMarkdownVersion turns off looking for a .md version of web pages that are not markdown.
+	NoMarkdownVersion bool `json:"noMarkdownVersion,omitempty"`
 }
 
 // AI is the language model provider (see package ai). The API key is not here:

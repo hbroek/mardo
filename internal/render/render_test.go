@@ -168,3 +168,28 @@ func TestImagesTheWebviewCannotLoadGoThroughTheProxy(t *testing.T) {
 		t.Errorf("a remote https image should load directly: %s", out)
 	}
 }
+
+func TestFrontMatterIsLeftOutAndTitlesThePage(t *testing.T) {
+	src := "---\ndescription: Connect, protect.\ntitle: \"Cloudflare Docs\"\nimage: https://x.test/og.png\n---\n\nSome text.\n"
+	html, title, err := Markdown([]byte(src), mustURL("https://x.test/"))
+	if err != nil || title != "Cloudflare Docs" || strings.Contains(html, "description") || strings.Contains(html, "<hr") || !strings.Contains(html, "Some text.") {
+		t.Fatalf("html = %q, title = %q, err = %v", html, title, err)
+	}
+	// A heading wins over the front matter's title.
+	if _, title, _ := Markdown([]byte("---\ntitle: Meta\n---\n# Heading\n"), mustURL("https://x.test/")); title != "Heading" {
+		t.Errorf("title = %q", title)
+	}
+	// Two horizontal rules around text are not front matter.
+	html, _, _ = Markdown([]byte("---\nJust a line\n---\n"), mustURL("https://x.test/"))
+	if !strings.Contains(html, "Just a line") {
+		t.Errorf("a rule-delimited paragraph was taken for front matter: %q", html)
+	}
+}
+
+func TestRawHTMLInMarkdownIsKeptButCleaned(t *testing.T) {
+	src := `[Nov 02<h3>Local flags</h3>Read more](https://x.test/p) <script>alert(1)</script><img src="/a.png" onerror="alert(2)">` + "\n"
+	html, _, err := Markdown([]byte(src), mustURL("https://x.test/"))
+	if err != nil || !strings.Contains(html, "Local flags</a></h3>") /* the heading keeps its link */ || strings.Contains(html, "script") || strings.Contains(html, "onerror") {
+		t.Fatalf("html = %q, err = %v", html, err)
+	}
+}

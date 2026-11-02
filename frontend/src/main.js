@@ -1,8 +1,9 @@
 import './style.css';
 import './schemes.css';
-import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument} from '../wailsjs/go/main/App';
+import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, NavigateAsIs, MarkdownVersions, SetMarkdownVersions} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn} from '../wailsjs/runtime/runtime';
 import * as view from './view.js';
+import {svgIcon} from './icons.js';
 import {initConsole, toggleConsole} from './console.js';
 import {initBookmarks, openBookmark} from './bookmarks.js';
 import {initPanel, panelShortcut, refreshPanel, togglePanel} from './bookmarkpanel.js';
@@ -196,7 +197,8 @@ function render() {
             : p.kind === 'markdown' ? (showSource ? view.source(p, editor()) : view.markdown(p))
             : p.kind === 'fallback' ? view.fallback(p, (origin) => openCredentials({origin}))
             : view.error(p, () => goActive((id) => Navigate(id, p.url)), (page) => openCredentials({origin: page.origin, kind: page.authScheme === 'basic' ? 'basic' : page.authScheme === 'bearer' ? 'bearer' : 'cookie'})));
-    const extras = [copyBar(p), searchSwitch(p), active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
+    const extras = [active?.draft != null ? null : copyBar(p), variantBar(p), searchSwitch(p), // no copy button over the text box while editing
+        active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
     content.replaceChildren(...extras, body);
     content.scrollTop = 0;
 }
@@ -322,6 +324,20 @@ function displayAddress(url) {
     return (url.startsWith(MEANING_PREFIX) ? '@' : '?') + searchQueryOf(url);
 }
 
+/** On the markdown version of a web page: say so, and offer the page as it is. */
+function variantBar(p) {
+    if (!p?.markdownOf) return null;
+    const bar = document.createElement('p');
+    bar.className = 'variant-bar note';
+    const view = document.createElement('a');
+    view.href = '#';
+    view.textContent = 'View the original page';
+    view.addEventListener('click', (e) => { e.preventDefault(); goActive((id) => NavigateAsIs(id, p.markdownOf)); });
+    const site = p.url.endsWith('/llms.txt'); // the site's overview for language models, in markdown
+    bar.append(site ? 'This site has no markdown home page; this is its llms.txt. ' : 'This is the markdown version of this page. ', view);
+    return bar;
+}
+
 /** On a search results page: a button to run the same search the other way. */
 function searchSwitch(p) {
     if (!p?.url || !isSearch(p.url) || p.kind === 'error') return null;
@@ -331,7 +347,8 @@ function searchSwitch(p) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'search-switch';
-    button.textContent = byMeaning ? 'Search by keywords instead' : '\u2728 Search by meaning with AI';
+    if (byMeaning) button.textContent = 'Search by keywords instead';
+    else button.append(svgIcon('sparkle'), ' Search by meaning with AI');
     button.title = byMeaning ? 'Every word must match' : 'Sends the titles, addresses, keywords and descriptions of your bookmarks and history to your AI provider';
     button.addEventListener('click', () => goActive((id) => Navigate(id, (byMeaning ? '?' : '@') + query)));
     return button;
@@ -626,6 +643,8 @@ const menuItems = {
     savePage,
     openFile,
     newDocument,
+    markdownVersions: () => MarkdownVersions(),
+    setMarkdownVersions: (on) => SetMarkdownVersions(on),
     history: () => goActive(FullHistory),
     clearHistory: () => ClearHistory(),
 };
@@ -664,6 +683,12 @@ const menuActions = {
     'edit-page': toggleEdit,
     ask: toggleAsk,
     summary: summarize,
+    'ai-outline': () => aiTools.outline(),
+    'ai-translate': () => aiTools.translate(),
+    'ai-compare': () => aiTools.compare(),
+    'ai-digest': () => aiTools.digest(),
+    'ai-explain': () => aiTools.explain(),
+    'ai-simplify': () => aiTools.simplify(),
     ai: menuItems.ai,
     credentials: menuItems.credentials,
     history: menuItems.history,
@@ -808,7 +833,7 @@ initAsk({
         if (tab === active) { render(); refreshAsk(); }
     },
 });
-initReading({page: currentPage, run: readPage, compare: openCompare});
+const aiTools = initReading({page: currentPage, run: readPage, compare: openCompare, toast});
 initSplitters();
 initCompare({
     // A restored tab that has not been shown yet has only its address (tab.pending); the Go side reads it from there.

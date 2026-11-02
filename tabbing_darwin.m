@@ -2,6 +2,7 @@
 
 extern void goSelectAll(void);
 extern void goCopyAll(void);
+extern void goMenu(const char *id);
 
 // Called from Go: see tabbing_darwin.go.
 void disableWindowTabbing(void) {
@@ -11,6 +12,7 @@ void disableWindowTabbing(void) {
 @interface SelectAllTarget : NSObject
 - (void)selectAllClicked:(id)sender;
 - (void)copyAllClicked:(id)sender;
+- (void)appItemClicked:(NSMenuItem *)sender;
 @end
 
 @implementation SelectAllTarget
@@ -19,6 +21,9 @@ void disableWindowTabbing(void) {
 }
 - (void)copyAllClicked:(id)sender {
     goCopyAll();
+}
+- (void)appItemClicked:(NSMenuItem *)sender {
+    goMenu([(NSString *)sender.representedObject UTF8String]);
 }
 @end
 
@@ -38,6 +43,19 @@ void routeSelectAll(void) {
             }
             if (item.action == @selector(copy:)) copyAt = [edit indexOfItem:item];
             if (item.action == @selector(copyAllClicked:)) haveCopyAll = YES;
+        }
+        // Site Credentials and the AI setup are settings of the app, so they go at the top of the Mardo menu.
+        NSMenu *app = [[[NSApp mainMenu] itemAtIndex:0] submenu];
+        if (app && [app indexOfItemWithTitle:@"AI Assistant…"] < 0) {
+            NSInteger at = 0; // at the top: Wails' app menu starts with Hide
+            NSArray *entries = @[@[@"Site Credentials…", @"credentials"], @[@"AI Assistant…", @"ai"]];
+            for (NSArray *e in entries) {
+                NSMenuItem *m = [[NSMenuItem alloc] initWithTitle:e[0] action:@selector(appItemClicked:) keyEquivalent:@""];
+                m.target = target;
+                m.representedObject = e[1];
+                [app insertItem:m atIndex:at++];
+            }
+            [app insertItem:[NSMenuItem separatorItem] atIndex:at];
         }
         // Copy All (the page's markdown) goes right below Copy.
         if (copyAt >= 0 && !haveCopyAll) {

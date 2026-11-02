@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"markdown-browser/internal/auth"
 	"markdown-browser/internal/fetch"
@@ -49,6 +50,8 @@ type Browser struct {
 	search  Searcher
 	meaning Searcher // searches by meaning, with an AI model
 	history *history.Log
+
+	noVariants atomic.Bool // do not look for .md versions of pages (see variant.go)
 
 	tabMu   sync.Mutex
 	tabs    map[int]*tab
@@ -175,8 +178,28 @@ func (t *tab) withState(p page.Page) page.Page {
 	return p
 }
 
+// SetMarkdownVersions turns on or off looking for a .md version of web pages that are not markdown.
+func (b *Browser) SetMarkdownVersions(on bool) { b.noVariants.Store(!on) }
+
+// MarkdownVersions says whether .md versions are looked for.
+func (b *Browser) MarkdownVersions() bool { return !b.noVariants.Load() }
+
+// NavigateAsIs loads rawURL without looking for a .md version, so a page that has one can still be seen as it is.
+func (b *Browser) NavigateAsIs(ctx context.Context, tabID int, rawURL string) page.Page {
+	t := b.tab(tabID)
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	p := b.loadPage(ctx, rawURL, false)
+	t.stack.Visit(p.URL)
+	return t.withState(b.record(p))
+}
+
 // load fetches rawURL and builds the Page to display. Failures become error pages.
 func (b *Browser) load(ctx context.Context, rawURL string) page.Page {
+	return b.loadPage(ctx, rawURL, b.MarkdownVersions())
+}
+
+func (b *Browser) loadPage(ctx context.Context, rawURL string, versions bool) page.Page {
 	if isSearchURL(rawURL) {
 		return b.loadSearch(ctx, rawURL)
 	}
@@ -220,19 +243,30 @@ func (b *Browser) load(ctx context.Context, rawURL string) page.Page {
 		}
 	}
 	if fetch.IsMarkdown(res.ContentType) {
-		html, title, err := render.Markdown(res.Body, base)
-		if err != nil {
-			p.Kind, p.Error = page.KindError, err.Error()
-			return p
-		}
-		p.Kind, p.HTML, p.Source = page.KindMarkdown, html, string(res.Body)
-		p.Title = title
-		if p.EditURL = fetch.Editable(res); p.EditURL != "" {
-			p.ETag = res.Header.Get("ETag")
-		}
+		return b.markdownPage(p, res, base)
+	} else if alt, ok := b.markdownVersion(ctx, res, versions); ok {
+		return alt
 	} else {
 		p.Kind = page.KindFallback
 		p.Title, p.Links = render.Fallback(res.Body, res.ContentType, base)
+	}
+	if p.Title == "" {
+		p.Title = res.URL
+	}
+	return p
+}
+
+// markdownPage fills p from a markdown response.
+func (b *Browser) markdownPage(p page.Page, res *fetch.Result, base *url.URL) page.Page {
+	html, title, err := render.Markdown(res.Body, base)
+	if err != nil {
+		p.Kind, p.Error = page.KindError, err.Error()
+		return p
+	}
+	p.Kind, p.HTML, p.Source = page.KindMarkdown, html, string(res.Body)
+	p.Title = title
+	if p.EditURL = fetch.Editable(res); p.EditURL != "" {
+		p.ETag = res.Header.Get("ETag")
 	}
 	if p.Title == "" {
 		p.Title = res.URL
