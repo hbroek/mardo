@@ -103,7 +103,7 @@ func TestLocalFileEditAndConflict(t *testing.T) {
 	if got, _ := os.ReadFile(path); string(got) != "# two\n" {
 		t.Fatalf("file holds %q", got)
 	}
-	if info, _ := os.Stat(path); info.Mode().Perm() != 0o640 {
+	if info, _ := os.Stat(path); runtime.GOOS != "windows" && info.Mode().Perm() != 0o640 { // Windows has no permission bits to keep
 		t.Fatalf("mode changed to %v", info.Mode().Perm())
 	}
 	if err := PutFile(edit, []byte("# three\n"), tag); !errors.Is(err, ErrChanged) {
