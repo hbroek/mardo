@@ -1,4 +1,5 @@
 // Builds the DOM for each kind of page. No state lives here.
+import {diffLines, withContext} from './diff.js';
 
 function el(tag, props = {}, ...children) {
     const node = Object.assign(document.createElement(tag), props);
@@ -89,13 +90,25 @@ export function source(p, ed) {
         if ((e.metaKey || e.ctrlKey) && (e.key === 'Enter' || e.key.toLowerCase() === 's')) { e.preventDefault(); ed.onSave(); }
         else if (e.key === 'Escape') { e.preventDefault(); ed.onCancel(); }
     });
+    const changed = ed.draft !== p.source;
     return el('div', {className: 'source-wrap editing'},
         el('div', {className: 'edit-bar'},
             el('button', {type: 'button', className: 'primary', textContent: ed.saving ? 'Saving\u2026' : 'Save', disabled: ed.saving, onclick: ed.onSave}),
             el('button', {type: 'button', textContent: 'Cancel', disabled: ed.saving, onclick: ed.onCancel}),
-            el('span', {className: 'note', textContent: 'Ctrl/Cmd+Enter saves, Esc cancels.'})),
+            el('button', {type: 'button', textContent: ed.diff ? 'Back to editing' : 'Show changes', disabled: ed.saving || (!changed && !ed.diff), onclick: ed.onDiff}),
+            el('span', {className: 'note', textContent: ed.aiDraft ? 'Drafted by AI. Review the changes, then Save; Cancel discards them.' : 'Ctrl/Cmd+Enter saves, Esc cancels.'})),
         ed.error ? el('p', {className: 'error-text', textContent: ed.error}) : '',
-        area);
+        ed.diff ? changes(p.source, ed.draft) : area);
+}
+
+/** What a draft changes: removed lines and added lines, with a few unchanged lines around them. */
+function changes(before, after) {
+    const lines = withContext(diffLines(before, after));
+    if (!lines.some((l) => l.type !== 'gap' && l.type !== 'same')) return el('p', {className: 'note', textContent: 'No changes.'});
+    const mark = {same: '  ', del: '- ', add: '+ ', gap: ''};
+    return el('pre', {className: 'source diff'}, ...lines.map((l) => l.type === 'gap'
+        ? el('span', {className: 'diff-gap', textContent: '\u2026\n'})
+        : el('span', {className: `diff-${l.type}`, textContent: `${mark[l.type]}${l.text}\n`})));
 }
 
 export function fallback(p, onCredentials) {

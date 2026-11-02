@@ -399,6 +399,30 @@ func (a *App) AskPage(requestID, rawURL string, history []ai.Message, question s
 	return AIAnswer{Text: reply, HTML: html, Source: a.aiSource(), Millis: took.Milliseconds()}, err
 }
 
+// AIEdit is a document the model revised, to be reviewed before it is saved.
+type AIEdit struct {
+	Text   string `json:"text"`
+	Source string `json:"source"`
+	Millis int64  `json:"millis"`
+}
+
+// EditPage asks the model to apply an instruction to markdown (the saved source, or the draft being worked on)
+// and returns the revised document. Nothing is saved: the page shows it as a draft.
+func (a *App) EditPage(requestID, title, current, instruction string) (AIEdit, error) {
+	c, err := a.aiClient()
+	if err != nil {
+		return AIEdit{}, err
+	}
+	ctx, done := a.aiContext(requestID)
+	defer done()
+	started := time.Now()
+	text, err := ai.Edit(ctx, c, title, current, instruction)
+	if err != nil {
+		return AIEdit{}, cancelled(ctx, err)
+	}
+	return AIEdit{Text: text, Source: a.aiSource(), Millis: time.Since(started).Milliseconds()}, nil
+}
+
 // ChatTurn is one message of a saved conversation about a page.
 type ChatTurn struct {
 	Role   string `json:"role"` // "user" or "assistant"

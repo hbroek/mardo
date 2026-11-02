@@ -1,10 +1,13 @@
-// "Ask this page": a conversation about the page in the active tab, in a panel beside it.
+// "Interact with this page": a conversation about the page in the active tab, in a panel beside it. On a page
+// the server or the disk lets you change, the reader can also tell the AI what to change; its result becomes an
+// unsaved draft in the page (see host.draft), never a save.
 // The conversation belongs to the tab (tab.chat) and is about one page. It is saved
 // after every answer and comes back when that page is opened again, even after a restart.
-import {AskPage, SavedConversation, SaveConversation} from '../wailsjs/go/main/App';
+import {AskPage, EditPage, SavedConversation, SaveConversation} from '../wailsjs/go/main/App';
 import {aiReady, openAI, newRequestId, cancelRequest} from './ai.js';
 import {waiting, seconds} from './view.js';
 
+const NEW_DOC = 'new:document'; // see main.js
 const $ = (id) => document.getElementById(id);
 const panel = $('ask-panel');
 const log = $('ask-log');
@@ -34,11 +37,21 @@ function askable(tab) {
     return p && p.url && p.kind !== 'error' && !p.url.startsWith('bookmarks:') ? p : null;
 }
 
+/** True when the page in the tab can be changed, so the AI may be told to. */
+function editable(tab) {
+    const p = tab?.page;
+    return p?.kind === 'markdown' && !!p.editUrl && !p.url.startsWith('bookmarks:');
+}
+
+/** The AI follows the document: while it is being edited the reader's messages are changes to make, otherwise questions. */
+const editing = (tab) => editable(tab) && tab.draft != null;
+
 function message(turn) {
     if (turn.role === 'user') return el('div', {className: 'ask-msg user', textContent: turn.text});
     if (turn.role === 'error') return el('div', {className: 'ask-msg error-text', textContent: turn.text});
     return el('div', {className: 'ask-msg assistant'},
-        el('div', {className: 'markdown', innerHTML: turn.html}), // sanitized by the backend
+        turn.html ? el('div', {className: 'markdown', innerHTML: turn.html}) // sanitized by the backend
+            : el('p', {textContent: turn.text}),
         el('div', {className: 'note', textContent: `${turn.source} \u00B7 ${seconds(turn.millis)}`}));
 }
 
@@ -50,20 +63,26 @@ export function refreshAsk() {
     const tab = host.tab();
     const page = askable(tab);
     const chat = tab?.chat;
-    if (page && !chat && tab.chatTried !== page.url) loadSaved(tab, page.url);
+    if (page && !chat && tab.chatTried !== page.url && page.url !== NEW_DOC) loadSaved(tab, page.url);
     const children = [];
     if (!page) {
         children.push(el('p', {className: 'note', textContent: 'Open a page, then ask questions about it here.'}));
     } else if (!chat || (!chat.turns.length && !chat.pending)) {
-        children.push(el('p', {className: 'note', textContent: 'Ask a question about this page. The text of the page and your questions are sent to your AI provider.'}));
+        children.push(el('p', {className: 'note', textContent: editing(tab)
+            ? 'Describe a change to make to this document. It appears as a draft you review before saving. The text of the document and your messages are sent to your AI provider.'
+            : editable(tab)
+                ? 'Ask a question about this page. To have the AI change it, click the pencil to edit, then describe the change here. The text of the page and your questions are sent to your AI provider.'
+                : 'Ask a question about this page. The text of the page and your questions are sent to your AI provider.'}));
     }
     for (const turn of chat?.turns ?? []) children.push(message(turn));
-    if (chat?.pending) children.push(waiting('Thinking'));
+    if (chat?.pending) children.push(waiting(chat.editing ? 'Drafting the change' : 'Thinking'));
     log.replaceChildren(...children);
     log.scrollTop = log.scrollHeight;
     const sendBtn = $('ask-send');
     sendBtn.disabled = !page;
-    sendBtn.textContent = chat?.pending ? 'Cancel' : 'Ask'; // while the model works, the button stops it
+    const changing = editing(tab);
+    input.placeholder = changing ? 'Describe a change to make\u2026' : 'Ask about this page\u2026';
+    sendBtn.textContent = chat?.pending ? 'Cancel' : changing ? 'Draft' : 'Ask'; // while the model works, the button stops it
     sendBtn.classList.toggle('primary', !chat?.pending);
     input.disabled = !page;
     $('ask-clear').disabled = !chat?.turns.length || Boolean(chat?.pending);
@@ -81,6 +100,8 @@ async function loadSaved(tab, url) {
 
 /** Saves the conversation (text only; the answers' markup is made again when loaded). */
 function persist(chat) {
+    if (chat.url === NEW_DOC) return; // a document with no file yet has nothing to come back to
+
     const turns = chat.turns.filter((t) => t.role === 'user' || t.role === 'assistant')
         .map((t) => ({role: t.role, text: t.text, html: '', source: t.source ?? '', millis: t.millis ?? 0}));
     SaveConversation(chat.url, turns).catch(() => {});
@@ -106,7 +127,7 @@ function cancelAsk(tab) {
     input.focus();
 }
 
-async function send() {
+async function send(forceAsk = false) {
     const tab = host.tab();
     if (tab?.chat?.pending) return cancelAsk(tab);
     const page = askable(tab);
@@ -118,15 +139,30 @@ async function send() {
     // Earlier answers go back as they were written.
     const history = chat.turns.filter((t) => t.role === 'user' || t.role === 'assistant').map((t) => ({role: t.role, content: t.text}));
     const id = newRequestId();
+    const edit = !forceAsk && editing(tab);
     chat.turns.push({role: 'user', text: question});
     chat.pending = true;
+    chat.editing = edit;
     chat.requestId = id;
     input.value = '';
     refreshAsk();
     try {
-        const a = await AskPage(id, chat.url, history, question);
-        if (chat.requestId !== id) return; // cancelled meanwhile
-        chat.turns.push({role: 'assistant', text: a.text, html: a.html, source: a.source, millis: a.millis});
+        if (edit) {
+            const base = tab.draft ?? page.source; // a draft being worked on carries on from where it is
+            const r = await EditPage(id, page.title, base, question);
+            if (chat.requestId !== id) return; // cancelled meanwhile
+            const same = r.text.trimEnd() === base.trimEnd();
+            const closed = tab.draft == null; // editing ended while the model worked: do not start it again
+            if (!same && !closed) host.draft(tab, r.text);
+            chat.turns.push({role: 'assistant', html: '', source: r.source, millis: r.millis,
+                text: same ? 'That would not change the document. Try describing the change differently.'
+                    : closed ? 'Editing was closed before the draft was ready, so it was dropped.'
+                    : 'I drafted the change in the page. Review it, then Save; Cancel discards it.'});
+        } else {
+            const a = await AskPage(id, chat.url, history, question);
+            if (chat.requestId !== id) return;
+            chat.turns.push({role: 'assistant', text: a.text, html: a.html, source: a.source, millis: a.millis});
+        }
         persist(chat);
     } catch (e) {
         if (chat.requestId !== id) return;
@@ -134,6 +170,7 @@ async function send() {
     } finally {
         if (chat.requestId === id) {
             chat.pending = false;
+            chat.editing = false;
             chat.requestId = '';
             if (host.tab() === tab && tab.chat === chat) refreshAsk();
         }
@@ -149,10 +186,10 @@ export function askNow(question) {
         return;
     }
     input.value = question;
-    send();
+    send(true); // reading tools ask; they never change the document
 }
 
-/** `host.tab()` gives the active tab; `host.open(url, newTab)` follows a link from an answer. */
+/** `host.tab()` gives the active tab; `host.open(url, newTab)` follows a link from an answer; `host.draft(tab, text)` shows an AI edit as a draft. */
 export function initAsk(hostApi) {
     host = hostApi;
     shown = stored() === '1';

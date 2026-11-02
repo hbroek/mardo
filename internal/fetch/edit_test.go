@@ -2,9 +2,12 @@ package fetch
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"runtime"
 	"testing"
 )
 
@@ -77,5 +80,42 @@ func TestPut(t *testing.T) {
 	}
 	if err := f.Put(ctx, "/tmp/a.md", []byte("x"), ""); err == nil {
 		t.Error("a local file was PUT")
+	}
+}
+
+func TestLocalFileEditAndConflict(t *testing.T) {
+	path := t.TempDir() + "/note.md"
+	if err := os.WriteFile(path, []byte("# one\n"), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	res, err := NewFetcher(nil, nil).Get(context.Background(), path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edit := Editable(res)
+	tag := res.Header.Get("ETag")
+	if edit != res.URL || tag == "" {
+		t.Fatalf("a writable file should be editable: edit=%q tag=%q", edit, tag)
+	}
+	if err := PutFile(edit, []byte("# two\n"), tag); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(path); string(got) != "# two\n" {
+		t.Fatalf("file holds %q", got)
+	}
+	if info, _ := os.Stat(path); info.Mode().Perm() != 0o640 {
+		t.Fatalf("mode changed to %v", info.Mode().Perm())
+	}
+	if err := PutFile(edit, []byte("# three\n"), tag); !errors.Is(err, ErrChanged) {
+		t.Fatalf("saving over a newer file should fail with ErrChanged, got %v", err)
+	}
+	if err := os.Chmod(path, 0o400); err != nil {
+		t.Fatal(err)
+	}
+	if os.Getuid() != 0 && runtime.GOOS != "windows" {
+		res, _ = NewFetcher(nil, nil).Get(context.Background(), path)
+		if Editable(res) != "" {
+			t.Fatal("a read-only file should not be editable")
+		}
 	}
 }

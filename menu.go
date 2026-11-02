@@ -64,8 +64,10 @@ func (a *App) appMenu() *menu.Menu {
 
 	file := bar.AddSubmenu("File")
 	item(file, "New Tab", "new-tab", cmd("t"))
+	item(file, "New Document", "new-document", cmd("n"))
 	item(file, "Close Tab", "close-tab", cmd("w"))
 	file.AddSeparator()
+	item(file, "Open File…", "open-file", cmd("o"))
 	item(file, "Edit Page", "edit-page", cmd("e"))
 	item(file, "Save Page…", "save-page", cmd("s"))
 	item(file, "Copy Markdown", "copy-markdown", cmdShift("c"))
@@ -107,7 +109,7 @@ func (a *App) appMenu() *menu.Menu {
 	toggle("bookmarks", "Bookmarks", cmd("b"))
 	toggle("console", "Console", cmd("j"))
 	toggle("source", "Source", cmd("u"))
-	toggle("ask", "Ask Panel", cmdShift("a"))
+	toggle("ask", "Interact Panel", cmdShift("a"))
 
 	marks := bar.AddSubmenu("Bookmarks")
 	item(marks, "Bookmark This Page…", "bookmark-page", cmd("d"))
@@ -148,7 +150,7 @@ func (a *App) domReady(context.Context) {
 var viewKeys = map[string]*keys.Accelerator{}
 
 // viewNames is what each View menu toggle is called after "Show " / "Hide ".
-var viewNames = map[string]string{"bookmarks": "Bookmarks", "console": "Console", "source": "Source", "ask": "Ask Panel"}
+var viewNames = map[string]string{"bookmarks": "Bookmarks", "console": "Console", "source": "Source", "ask": "Interact Panel"}
 
 // SetViewShown keeps a View menu item saying what it will do: Show or Hide.
 func (a *App) SetViewShown(id string, shown bool) {

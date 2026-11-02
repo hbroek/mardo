@@ -14,6 +14,7 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 - A native menu bar (File, Edit, View, Bookmarks, Tools; plus the app and Window menus on macOS) has the same actions as the toolbar and
   shortcuts; Edit > Select All selects the field, bookmarks, chat or page you are in. On Windows and Linux it lists the shortcuts and the
   page handles the keys; the ☰ menu stays everywhere
+- **File > New Document** (Cmd/Ctrl+N) opens an empty markdown document in edit mode. It is only in the window until you press Save, which asks where to put the file; Cancel, or the pencil, closes it without leaving anything on disk. The AI panel can draft its first text
 - Not markdown? Shows the page title and the links found on it
 - RSS and Atom feeds render as a list of posts; an item's `<source:markdown>` is used when present
 - `http`, `https` and `file://`; drop a `.md` file on the window to open it. Relative links and images work,
@@ -38,7 +39,7 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 | Cmd/Ctrl+D | Add or edit the bookmark for this page |
 | Cmd/Ctrl+B | Open the bookmarks panel and move into it (again to close it) |
 | Cmd/Ctrl+J | Show / hide the network console |
-| Cmd/Ctrl+Shift+A | Show / hide the Ask this page panel |
+| Cmd/Ctrl+Shift+A | Show / hide the Interact with this page panel |
 | Cmd/Ctrl+T, Cmd/Ctrl+W | New tab, close tab |
 | Ctrl+Tab / Ctrl+Shift+Tab, Cmd/Ctrl+Shift+[ / ], Cmd/Ctrl+1–9 | Switch tabs (9 is the last) |
 
@@ -83,10 +84,13 @@ Any server that speaks the OpenAI chat-completions API works. Presets are filled
 compatible endpoint), OpenAI, Google Gemini, Ollama, and Apple's on-device model through `fm serve`
 (`http://127.0.0.1:1976/v1`; run `fm serve` first). Or enter your own address and model.
 
-The speech-bubble button (💬, Cmd/Ctrl+Shift+A) opens **Ask this page**: a conversation about the page in the current tab, in a
+The speech-bubble button (💬, Cmd/Ctrl+Shift+A) opens **Interact with this page**: a conversation about the page in the current tab, in a
 panel on the right. Each tab has its own conversation, about one page. It is saved after every answer and comes back when you open
 that page again, also after a restart (**Clear** deletes it; ☰ → AI assistant → *Delete saved conversations* deletes them all). The text
 of your questions and the answers is kept in `conversations.json` in the config folder, readable only by you, for up to 50 pages. Answers are rendered as markdown, with links that open in the browser, and show the model and how long it took.
+On a page you can edit, the panel follows the page: while you only read it, your messages are questions; once you click the pencil to edit, they are
+changes to make. The AI writes the whole revised document, which opens as an unsaved draft with **Show changes** (what was removed and added);
+nothing is saved until you press Save, and Cancel discards it. Each instruction builds on the current draft. Documents over 60,000 characters are too long for this.
 Enter sends and Shift+Enter starts a new line. While a model is working, the **Cancel** button (or Esc) stops it, and so do the Cancel buttons on the summary card and the bookmark suggestion; the question goes back into the box.
 
 **Tag with AI** (a button in the bookmarks panel footer, or right-click a folder to start with just that folder) asks the AI for a short
@@ -107,7 +111,7 @@ keyword results page has a button to rerun the search by meaning, and the other 
 **Reading tools** (the book button in the toolbar) work on the page in the active tab. **Outline** lists the page's sections with a line on each;
 **Translate into** a language you pick keeps the headings, lists, links and code and translates the text (up to the first 30,000 characters);
 on a feed, **Digest** groups the entries by topic with links. They appear in the card above the page, like the summary, with a cancel button. Select
-some text first and **Explain the selection** or **Simplify the selection** asks the Ask panel about that passage, so you can follow up and the
+some text first and **Explain the selection** or **Simplify the selection** asks the Interact panel about that passage, so you can follow up and the
 conversation is saved with the page. The page text goes to your AI provider, as for the summary.
 
 **Sort unfiled** (a button in the bookmarks panel footer) asks the AI where the bookmarks that sit in no folder belong. It prefers your
@@ -220,7 +224,7 @@ post to Mastodon or Bluesky with an app password kept in the keychain), and save
 ```
 main.go, app.go        Wails bootstrap and the methods exposed to the UI
 internal/fetch         HTTP/file loading, content negotiation, size and redirect limits
-internal/chats         saved Ask this page conversations
+internal/chats         saved page conversations
 internal/ai            OpenAI-compatible chat client; summary and bookmark-suggestion prompts
 internal/render        markdown -> sanitized HTML, feeds, link extraction
 internal/browser       ties fetch + render + history together

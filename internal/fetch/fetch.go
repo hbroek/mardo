@@ -117,6 +117,9 @@ func Normalize(input string) (*url.URL, error) {
 	return u, nil
 }
 
+// FileURL is the file address of a local path.
+func FileURL(path string) string { return fileURL(path).String() }
+
 func fileURL(path string) *url.URL {
 	p := filepath.ToSlash(path)
 	if !strings.HasPrefix(p, "/") { // Windows drive path: C:/x -> /C:/x
@@ -222,7 +225,11 @@ func (f *Fetcher) getFile(u *url.URL) (res *Result, err error) {
 	if isMarkdownExt(u.Path) {
 		ct = "text/markdown; charset=utf-8"
 	}
-	return &Result{URL: u.String(), Status: http.StatusOK, ContentType: ct, Body: body}, nil
+	h := http.Header{}
+	if info, err := file.Stat(); err == nil {
+		h.Set("ETag", fileTag(info))
+	}
+	return &Result{URL: u.String(), Status: http.StatusOK, ContentType: ct, Body: body, Header: h}, nil
 }
 
 func readCapped(r io.Reader) ([]byte, error) {

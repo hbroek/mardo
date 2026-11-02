@@ -78,6 +78,10 @@ export function DeleteCredential(arg1) {
   return window['go']['main']['App']['DeleteCredential'](arg1);
 }
 
+export function EditPage(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['EditPage'](arg1, arg2, arg3, arg4);
+}
+
 export function ExportBookmarks(arg1) {
   return window['go']['main']['App']['ExportBookmarks'](arg1);
 }
@@ -122,6 +126,10 @@ export function NewTab() {
   return window['go']['main']['App']['NewTab']();
 }
 
+export function PickFile() {
+  return window['go']['main']['App']['PickFile']();
+}
+
 export function ReadPage(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['ReadPage'](arg1, arg2, arg3, arg4);
 }
@@ -148,6 +156,10 @@ export function SaveConversation(arg1, arg2) {
 
 export function SaveCredential(arg1) {
   return window['go']['main']['App']['SaveCredential'](arg1);
+}
+
+export function SaveNewDocument(arg1, arg2) {
+  return window['go']['main']['App']['SaveNewDocument'](arg1, arg2);
 }
 
 export function SavePage(arg1) {

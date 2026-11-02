@@ -19,7 +19,16 @@ func Editable(res *Result) string {
 		return ""
 	}
 	base, err := url.Parse(res.URL)
-	if err != nil || (base.Scheme != "http" && base.Scheme != "https") {
+	if err != nil {
+		return ""
+	}
+	if base.Scheme == "file" {
+		if writable(FilePath(base)) {
+			return res.URL
+		}
+		return ""
+	}
+	if base.Scheme != "http" && base.Scheme != "https" {
 		return ""
 	}
 	if !allows(res.Header, http.MethodPut) {
@@ -107,7 +116,7 @@ func hasRel(rels, want string) bool {
 }
 
 // ErrChanged means the document changed on the server after it was loaded.
-var ErrChanged = errors.New("the document changed on the server after you opened it")
+var ErrChanged = errors.New("the document changed after you opened it (someone else saved it); reload to see the new version")
 
 // Put replaces the document at rawURL with body, sending the saved credentials. etag is the
 // ETag the page was loaded with; the server refuses the save if the document has changed since.

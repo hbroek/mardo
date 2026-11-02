@@ -547,7 +547,7 @@ label.radio { flex-direction: row; align-items: center; gap: 8px; font-size: 1em
 .ask-msg .markdown > :first-child { margin-top: 0; }
 .ask-msg .markdown > :last-child { margin-bottom: 0; }
 .ask-msg .note { margin: 6px 0 0; font-size: 0.8em; }
-#ask-form { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--border); }
+#ask-form { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border-top: 1px solid var(--border); }
 #ask-input { flex: 1; resize: none; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; font-size: 0.9em; }
 #ask-send { padding: 0 14px; border-radius: 6px; cursor: pointer; }
 #ask-send:disabled { opacity: 0.5; cursor: default; }
@@ -626,3 +626,10 @@ dialog .stack[hidden] { display: none; } /* display: flex would otherwise win ov
 .cmp-url { display: block; margin: 0; max-width: 30rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #cmp-body { max-height: 55vh; overflow: auto; padding: 0 4px; }
 #cmp-focus { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+
+/* what a draft changes */
+.source.diff { padding: 0; overflow: auto; }
+.source.diff span { display: block; padding: 0 16px; }
+.diff-add { background: rgba(46, 160, 67, 0.22); }
+.diff-del { background: rgba(248, 81, 73, 0.22); text-decoration: line-through; text-decoration-color: rgba(248, 81, 73, 0.5); }
+.diff-gap { color: var(--muted, gray); opacity: 0.7; }

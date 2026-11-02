@@ -689,7 +689,7 @@ func TestSaveSourceWritesBackAndReloads(t *testing.T) {
 	if err != nil || fresh.Title != "New" || fresh.ETag != `"v2"` {
 		t.Fatalf("after save: %+v, %v", fresh, err)
 	}
-	if _, err := a.SaveSource(1, p.URL, p.EditURL, p.ETag, "# Stale\n"); err == nil || !strings.Contains(err.Error(), "changed on the server") {
+	if _, err := a.SaveSource(1, p.URL, p.EditURL, p.ETag, "# Stale\n"); err == nil || !strings.Contains(err.Error(), "changed after you opened it") {
 		t.Errorf("saving a stale version: %v", err)
 	}
 	if _, err := a.SaveSource(1, p.URL, "https://elsewhere.test/doc.md", fresh.ETag, "x"); err == nil {

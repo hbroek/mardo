@@ -46,6 +46,8 @@ export function DeleteBookmarkFolder(arg1:string):Promise<void>;
 
 export function DeleteCredential(arg1:string):Promise<void>;
 
+export function EditPage(arg1:string,arg2:string,arg3:string,arg4:string):Promise<main.AIEdit>;
+
 export function ExportBookmarks(arg1:string):Promise<string>;
 
 export function ForgetConversations():Promise<number>;
@@ -68,6 +70,8 @@ export function NetworkLog():Promise<Array<fetch.Entry>>;
 
 export function NewTab():Promise<number>;
 
+export function PickFile():Promise<string>;
+
 export function ReadPage(arg1:string,arg2:string,arg3:string,arg4:string):Promise<main.AISummary>;
 
 export function Reload(arg1:number):Promise<page.Page>;
@@ -81,6 +85,8 @@ export function SaveBookmarkFolder(arg1:bookmarks.Folder):Promise<bookmarks.Fold
 export function SaveConversation(arg1:string,arg2:Array<main.ChatTurn>):Promise<void>;
 
 export function SaveCredential(arg1:auth.Credential):Promise<string>;
+
+export function SaveNewDocument(arg1:number,arg2:string):Promise<main.NewDocumentResult>;
 
 export function SavePage(arg1:page.Page):Promise<string>;
 

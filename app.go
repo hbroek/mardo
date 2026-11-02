@@ -265,6 +265,17 @@ func (a *App) searchPage(ctx context.Context, query string) (string, error) {
 // maxImportBytes bounds the bookmark file read on import.
 const maxImportBytes = 64 << 20
 
+// PickFile asks for a local file to open and returns its path, or "" if the dialog is canceled.
+func (a *App) PickFile() (string, error) {
+	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Open file",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Markdown and text (*.md, *.markdown, *.txt)", Pattern: "*.md;*.markdown;*.txt"},
+			{DisplayName: "All files", Pattern: "*"},
+		},
+	})
+}
+
 // ImportBookmarks asks for a bookmark file and adds its folders and
 // bookmarks: an HTML export from any browser, or a markdown list (.md,
 // .markdown, .txt; see internal/bookmarks/markdown_io.go). Canceling the

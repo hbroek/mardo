@@ -1,6 +1,6 @@
 import './style.css';
 import './schemes.css';
-import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown} from '../wailsjs/go/main/App';
+import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn} from '../wailsjs/runtime/runtime';
 import * as view from './view.js';
 import {initConsole, toggleConsole} from './console.js';
@@ -41,6 +41,9 @@ function editor() {
         draft: tab.draft ?? null,
         saving: !!tab.saving,
         error: tab.saveError ?? '',
+        diff: !!tab.showDiff,
+        aiDraft: !!tab.aiDraft,
+        onDiff: () => { tab.showDiff = !tab.showDiff; render(); },
         onEdit: startEdit,
         onInput: (text) => { tab.draft = text; tab.discardArmed = false; },
         onSave: () => saveEdit(),
@@ -57,7 +60,10 @@ function startEdit() {
     tab.draft = tab.page.source;
     tab.saveError = '';
     tab.discardArmed = false;
+    tab.showDiff = false;
+    tab.aiDraft = false;
     render();
+    refreshAsk(); // the panel now takes changes, not questions
     const box = $('content').querySelector('.source-edit');
     box?.focus();
     box?.setSelectionRange(0, 0);
@@ -74,11 +80,32 @@ function cancelEdit() {
         $('content').querySelector('.source-edit')?.focus();
         return;
     }
+    endEdit(tab);
+}
+
+/** Leaves editing, dropping the draft. */
+function endEdit(tab) {
+    if (tab.page?.url === NEW_DOC) return closeTab(tab); // never saved, so there is nothing to go back to
     tab.draft = null;
     tab.saveError = '';
     tab.discardArmed = false;
+    tab.showDiff = false;
+    tab.aiDraft = false;
     if (tab.editFromRendered) tab.showSource = false;
-    render();
+    if (tab === active) { render(); refreshAsk(); }
+}
+
+/** The pencil: starts editing, or stops it; changes not saved yet are asked about first. */
+function toggleEdit() {
+    const tab = active;
+    if (!tab?.page?.editUrl || tab.saving) return;
+    if (tab.draft == null) return startEdit();
+    if (tab.draft === tab.page.source) return endEdit(tab);
+    const dialog = $('unsaved-dialog');
+    if (!dialog.open) dialog.showModal();
+}
+for (const [id, act] of [['unsaved-keep', () => {}], ['unsaved-discard', () => endEdit(active)], ['unsaved-save', () => saveEdit()]]) {
+    $(id).addEventListener('click', () => { $('unsaved-dialog').close(); act(); });
 }
 
 /** Saves the edited source to the server; the tab then shows what is stored. */
@@ -90,11 +117,22 @@ async function saveEdit() {
     tab.saveError = '';
     render();
     try {
-        const fresh = await SaveSource(tab.id, p.url, p.editUrl, p.etag, tab.draft);
+        let fresh;
+        if (p.url === NEW_DOC) { // the first save asks where to put the file, and the tab then shows that file
+            const r = await SaveNewDocument(tab.id, tab.draft);
+            if (r.canceled) { // no file chosen: still a draft
+                tab.saving = false;
+                if (tab === active) { render(); $('content').querySelector('.source-edit')?.focus(); }
+                return;
+            }
+            fresh = r.page;
+        } else {
+            fresh = await SaveSource(tab.id, p.url, p.editUrl, p.etag, tab.draft);
+        }
         if (fresh.kind === 'error') throw new Error(fresh.error);
         tab.saving = false;
         show(tab, fresh);
-        toast('Saved to the server.');
+        toast(p.url === NEW_DOC ? 'Saved.' : p.url.startsWith('file:') ? 'Saved the file.' : 'Saved to the server.');
     } catch (e) {
         tab.saving = false;
         tab.saveError = String(e).replace(/^Error: /, '');
@@ -111,11 +149,13 @@ function render() {
     if (sourceBtn.classList.contains('pencil') !== editable) {
         sourceBtn.classList.toggle('pencil', editable);
         sourceBtn.innerHTML = editable ? pencilIcon : sourceIcon;
-        sourceBtn.title = editable ? 'Edit this page: the server lets you change it (Ctrl/Cmd+E)' : 'Show source';
-        sourceBtn.setAttribute('aria-label', editable ? 'Edit this page' : 'Show source');
     }
-    $('summarize').disabled = !p?.url || p.kind === 'error' || isSearch(p.url);
-    sourceBtn.setAttribute('aria-pressed', String(showSource && !sourceBtn.disabled));
+    const editing = editable && active?.draft != null;
+    sourceBtn.title = !editable ? 'Show source' : editing ? 'Stop editing (Ctrl/Cmd+E)' : 'Edit this page (Ctrl/Cmd+E)';
+    sourceBtn.setAttribute('aria-label', !editable ? 'Show source' : editing ? 'Stop editing' : 'Edit this page');
+    if (editable) sourceBtn.setAttribute('aria-pressed', String(editing)); // the pencil stays lit while editing
+    $('summarize').disabled = !p?.url || p.kind === 'error' || isSearch(p.url) || p.url === NEW_DOC;
+    if (!editable) sourceBtn.setAttribute('aria-pressed', String(showSource && !sourceBtn.disabled));
     const body = (
         !p ? view.welcome()
             : p.kind === 'markdown' ? (showSource ? view.source(p, editor()) : view.markdown(p))
@@ -138,6 +178,29 @@ function toast(text, isError = false) {
     box.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { box.hidden = true; }, isError ? 6000 : 3000);
+}
+
+/** A new, empty markdown document in a tab of its own, already in edit mode. It is only a file once saved. */
+async function newDocument() {
+    const tab = await openTab();
+    tab.page = {kind: 'markdown', url: NEW_DOC, title: 'Untitled', html: '', source: '', editUrl: NEW_DOC, etag: '', canBack: false, canForward: false};
+    tab.showSource = true;
+    tab.draft = '';
+    tab.editFromRendered = false;
+    tab.saveError = '';
+    display();
+    renderTabs();
+    $('content').querySelector('.source-edit')?.focus();
+}
+
+/** Opens a local file chosen in the system's dialog, in the current tab. */
+async function openFile() {
+    try {
+        const path = await PickFile();
+        if (path) goActive((id) => Navigate(id, path));
+    } catch (e) {
+        toast(String(e), true);
+    }
 }
 
 /** Saves the page as a markdown file: its own markdown, or the title and links of any other page. */
@@ -208,12 +271,15 @@ function copyBar(p) {
 // Searches by meaning ("@ ...") live at "bookmarks:meaning?q=..." and are shown as "@query".
 const SEARCH_PREFIX = 'bookmarks:search?q=';
 const MEANING_PREFIX = 'bookmarks:meaning?q=';
+/** The address of a new document that is not on disk yet; it is only in this window until it is saved. */
+const NEW_DOC = 'new:document';
 const isSearch = (url) => url.startsWith(SEARCH_PREFIX) || url.startsWith(MEANING_PREFIX);
 function searchQueryOf(url) {
     const prefix = url.startsWith(MEANING_PREFIX) ? MEANING_PREFIX : SEARCH_PREFIX;
     try { return decodeURIComponent(url.slice(prefix.length).replace(/\+/g, ' ')); } catch { return ''; }
 }
 function displayAddress(url) {
+    if (url === NEW_DOC) return '';
     if (!isSearch(url)) return url;
     return (url.startsWith(MEANING_PREFIX) ? '@' : '?') + searchQueryOf(url);
 }
@@ -241,7 +307,7 @@ function display() {
     document.title = p?.title ? `${p.title} - Mardo` : 'Mardo - Markdown Browser & Author';
     $('back').disabled = !p?.canBack;
     $('forward').disabled = !p?.canForward;
-    $('reload').disabled = !p?.url;
+    $('reload').disabled = !p?.url || p.url === NEW_DOC;
     document.body.classList.toggle('loading', Boolean(active?.loading));
     render();
     refreshAsk();
@@ -256,6 +322,8 @@ function show(tab, p) {
     if (tab.chat && tab.chat.url !== p.url) tab.chat = null; // a conversation is about one page; it is saved and comes back with the page
     tab.showSource = false;
     tab.draft = null;
+    tab.showDiff = false;
+    tab.aiDraft = false;
     tab.saveError = '';
     if (tab === active) display();
     renderTabs();
@@ -300,7 +368,7 @@ function tabTitle(t) {
 }
 
 function saveTabs() {
-    const kept = tabs.filter((t) => t.page?.url || t.pending);
+    const kept = tabs.filter((t) => (t.page?.url && t.page.url !== NEW_DOC) || t.pending); // a new document has no file to come back to
     try {
         localStorage.setItem(TABS_KEY, JSON.stringify({
             urls: kept.map((t) => t.page?.url ?? t.pending),
@@ -488,7 +556,7 @@ address.addEventListener('focus', () => address.select());
 $('back').addEventListener('click', () => goActive(Back));
 $('forward').addEventListener('click', () => goActive(Forward));
 $('reload').addEventListener('click', () => goActive(Reload));
-sourceBtn.addEventListener('click', () => (sourceBtn.classList.contains('pencil') ? startEdit() : toggleSource()));
+sourceBtn.addEventListener('click', () => (sourceBtn.classList.contains('pencil') ? toggleEdit() : toggleSource()));
 
 // Links in rendered content navigate inside the browser; fragments scroll in place.
 content.addEventListener('click', (e) => {
@@ -519,6 +587,8 @@ const menuItems = {
     credentials: () => openCredentials({origin: originOf(currentPage()?.url ?? '').replace(/^null$/, '')}),
     ai: openAI,
     savePage,
+    openFile,
+    newDocument,
     history: () => goActive(FullHistory),
     clearHistory: () => ClearHistory(),
 };
@@ -533,6 +603,8 @@ async function bookmarkTool(button) {
 const menuActions = {
     'new-tab': () => openTab(),
     'close-tab': () => closeTab(active),
+    'new-document': newDocument,
+    'open-file': openFile,
     'save-page': savePage,
     'copy-markdown': copyMarkdown,
     'bookmark-page': () => { if (currentPage()?.url && !isSearch(currentPage().url)) openBookmarkDialog(); },
@@ -551,7 +623,7 @@ const menuActions = {
     'bookmarks-storage': () => bookmarkTool('storage-open'),
     console: toggleConsole,
     source: toggleSource,
-    'edit-page': startEdit,
+    'edit-page': toggleEdit,
     ask: toggleAsk,
     summary: summarize,
     ai: menuItems.ai,
@@ -603,7 +675,7 @@ const isMac = navigator.platform.startsWith('Mac');
 function menuOwnsKey(e, mod, key) {
     if (!mod || e.altKey) return false;
     if (e.shiftKey) return key === 'a' || key === 'c';
-    return 'lrujbdtwse[]'.includes(key) && key.length === 1;
+    return 'lrujbdtwseon[]'.includes(key) && key.length === 1;
 }
 document.addEventListener('keydown', (e) => {
     const mod = isMac ? e.metaKey : e.ctrlKey;
@@ -613,10 +685,12 @@ document.addEventListener('keydown', (e) => {
     if (mod && key === 'l') address.focus();
     else if (mod && key === 'r') { if (currentPage()?.url) goActive(Reload); }
     else if (mod && key === 'u') toggleSource();
-    else if (mod && !e.shiftKey && key === 'e') startEdit();
+    else if (mod && !e.shiftKey && key === 'e') toggleEdit();
     else if (mod && e.shiftKey && key === 'a') toggleAsk();
     else if (mod && e.shiftKey && key === 'c') copyMarkdown();
     else if (mod && !e.shiftKey && key === 's') savePage();
+    else if (mod && !e.shiftKey && key === 'o') openFile();
+    else if (mod && !e.shiftKey && key === 'n') newDocument();
     else if (mod && key === 't') openTab();
     else if (mod && key === 'w') closeTab(active);
     else if (e.ctrlKey && e.key === 'Tab') stepTab(e.shiftKey ? -1 : 1);
@@ -658,9 +732,9 @@ initCredentials((origin) => {
 const bookmarkBtn = $('bookmark-add');
 async function updateBookmarkIndicator() {
     const url = currentPage()?.url ?? '';
-    bookmarkBtn.disabled = !url || isSearch(url); // a results page is not a page to save
+    bookmarkBtn.disabled = !url || isSearch(url) || url === NEW_DOC; // a results page, or a document with no file yet, is not a page to save
     let found = null;
-    if (url && !isSearch(url)) {
+    if (url && !isSearch(url) && url !== NEW_DOC) {
         try { found = await BookmarkFor(url); } catch { /* no backend: stays unsaved */ }
     }
     if ((currentPage()?.url ?? '') !== url) return; // navigated away meanwhile
@@ -683,6 +757,18 @@ initAI();
 initAsk({
     tab: () => active,
     open: (url, newTab) => (newTab ? openTab(url, {background: true}) : goActive((id) => Navigate(id, url))),
+    /** What an AI edit changes: the text the document would have, shown as an unsaved draft in the page. */
+    draft: (tab, text) => {
+        if (!tab.page?.editUrl || tab.saving) return;
+        if (tab.draft == null) tab.editFromRendered = !tab.showSource; // cancelling goes back to reading
+        tab.showSource = true;
+        tab.draft = text;
+        tab.aiDraft = true;
+        tab.showDiff = true; // the first thing to see is what changed
+        tab.saveError = '';
+        tab.discardArmed = false;
+        if (tab === active) { render(); refreshAsk(); }
+    },
 });
 initReading({page: currentPage, run: readPage, compare: openCompare});
 initSplitters();
