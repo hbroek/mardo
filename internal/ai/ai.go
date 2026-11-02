@@ -57,6 +57,9 @@ type Completer interface {
 	Complete(ctx context.Context, messages []Message) (string, error)
 }
 
+// DefaultMaxTokens is how long a reply may be unless the Client says otherwise; a model that thinks first spends some of it on that.
+const DefaultMaxTokens = 20000
+
 // Client is a Chatter for one OpenAI-compatible server.
 type Client struct {
 	BaseURL string
@@ -88,6 +91,7 @@ type chatResponse struct {
 		Message struct {
 			Content string `json:"content"`
 		} `json:"message"`
+		FinishReason string `json:"finish_reason"`
 	} `json:"choices"`
 	Error *struct {
 		Message string `json:"message"`
@@ -110,7 +114,7 @@ func (c *Client) Complete(ctx context.Context, messages []Message) (string, erro
 	}
 	max := c.MaxTokens
 	if max == 0 {
-		max = 1024
+		max = DefaultMaxTokens
 	}
 	body, _ := json.Marshal(chatRequest{
 		Model:     strings.TrimSpace(c.Model),
@@ -142,6 +146,9 @@ func (c *Client) Complete(ctx context.Context, messages []Message) (string, erro
 		return "", statusError(resp.StatusCode, u.Host, out)
 	}
 	if len(out.Choices) == 0 || strings.TrimSpace(out.Choices[0].Message.Content) == "" {
+		if len(out.Choices) > 0 && out.Choices[0].FinishReason == "length" { // a reasoning model can use the whole allowance thinking
+			return "", errors.New("the AI server ran out of room before it wrote any text (a model that thinks first can use it all); try a shorter page or a model that does not think first")
+		}
 		return "", errors.New("the AI server answered with no text")
 	}
 	return strings.TrimSpace(out.Choices[0].Message.Content), nil

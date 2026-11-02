@@ -96,6 +96,8 @@ export function source(p, ed) {
     area.addEventListener('input', () => ed.onInput(area.value));
     area.addEventListener('keydown', (e) => {
         if ((e.metaKey || e.ctrlKey) && (e.key === 'Enter' || e.key.toLowerCase() === 's')) { e.preventDefault(); ed.onSave(); }
+        else if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'z') { e.preventDefault(); (e.shiftKey ? ed.onRedo : ed.onUndo)(); }
+        else if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); ed.onRedo(); }
         else if (e.key === 'Escape') { e.preventDefault(); ed.onCancel(); }
     });
     const changed = ed.draft !== p.source;
@@ -103,6 +105,8 @@ export function source(p, ed) {
         el('div', {className: 'edit-bar'},
             el('button', {type: 'button', className: 'primary', textContent: ed.saving ? 'Saving\u2026' : 'Save', disabled: ed.saving, onclick: ed.onSave}),
             el('button', {type: 'button', textContent: 'Cancel', disabled: ed.saving, onclick: ed.onCancel}),
+            el('button', {type: 'button', textContent: 'Undo', title: 'Undo (Ctrl/Cmd+Z)', disabled: ed.saving || !ed.canUndo, onclick: ed.onUndo}),
+            el('button', {type: 'button', textContent: 'Redo', title: 'Redo (Shift+Ctrl/Cmd+Z)', disabled: ed.saving || !ed.canRedo, onclick: ed.onRedo}),
             el('button', {type: 'button', textContent: ed.diff ? 'Back to editing' : 'Show changes', disabled: ed.saving || (!changed && !ed.diff), onclick: ed.onDiff}),
             el('span', {className: 'note', textContent: ed.aiDraft ? 'Drafted by AI. Review the changes, then Save; Cancel discards them.' : 'Ctrl/Cmd+S saves, Esc cancels.'})),
         ed.error ? el('p', {className: 'error-text', textContent: ed.error}) : '',

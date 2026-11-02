@@ -114,4 +114,4 @@ jobs:
             --repo "${{ github.repository }}" \
             --title "${{ github.ref_name }}" \
             --generate-notes \
-            --notes "macOS builds are signed and notarized. Windows builds are unsigned: choose More info, then Run anyway."
+            --notes "macOS builds are signed and notarized. Windows and Linux builds are not signed, so Windows SmartScreen warns about an unknown publisher (More info, then Run anyway). You are encouraged to build Mardo yourself from source; see the README."

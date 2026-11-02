@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"markdown-browser/internal/ai"
 	"markdown-browser/internal/auth"
@@ -413,6 +414,7 @@ func (a *App) EditPage(requestID, title, current, instruction string) (AIEdit, e
 	if err != nil {
 		return AIEdit{}, err
 	}
+	c.MaxTokens = max(ai.DefaultMaxTokens, utf8.RuneCountInString(current)/2+4096) // the whole document comes back, besides any thinking
 	ctx, done := a.aiContext(requestID)
 	defer done()
 	started := time.Now()

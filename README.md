@@ -190,7 +190,8 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The macOS build is signed and notarized. The Windows build is unsigned: choose More info, then Run anyway.
+The macOS build is signed and notarized. The Windows and Linux builds are not signed, so Windows SmartScreen warns about an unknown publisher
+(choose More info, then Run anyway). Signing costs money and this is a free project, so you are encouraged to build it yourself from source: see [Build](#build).
 
 ### Signing releases (macOS)
 

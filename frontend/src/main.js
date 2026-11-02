@@ -44,12 +44,49 @@ function editor() {
         error: tab.saveError ?? '',
         diff: !!tab.showDiff,
         aiDraft: !!tab.aiDraft,
+        canUndo: !!tab.undo?.length,
+        canRedo: !!tab.redo?.length,
+        onUndo: () => undoDraft(tab, true),
+        onRedo: () => undoDraft(tab, false),
         onDiff: () => { tab.showDiff = !tab.showDiff; render(); },
         onEdit: startEdit,
-        onInput: (text) => { tab.draft = text; tab.discardArmed = false; },
+        onInput: (text) => {
+            const now = Date.now();
+            if (now - (tab.lastEdit ?? 0) > UNDO_PAUSE) remember(tab); // typing in one go is one step; a pause starts the next
+            tab.lastEdit = now;
+            tab.draft = text;
+            tab.discardArmed = false;
+        },
         onSave: () => saveEdit(),
         onCancel: cancelEdit,
     };
+}
+
+// Undo steps for the draft of a tab: typing in one go is one step, and so is each change the AI makes.
+const UNDO_PAUSE = 800; // ms
+const UNDO_LEVELS = 1000;
+
+/** Keeps the draft as it is now, to go back to; anything undone before is no longer there to redo. */
+function remember(tab, text = tab.draft) {
+    (tab.undo ??= []).push(text);
+    if (tab.undo.length > UNDO_LEVELS) tab.undo.shift();
+    tab.redo = [];
+}
+
+/** One step back (or forward again) in the draft. */
+function undoDraft(tab, back) {
+    const from = back ? tab.undo : tab.redo;
+    if (tab.draft == null || tab.saving || !from?.length) return;
+    (back ? (tab.redo ??= []) : (tab.undo ??= [])).push(tab.draft);
+    tab.draft = from.pop();
+    tab.lastEdit = 0;
+    tab.discardArmed = false;
+    if (tab.draft === tab.page.source) tab.aiDraft = false; // all the way back: nothing of the AI's is left
+    if (tab !== active) return;
+    render();
+    const box = $('content').querySelector('.source-edit');
+    box?.focus();
+    box?.setSelectionRange(box.value.length, box.value.length);
 }
 
 /** Starts editing from wherever the page is: the rendered view switches to the source, in a text box with the cursor in it. */
@@ -59,6 +96,9 @@ function startEdit() {
     tab.editFromRendered = !tab.showSource; // cancelling or saving goes back to reading
     tab.showSource = true;
     tab.draft = tab.page.source;
+    tab.undo = [];
+    tab.redo = [];
+    tab.lastEdit = 0;
     tab.saveError = '';
     tab.discardArmed = false;
     tab.showDiff = false;
@@ -823,7 +863,9 @@ initAsk({
     /** What an AI edit changes: the text the document would have, shown as an unsaved draft in the page. */
     draft: (tab, text) => {
         if (!tab.page?.editUrl || tab.saving) return;
-        if (tab.draft == null) tab.editFromRendered = !tab.showSource; // cancelling goes back to reading
+        if (tab.draft == null) { tab.editFromRendered = !tab.showSource; tab.undo = []; } // cancelling goes back to reading
+        remember(tab, tab.draft ?? tab.page.source);
+        tab.lastEdit = 0;
         tab.showSource = true;
         tab.draft = text;
         tab.aiDraft = true;
