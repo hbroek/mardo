@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/localfile"
-	"markdown-browser/internal/page"
+	"mardo/internal/fetch"
+	"mardo/internal/localfile"
+	"mardo/internal/page"
 )
 
 func mustURL(s string) *url.URL {

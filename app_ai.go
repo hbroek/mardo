@@ -10,13 +10,13 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"markdown-browser/internal/ai"
-	"markdown-browser/internal/auth"
-	"markdown-browser/internal/bookmarks"
-	"markdown-browser/internal/chats"
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/render"
-	"markdown-browser/internal/settings"
+	"mardo/internal/ai"
+	"mardo/internal/auth"
+	"mardo/internal/bookmarks"
+	"mardo/internal/chats"
+	"mardo/internal/fetch"
+	"mardo/internal/render"
+	"mardo/internal/settings"
 )
 
 // AIInfo is what the settings dialog shows.

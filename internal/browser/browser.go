@@ -10,12 +10,12 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"markdown-browser/internal/auth"
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/history"
-	"markdown-browser/internal/nav"
-	"markdown-browser/internal/page"
-	"markdown-browser/internal/render"
+	"mardo/internal/auth"
+	"mardo/internal/fetch"
+	"mardo/internal/history"
+	"mardo/internal/nav"
+	"mardo/internal/page"
+	"mardo/internal/render"
 )
 
 // Searcher turns a bookmark search query into a markdown page.

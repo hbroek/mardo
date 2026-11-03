@@ -48,7 +48,7 @@ func DefaultPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "markdown-browser", "history.json"), nil
+	return filepath.Join(dir, "mardo", "history.json"), nil
 }
 
 // Add records a visit, moving an existing entry for the same URL to the top.
@@ -111,7 +111,7 @@ func (l *Log) save() {
 // in the temp directory for an in-memory log.
 func (l *Log) markdownPath() string {
 	if l.path == "" {
-		return filepath.Join(os.TempDir(), "markdown-browser-history.md")
+		return filepath.Join(os.TempDir(), "mardo-history.md")
 	}
 	return filepath.Join(filepath.Dir(l.path), "history.md")
 }

@@ -1,4 +1,4 @@
-module markdown-browser
+module mardo
 
 go 1.26.0
 

@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"markdown-browser/internal/auth"
+	"mardo/internal/auth"
 )
 
 const (

@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"strings"
 
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/imgproxy"
-	"markdown-browser/internal/localfile"
+	"mardo/internal/fetch"
+	"mardo/internal/imgproxy"
+	"mardo/internal/localfile"
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"

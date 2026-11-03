@@ -13,13 +13,13 @@ import (
 	"testing"
 	"time"
 
-	"markdown-browser/internal/ai"
-	"markdown-browser/internal/auth"
-	"markdown-browser/internal/bookmarks"
-	"markdown-browser/internal/browser"
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/history"
-	"markdown-browser/internal/settings"
+	"mardo/internal/ai"
+	"mardo/internal/auth"
+	"mardo/internal/bookmarks"
+	"mardo/internal/browser"
+	"mardo/internal/fetch"
+	"mardo/internal/history"
+	"mardo/internal/settings"
 )
 
 // miniLinkaGoGo answers just enough of the API for the storage settings flow.

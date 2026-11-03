@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"markdown-browser/internal/auth"
-	"markdown-browser/internal/fetch"
+	"mardo/internal/auth"
+	"mardo/internal/fetch"
 )
 
 func TestWanted(t *testing.T) {

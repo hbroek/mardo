@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"markdown-browser/internal/bookmarks"
-	"markdown-browser/internal/bookmarks/storetest"
+	"mardo/internal/bookmarks"
+	"mardo/internal/bookmarks/storetest"
 )
 
 func TestConformance(t *testing.T) {

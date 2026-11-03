@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"net/url"
 
-	"markdown-browser/internal/page"
+	"mardo/internal/page"
 
 	xhtml "golang.org/x/net/html"
 	"golang.org/x/net/html/atom"

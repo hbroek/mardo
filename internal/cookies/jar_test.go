@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"markdown-browser/internal/auth"
+	"mardo/internal/auth"
 )
 
 func mustURL(s string) *url.URL {

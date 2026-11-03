@@ -10,8 +10,8 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/page"
+	"mardo/internal/fetch"
+	"mardo/internal/page"
 )
 
 // NewDocumentResult is what saving a new document did: the page now shown, or that the file dialog was canceled.

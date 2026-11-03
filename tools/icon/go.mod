@@ -1,4 +1,4 @@
-module markdown-browser/tools/icon
+module mardo/tools/icon
 
 go 1.26.0
 

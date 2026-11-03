@@ -31,7 +31,7 @@ import (
 	"sync"
 	"time"
 
-	"markdown-browser/internal/bookmarks"
+	"mardo/internal/bookmarks"
 )
 
 const (

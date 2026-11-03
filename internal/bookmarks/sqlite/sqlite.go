@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"markdown-browser/internal/bookmarks"
+	"mardo/internal/bookmarks"
 
 	_ "modernc.org/sqlite"
 )

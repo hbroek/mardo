@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"markdown-browser/internal/auth"
+	"mardo/internal/auth"
 
 	"golang.org/x/net/publicsuffix"
 )

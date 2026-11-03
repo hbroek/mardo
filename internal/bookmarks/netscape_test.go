@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"markdown-browser/internal/bookmarks"
+	"mardo/internal/bookmarks"
 )
 
 // A trimmed Chrome-style export: uppercase tags, unclosed <DT>/<p>, entities.

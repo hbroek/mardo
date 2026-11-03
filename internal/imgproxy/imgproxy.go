@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"markdown-browser/internal/auth"
-	"markdown-browser/internal/fetch"
+	"mardo/internal/auth"
+	"mardo/internal/fetch"
 )
 
 // Prefix is the URL path the handler answers on.

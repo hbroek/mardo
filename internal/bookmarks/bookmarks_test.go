@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"markdown-browser/internal/bookmarks"
-	"markdown-browser/internal/bookmarks/storetest"
+	"mardo/internal/bookmarks"
+	"mardo/internal/bookmarks/storetest"
 )
 
 func TestMemoryStore(t *testing.T) {

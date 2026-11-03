@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"markdown-browser/internal/bookmarks"
-	"markdown-browser/internal/bookmarks/storetest"
+	"mardo/internal/bookmarks"
+	"mardo/internal/bookmarks/storetest"
 )
 
 // fakeAPI is a stand-in for the LinkaGoGo REST API as documented. Where the

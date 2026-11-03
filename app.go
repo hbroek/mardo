@@ -12,20 +12,20 @@ import (
 	"strings"
 	"sync"
 
-	"markdown-browser/internal/auth"
-	"markdown-browser/internal/bookmarks"
-	"markdown-browser/internal/bookmarks/linkagogo"
-	_ "markdown-browser/internal/bookmarks/sqlite"
-	"markdown-browser/internal/browser"
-	"markdown-browser/internal/chats"
-	"markdown-browser/internal/cookies"
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/history"
-	"markdown-browser/internal/imgproxy"
-	"markdown-browser/internal/localfile"
-	"markdown-browser/internal/page"
-	"markdown-browser/internal/render"
-	"markdown-browser/internal/settings"
+	"mardo/internal/auth"
+	"mardo/internal/bookmarks"
+	"mardo/internal/bookmarks/linkagogo"
+	_ "mardo/internal/bookmarks/sqlite"
+	"mardo/internal/browser"
+	"mardo/internal/chats"
+	"mardo/internal/cookies"
+	"mardo/internal/fetch"
+	"mardo/internal/history"
+	"mardo/internal/imgproxy"
+	"mardo/internal/localfile"
+	"mardo/internal/page"
+	"mardo/internal/render"
+	"mardo/internal/settings"
 
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -60,7 +60,7 @@ func NewApp() *App {
 	// On error the files stay in memory / the working directory is not used.
 	dir, _ := os.UserConfigDir()
 	if dir != "" {
-		dir = filepath.Join(dir, "markdown-browser")
+		dir = filepath.Join(dir, "mardo")
 	}
 	file := func(name string) string {
 		if dir == "" {

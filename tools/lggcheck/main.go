@@ -19,8 +19,8 @@ import (
 	"strings"
 	"time"
 
-	"markdown-browser/internal/bookmarks"
-	"markdown-browser/internal/bookmarks/linkagogo"
+	"mardo/internal/bookmarks"
+	"mardo/internal/bookmarks/linkagogo"
 )
 
 func main() {

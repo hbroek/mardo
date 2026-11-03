@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/history"
-	"markdown-browser/internal/page"
+	"mardo/internal/fetch"
+	"mardo/internal/history"
+	"mardo/internal/page"
 )
 
 func TestMarkdownURLs(t *testing.T) {

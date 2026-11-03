@@ -26,9 +26,9 @@ linux:
 
 # macOS release signing. IDENTITY is the "Developer ID Application" certificate;
 # NOTARY_PROFILE is a keychain profile created once with:
-#   xcrun notarytool store-credentials markdown-browser --apple-id <id> --team-id <team>
+#   xcrun notarytool store-credentials mardo --apple-id <id> --team-id <team>
 IDENTITY ?= Developer ID Application
-NOTARY_PROFILE ?= markdown-browser
+NOTARY_PROFILE ?= mardo
 APP := build/bin/mardo.app
 
 # Sign with the hardened runtime (required for notarization).

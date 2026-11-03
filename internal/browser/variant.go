@@ -8,8 +8,8 @@ import (
 	"path"
 	"strings"
 
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/page"
+	"mardo/internal/fetch"
+	"mardo/internal/page"
 )
 
 // markdownURLs are the places the markdown version of a web page would be, best first, by the convention that a

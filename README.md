@@ -157,8 +157,8 @@ How credentials are handled:
   "Clear saved cookies" removes them.
 - The app does **not** read cookies out of other browsers.
 
-Files live in the user config directory (`~/Library/Application Support/markdown-browser` on macOS,
-`%AppData%\markdown-browser` on Windows, `~/.config/markdown-browser` on Linux; the folder keeps its old name so existing settings carry over): `history.json`, `history.md`,
+Files live in the user config directory (`~/Library/Application Support/mardo` on macOS,
+`%AppData%\mardo` on Windows, `~/.config/mardo` on Linux): `history.json`, `history.md`,
 `credentials.json` (site names only, no secrets) and `cookies.bin`.
 
 ## Build
@@ -198,7 +198,7 @@ The macOS build is signed and notarized. The Windows and Linux builds are not si
 Locally, with a "Developer ID Application" certificate in your keychain:
 
 ```sh
-xcrun notarytool store-credentials markdown-browser --apple-id <id> --team-id <team>   # once
+xcrun notarytool store-credentials mardo --apple-id <id> --team-id <team>   # once
 make notarize
 ```
 

@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"markdown-browser/internal/auth"
-	"markdown-browser/internal/fetch"
-	"markdown-browser/internal/history"
-	"markdown-browser/internal/page"
+	"mardo/internal/auth"
+	"mardo/internal/fetch"
+	"mardo/internal/history"
+	"mardo/internal/page"
 )
 
 func testServer() *httptest.Server {

@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	"markdown-browser/internal/bookmarks"
+	"mardo/internal/bookmarks"
 )
 
 var ctx = context.Background()

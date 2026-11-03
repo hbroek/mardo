@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"markdown-browser/internal/bookmarks"
+	"mardo/internal/bookmarks"
 )
 
 // Settings is the content of settings.json. A missing or unreadable file

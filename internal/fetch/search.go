@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 
-	"markdown-browser/internal/auth"
+	"mardo/internal/auth"
 )
 
 // SearchQuery decides whether address bar input is a bookmark search rather

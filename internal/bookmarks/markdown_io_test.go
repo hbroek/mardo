@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"markdown-browser/internal/bookmarks"
+	"mardo/internal/bookmarks"
 )
 
 func parseMD(t *testing.T, src string) *bookmarks.ImportFolder {
