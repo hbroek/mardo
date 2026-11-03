@@ -4,7 +4,7 @@ WAILS ?= $(shell command -v wails 2>/dev/null || echo $(HOME)/go/bin/wails)
 export CGO_CFLAGS  += -mmacosx-version-min=13.0
 export CGO_LDFLAGS += -mmacosx-version-min=13.0
 
-.PHONY: dev build test windows linux sign notarize
+.PHONY: dev build test windows linux sign notarize ios-framework
 
 dev:
 	$(WAILS) dev
@@ -43,3 +43,8 @@ notarize: sign
 	xcrun stapler staple $(APP)
 	spctl --assess --type execute --verbose $(APP)
 	rm build/bin/notarize.zip
+
+# The Go core as a framework for an iPhone app (the Swift shell is not in this repository yet).
+# Needs Xcode and gomobile: go install golang.org/x/mobile/cmd/gomobile@latest
+ios-framework:
+	gomobile bind -target ios,iossimulator -o build/Mardo.xcframework ./mobile

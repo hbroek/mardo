@@ -228,6 +228,7 @@ post to Mastodon or Bluesky with an app password kept in the keychain), and save
 
 ```
 main.go, app.go, menu.go  the desktop shell: Wails bootstrap, native menus and file dialogs
+mobile/                the core packed for an iPhone app (`make ios-framework`): one `Call(method, json)` entry point
 core/                  the methods the UI calls (tabs, bookmarks, AI, saving); a Host interface stands in for the window
 internal/fetch         HTTP/file loading, content negotiation, size and redirect limits
 internal/chats         saved page conversations
