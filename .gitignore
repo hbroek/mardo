@@ -5,3 +5,6 @@ frontend/dist
 *.tmp
 build/Mardo.xcframework
 frontend/dist-ios
+ios/Mardo.xcodeproj
+ios/build
+ios/Mardo/Info.plist

@@ -180,6 +180,21 @@ The Linux release is a folder with the program, `install.sh`, a launcher entry a
 `~/.local` (program, application-menu entry and icon; delete those three files to uninstall). Without it the program runs but
 Wayland desktops have no launcher to take the taskbar icon from; X11 desktops show the window icon either way. A GitHub Actions workflow builds all three platforms.
 
+## iPhone (work in progress)
+
+The iPhone app runs the same Go core inside the app and shows the same page in a web view. The page calls the core
+through a message bridge (`frontend/src/ios/bridge.js`), the web view loads it from a `mardo://app` scheme served from the
+app bundle, and Swift supplies the Keychain, file picker and image requests (`ios/Mardo/`). Needs Xcode and
+[XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`):
+
+```sh
+make ios-framework ios-web ios-app   # the core, the page, then the app for the simulator
+open ios/Mardo.xcodeproj             # run it from Xcode
+```
+
+Not done yet: a layout for the phone screen (the page is still the desktop one), opening `.md` files and links from
+other apps, and a Share extension. Opened and new pages are saved in the app's Documents folder, which the Files app shows.
+
 ## Releases
 
 Push a version tag and GitHub Actions builds macOS (arm64), Windows and Linux, then publishes them on the
@@ -228,6 +243,7 @@ post to Mastodon or Bluesky with an app password kept in the keychain), and save
 
 ```
 main.go, app.go, menu.go  the desktop shell: Wails bootstrap, native menus and file dialogs
+ios/                   the iPhone app (SwiftUI + WKWebView around the core; see below)
 frontend/src/ios       the page's bridge to the core on iPhone (`make ios-web` builds frontend/dist-ios)
 mobile/                the core packed for an iPhone app (`make ios-framework`): one `Call(method, json)` entry point
 core/                  the methods the UI calls (tabs, bookmarks, AI, saving); a Host interface stands in for the window
