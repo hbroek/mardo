@@ -45,6 +45,6 @@ notarize: sign
 	rm build/bin/notarize.zip
 
 # The Go core as a framework for an iPhone app (the Swift shell is not in this repository yet).
-# Needs Xcode and gomobile: go install golang.org/x/mobile/cmd/gomobile@latest
+# Needs Xcode and both tools: go install golang.org/x/mobile/cmd/gomobile@latest golang.org/x/mobile/cmd/gobind@latest
 ios-framework:
 	gomobile bind -target ios,iossimulator -o build/Mardo.xcframework ./mobile
