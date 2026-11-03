@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -51,13 +51,13 @@ func aiOrigin(baseURL string) (origin string, remote bool, err error) {
 	return origin, !auth.IsLoopbackHost(u.Hostname()), nil
 }
 
-func (a *App) aiHasKey(origin string) bool {
+func (a *Core) aiHasKey(origin string) bool {
 	return a.auth.Readable(origin)
 }
 
 // aiContext is the context for one AI request. With an id from the page, CancelAI
 // with the same id stops it, including the request to the model. Call done when finished.
-func (a *App) aiContext(id string) (ctx context.Context, done func()) {
+func (a *Core) aiContext(id string) (ctx context.Context, done func()) {
 	ctx, cancel := context.WithCancel(a.bookmarkCtx())
 	if id == "" {
 		return ctx, cancel
@@ -77,7 +77,7 @@ func (a *App) aiContext(id string) (ctx context.Context, done func()) {
 }
 
 // CancelAI stops the request that was started with this id, if it is still running.
-func (a *App) CancelAI(id string) {
+func (a *Core) CancelAI(id string) {
 	a.aiMu.Lock()
 	cancel := a.aiCancels[id]
 	a.aiMu.Unlock()
@@ -97,7 +97,7 @@ func cancelled(ctx context.Context, err error) error {
 }
 
 // AISettings describes the current provider and the ones on offer.
-func (a *App) AISettings() AIInfo {
+func (a *Core) AISettings() AIInfo {
 	a.bmMu.RLock()
 	cfg := a.settings.AI
 	a.bmMu.RUnlock()
@@ -111,7 +111,7 @@ func (a *App) AISettings() AIInfo {
 
 // SaveAI stores the provider. A new API key goes to the keychain; an empty one
 // keeps the key already saved for that server.
-func (a *App) SaveAI(in AIInput, apiKey string) error {
+func (a *Core) SaveAI(in AIInput, apiKey string) error {
 	in.BaseURL = strings.TrimSpace(in.BaseURL)
 	in.Model = strings.TrimSpace(in.Model)
 	origin, remote, err := aiOrigin(in.BaseURL)
@@ -148,13 +148,13 @@ func (a *App) SaveAI(in AIInput, apiKey string) error {
 }
 
 // TestAI checks a provider with a one-word request, using the typed key or the saved one.
-func (a *App) TestAI(in AIInput, apiKey string) (string, error) {
+func (a *Core) TestAI(in AIInput, apiKey string) (string, error) {
 	c := &ai.Client{BaseURL: in.BaseURL, Model: in.Model, Key: strings.TrimSpace(apiKey), Authorize: a.auth.Apply, MaxTokens: 16}
 	return c.Chat(a.bookmarkCtx(), "Answer with the single word OK.", "ping")
 }
 
 // aiClient is the configured provider, if the user has allowed using it.
-func (a *App) aiClient() (*ai.Client, error) {
+func (a *Core) aiClient() (*ai.Client, error) {
 	info := a.AISettings()
 	if !info.Configured {
 		return nil, errors.New("no AI provider is set up yet (menu → AI assistant)")
@@ -178,7 +178,7 @@ const (
 )
 
 // pageText returns the page's title and text, from the cache when it is fresh.
-func (a *App) pageText(ctx context.Context, rawURL string) (title, text string, err error) {
+func (a *Core) pageText(ctx context.Context, rawURL string) (title, text string, err error) {
 	if strings.HasPrefix(rawURL, "file:") { // a local file may be edited at any moment
 		return a.fetchPageText(ctx, rawURL)
 	}
@@ -211,7 +211,7 @@ func (a *App) pageText(ctx context.Context, rawURL string) (title, text string, 
 }
 
 // fetchPageText fetches a page the way the browser does and returns its title and plain text.
-func (a *App) fetchPageText(ctx context.Context, rawURL string) (title, text string, err error) {
+func (a *Core) fetchPageText(ctx context.Context, rawURL string) (title, text string, err error) {
 	if rawURL == "" || strings.HasPrefix(rawURL, "bookmarks:") {
 		return "", "", errors.New("there is no page to read")
 	}
@@ -247,7 +247,7 @@ type AISummary struct {
 }
 
 // aiSource names what answers: the model, else the provider's name, else its host.
-func (a *App) aiSource() string {
+func (a *Core) aiSource() string {
 	info := a.AISettings()
 	if m := strings.TrimSpace(info.Model); m != "" {
 		return m
@@ -264,7 +264,7 @@ func (a *App) aiSource() string {
 }
 
 // SummarizePage returns an AI summary of the page.
-func (a *App) SummarizePage(requestID, rawURL string) (AISummary, error) {
+func (a *Core) SummarizePage(requestID, rawURL string) (AISummary, error) {
 	c, err := a.aiClient()
 	if err != nil {
 		return AISummary{}, err
@@ -287,7 +287,7 @@ func (a *App) SummarizePage(requestID, rawURL string) (AISummary, error) {
 }
 
 // SuggestBookmark proposes a title, description and keywords for a page.
-func (a *App) SuggestBookmark(requestID, rawURL string) (ai.Suggestion, error) {
+func (a *Core) SuggestBookmark(requestID, rawURL string) (ai.Suggestion, error) {
 	c, err := a.aiClient()
 	if err != nil {
 		return ai.Suggestion{}, err
@@ -312,7 +312,7 @@ type AIAnswer struct {
 
 // ReadPage runs one of the reading tools on a page: "outline", "translate"
 // (option is the language) or "digest" (for feeds).
-func (a *App) ReadPage(requestID, rawURL, tool, option string) (AISummary, error) {
+func (a *Core) ReadPage(requestID, rawURL, tool, option string) (AISummary, error) {
 	c, err := a.aiClient()
 	if err != nil {
 		return AISummary{}, err
@@ -345,7 +345,7 @@ func (a *App) ReadPage(requestID, rawURL, tool, option string) (AISummary, error
 }
 
 // CompareTabs compares the text of several pages, optionally around a question.
-func (a *App) CompareTabs(requestID string, urls []string, focus string) (AISummary, error) {
+func (a *Core) CompareTabs(requestID string, urls []string, focus string) (AISummary, error) {
 	c, err := a.aiClient()
 	if err != nil {
 		return AISummary{}, err
@@ -378,7 +378,7 @@ func (a *App) CompareTabs(requestID string, urls []string, focus string) (AISumm
 }
 
 // AskPage answers a question about the page, continuing the conversation in history.
-func (a *App) AskPage(requestID, rawURL string, history []ai.Message, question string) (AIAnswer, error) {
+func (a *Core) AskPage(requestID, rawURL string, history []ai.Message, question string) (AIAnswer, error) {
 	c, err := a.aiClient()
 	if err != nil {
 		return AIAnswer{}, err
@@ -409,7 +409,7 @@ type AIEdit struct {
 
 // EditPage asks the model to apply an instruction to markdown (the saved source, or the draft being worked on)
 // and returns the revised document. Nothing is saved: the page shows it as a draft.
-func (a *App) EditPage(requestID, title, current, instruction string) (AIEdit, error) {
+func (a *Core) EditPage(requestID, title, current, instruction string) (AIEdit, error) {
 	c, err := a.aiClient()
 	if err != nil {
 		return AIEdit{}, err
@@ -434,7 +434,7 @@ type ChatTurn struct {
 	Millis int64  `json:"millis"`
 }
 
-func (a *App) conversations() *chats.Store {
+func (a *Core) conversations() *chats.Store {
 	a.pageMu.Lock()
 	defer a.pageMu.Unlock()
 	if a.chats == nil {
@@ -444,7 +444,7 @@ func (a *App) conversations() *chats.Store {
 }
 
 // SavedConversation returns the conversation saved for a page, answers rendered as sanitized HTML.
-func (a *App) SavedConversation(rawURL string) []ChatTurn {
+func (a *Core) SavedConversation(rawURL string) []ChatTurn {
 	base, _ := url.Parse(rawURL)
 	var out []ChatTurn
 	for _, t := range a.conversations().Get(rawURL) {
@@ -458,7 +458,7 @@ func (a *App) SavedConversation(rawURL string) []ChatTurn {
 }
 
 // SaveConversation keeps the conversation for a page; an empty one forgets it.
-func (a *App) SaveConversation(rawURL string, turns []ChatTurn) {
+func (a *Core) SaveConversation(rawURL string, turns []ChatTurn) {
 	saved := make([]chats.Turn, 0, len(turns))
 	for _, t := range turns {
 		saved = append(saved, chats.Turn{Role: t.Role, Text: t.Text, Source: t.Source, Millis: t.Millis})
@@ -467,7 +467,7 @@ func (a *App) SaveConversation(rawURL string, turns []ChatTurn) {
 }
 
 // ForgetConversations deletes every saved conversation and returns how many pages had one.
-func (a *App) ForgetConversations() int {
+func (a *Core) ForgetConversations() int {
 	n := a.conversations().Len()
 	a.conversations().Clear()
 	return n
@@ -479,7 +479,7 @@ const maxHistoryOffered = 100
 // meaningPage answers "@ description" in the address bar: it offers the model the saved bookmarks
 // and recent history (titles, addresses, folders, keywords and descriptions, not the pages
 // themselves) and shows the ones it picks, best first.
-func (a *App) meaningPage(ctx context.Context, query string) (string, error) {
+func (a *Core) meaningPage(ctx context.Context, query string) (string, error) {
 	c, err := a.aiClient()
 	if err != nil {
 		return "", err
@@ -586,14 +586,14 @@ func folderPaths(folders []bookmarks.Folder) map[string]string {
 }
 
 // UnfiledBookmarks lists the bookmarks that sit at the top level, in no folder.
-func (a *App) UnfiledBookmarks() ([]bookmarks.Bookmark, error) {
+func (a *Core) UnfiledBookmarks() ([]bookmarks.Bookmark, error) {
 	return a.BookmarksIn("")
 }
 
 // SuggestFolders asks the model where unfiled bookmarks belong. proposed lists
 // folders earlier batches asked to create, so later batches reuse them. within is
 // the path of a folder being tidied, or "" when sorting the unfiled.
-func (a *App) SuggestFolders(requestID string, batch []FilingInput, proposed []string, within string) ([]FolderChoice, error) {
+func (a *Core) SuggestFolders(requestID string, batch []FilingInput, proposed []string, within string) ([]FolderChoice, error) {
 	c, err := a.aiClient()
 	if err != nil {
 		return nil, err
@@ -664,7 +664,7 @@ type MoveResult struct {
 }
 
 // ApplyFiling moves bookmarks into folders by path, creating the folders that do not exist.
-func (a *App) ApplyFiling(moves []Move) (MoveResult, error) {
+func (a *Core) ApplyFiling(moves []Move) (MoveResult, error) {
 	var res MoveResult
 	s, err := a.store()
 	if err != nil {

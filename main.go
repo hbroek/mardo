@@ -8,6 +8,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
+
+	"mardo/core"
 )
 
 //go:embed all:frontend/dist
@@ -31,7 +33,7 @@ func main() {
 		Height: 768,
 		AssetServer: &assetserver.Options{
 			Assets:  assets,
-			Handler: app.assetHandler(),
+			Handler: core.AssetHandler(app.Core),
 		},
 		BackgroundColour: &options.RGBA{R: 15, G: 13, B: 26, A: 1},
 		DragAndDrop: &options.DragAndDrop{

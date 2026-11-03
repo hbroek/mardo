@@ -134,8 +134,8 @@ func (a *App) appMenu() *menu.Menu {
 	item(tools, "History", "history", nil)
 	item(tools, "Clear History", "clear-history", nil)
 	tools.AddSeparator()
-	a.markdownItem = tools.AddCheckbox("Look for Markdown Versions", a.browser.MarkdownVersions(), nil, func(*menu.CallbackData) {
-		go a.SetMarkdownVersions(!a.browser.MarkdownVersions())
+	a.markdownItem = tools.AddCheckbox("Look for Markdown Versions", a.MarkdownVersions(), nil, func(*menu.CallbackData) {
+		go a.SetMarkdownVersions(!a.MarkdownVersions())
 	})
 	tools.AddSeparator()
 	// The same tools as the sparkle button. They tell you when the page or a selection does not suit them.

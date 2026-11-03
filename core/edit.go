@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"errors"
@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"mardo/internal/fetch"
 	"mardo/internal/page"
@@ -22,7 +20,7 @@ type NewDocumentResult struct {
 
 // SaveNewDocument writes a document that so far exists only in the window to a file the reader
 // chooses, then opens that file in the tab. Canceling the dialog is not an error: the document stays a draft.
-func (a *App) SaveNewDocument(tab int, text string) (NewDocumentResult, error) {
+func (a *Core) SaveNewDocument(tab int, text string) (NewDocumentResult, error) {
 	if len(text) > fetch.MaxBody {
 		return NewDocumentResult{}, fmt.Errorf("page larger than %d MB", fetch.MaxBody>>20)
 	}
@@ -32,12 +30,7 @@ func (a *App) SaveNewDocument(tab int, text string) (NewDocumentResult, error) {
 			start = docs
 		}
 	}
-	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:            "Save new page",
-		DefaultDirectory: start,
-		DefaultFilename:  "untitled.md",
-		Filters:          []runtime.FileFilter{{DisplayName: "Markdown (*.md)", Pattern: "*.md"}},
-	})
+	path, err := a.host.PickSave("Save new page", start, "untitled.md", []Filter{{Name: "Markdown (*.md)", Pattern: "*.md"}})
 	if err != nil || path == "" {
 		return NewDocumentResult{Canceled: err == nil}, err
 	}
@@ -61,7 +54,7 @@ func writeNewDocument(path, text string) (string, error) {
 // SaveSource saves edited markdown back to the server the page came from, then loads the
 // page again so the tab shows (and remembers the version of) what is stored now. editURL and
 // etag are what the page was loaded with; the server only gets the text if it is still that version.
-func (a *App) SaveSource(tab int, pageURL, editURL, etag, text string) (page.Page, error) {
+func (a *Core) SaveSource(tab int, pageURL, editURL, etag, text string) (page.Page, error) {
 	pu, err1 := url.Parse(pageURL)
 	eu, err2 := url.Parse(editURL)
 	if err1 == nil && err2 == nil && pu.Scheme == "file" {

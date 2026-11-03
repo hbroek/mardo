@@ -227,7 +227,8 @@ post to Mastodon or Bluesky with an app password kept in the keychain), and save
 ## Layout
 
 ```
-main.go, app.go        Wails bootstrap and the methods exposed to the UI
+main.go, app.go, menu.go  the desktop shell: Wails bootstrap, native menus and file dialogs
+core/                  the methods the UI calls (tabs, bookmarks, AI, saving); a Host interface stands in for the window
 internal/fetch         HTTP/file loading, content negotiation, size and redirect limits
 internal/chats         saved page conversations
 internal/ai            OpenAI-compatible chat client; summary and bookmark-suggestion prompts

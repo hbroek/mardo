@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -62,11 +62,12 @@ func (m *miniLinkaGoGo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func testApp(t *testing.T, api *miniLinkaGoGo) *App {
+func testApp(t *testing.T, api *miniLinkaGoGo) *Core {
 	srv := httptest.NewServer(api)
 	t.Cleanup(srv.Close)
 	dir := t.TempDir()
-	a := &App{
+	a := &Core{
+		host:         noHost{},
 		auth:         auth.NewManager(&auth.MemorySecrets{}, ""),
 		bookmarks:    bookmarks.NewMemory(),
 		settings:     settings.Settings{Bookmarks: settings.Backend{Backend: "memory"}},
@@ -679,7 +680,7 @@ func TestSaveSourceWritesBackAndReloads(t *testing.T) {
 	defer srv.Close()
 
 	fetcher := fetch.NewFetcher(nil, nil)
-	a := &App{ctx: context.Background(), fetcher: fetcher, browser: browser.New(history.Open(""), fetcher)}
+	a := &Core{ctx: context.Background(), host: noHost{}, fetcher: fetcher, browser: browser.New(history.Open(""), fetcher)}
 	p := a.Navigate(1, srv.URL+"/doc.md")
 	if p.EditURL == "" || p.ETag != `"v1"` {
 		t.Fatalf("page = %+v", p)
