@@ -4,3 +4,4 @@ frontend/dist
 .DS_Store
 *.tmp
 build/Mardo.xcframework
+frontend/dist-ios

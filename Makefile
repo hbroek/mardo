@@ -4,7 +4,7 @@ WAILS ?= $(shell command -v wails 2>/dev/null || echo $(HOME)/go/bin/wails)
 export CGO_CFLAGS  += -mmacosx-version-min=13.0
 export CGO_LDFLAGS += -mmacosx-version-min=13.0
 
-.PHONY: dev build test windows linux sign notarize ios-framework
+.PHONY: dev build test windows linux sign notarize ios-framework ios-web
 
 dev:
 	$(WAILS) dev
@@ -48,3 +48,7 @@ notarize: sign
 # Needs Xcode and both tools: go install golang.org/x/mobile/cmd/gomobile@latest golang.org/x/mobile/cmd/gobind@latest
 ios-framework:
 	gomobile bind -target ios,iossimulator -o build/Mardo.xcframework ./mobile
+
+# The page for the iPhone app, calling the Go core through the app's bridge (frontend/src/ios/bridge.js).
+ios-web:
+	cd frontend && npm run build:ios
