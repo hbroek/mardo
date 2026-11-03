@@ -10,7 +10,7 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
-const service = "markdown-browser"
+const service = "mardo"
 
 // ErrNotFound is returned by Secrets.Get when nothing is stored under name.
 var ErrNotFound = errors.New("secret not found")
