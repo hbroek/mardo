@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
     <title>Mardo - Markdown Browser &amp; Author</title>
     <script>
         // Apply the saved theme before first paint so it does not flash.
@@ -29,6 +29,7 @@
     <button id="console-toggle" title="Show console (Ctrl/Cmd+J)" aria-pressed="false">&gt;_</button>
     <button id="share" title="Share this page" aria-label="Share" hidden disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
     <button id="source" title="Show source" disabled>&lt;/&gt;</button>
+    <button id="tabs-toggle" title="Tabs" aria-label="Tabs" aria-pressed="false" hidden><span id="tabs-count">1</span></button>
     <div class="menu-wrap">
         <button id="menu" title="Menu" aria-haspopup="true" aria-expanded="false" aria-label="Menu"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
         <div id="settings-menu" class="menu settings-menu" role="menu" hidden></div>

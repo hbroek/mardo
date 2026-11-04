@@ -20,6 +20,10 @@ struct WebScreen: UIViewRepresentable {
         let web = WKWebView(frame: .zero, configuration: config)
         web.isInspectable = true
         #if DEBUG
+        // For trying the page without a finger: `simctl launch ... -mardoScript "<js>"` runs it a few seconds after launch.
+        if let script = UserDefaults.standard.string(forKey: "mardoScript") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 7) { web.evaluateJavaScript(script) }
+        }
         web.navigationDelegate = core.log
         #endif
         web.scrollView.contentInsetAdjustmentBehavior = .never // the page handles the safe area itself

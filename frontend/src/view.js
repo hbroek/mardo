@@ -34,10 +34,28 @@ export function welcome() {
         ['Ctrl/Cmd + Shift + C', 'Copy the page\'s markdown (Copy All)'],
         ['Ctrl/Cmd + J', 'Show / hide the network console'],
     ];
+    if (document.documentElement.classList.contains('phone')) return welcomePhone();
     return el('section', {className: 'welcome'},
         el('h1', {textContent: 'Mardo - Markdown Browser & Author'}),
         el('p', {textContent: 'Enter an http, https or file address above, or start a new markdown page with File > New Page. Pages are requested as markdown and rendered here. Anything else shows its title and links.'}),
         el('dl', {}, ...shortcuts.flatMap(([k, v]) => [el('dt', {textContent: k}), el('dd', {textContent: v})])),
+    );
+}
+
+/** The welcome page on a phone: there are no keys, so it points at the buttons along the bottom. */
+function welcomePhone() {
+    const tools = [
+        ['Bookmarks', 'Your saved pages, in folders.'],
+        ['Bookmark', 'Save the page you are reading.'],
+        ['AI tools', 'Summarize, outline, translate or explain the page.'],
+        ['Ask', 'Ask a question about the page.'],
+        ['Tabs', 'Switch between pages, or open a new one.'],
+        ['Menu', 'History, sign-ins, themes, and writing a page of your own.'],
+    ];
+    return el('section', {className: 'welcome'},
+        el('h1', {textContent: 'Mardo'}),
+        el('p', {textContent: 'A reader for markdown pages. Type an address or a search above. Pages are requested as markdown and shown cleanly.'}),
+        el('dl', {}, ...tools.flatMap(([k, v]) => [el('dt', {textContent: k}), el('dd', {textContent: v})])),
     );
 }
 

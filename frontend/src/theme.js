@@ -98,15 +98,17 @@ export function initMenu(actions) {
         const saveEntry = item('menuitem', 'Save page\u2026', null, () => { close(); actions.savePage(); }, icon('save'));
         const historyEntry = item('menuitem', 'History', null, () => { close(); actions.history(); }, icon('clock'));
         const clearEntry = item('menuitem', 'Clear history', null, async () => { close(); await actions.clearHistory(); }, icon('trash'));
-        menu.replaceChildren(
-            creds,
-            aiEntry,
-            newEntry,
-            openEntry,
-            saveEntry,
-            historyEntry,
-            clearEntry,
-            markdownEntry,
+        // On a phone the toolbar leaves out what is rarely needed there; it is here instead.
+        const phone = root.classList.contains('phone');
+        const press = (id) => () => { close(); $(id).click(); };
+        const phoneRows = !phone ? [] : [
+            item('menuitem', 'Forward', null, press('forward'), span('menu-icon', '\u2192')),
+            item('menuitem', 'Reload', null, press('reload'), span('menu-icon', '\u21BB')),
+            ...(!$('share').hidden ? [item('menuitem', 'Share\u2026', null, press('share'), span('menu-icon', '\u2191'))] : []),
+        ];
+        // Reading comes first on a phone; writing is a section of its own at the end.
+        const writing = [newEntry, openEntry, saveEntry, ...(phone ? [item('menuitem', 'View source or edit', null, press('source'), span('menu-icon', '</>'))] : [])];
+        const themeRows = [
             heading('Theme'),
             ...themes.map((t) => item('menuitemradio', t.name, t.id === theme, () => { applyTheme(t.id); build(); }, span('menu-icon', t.icon))),
             heading('Color scheme'),
@@ -115,7 +117,10 @@ export function initMenu(actions) {
                 sw.style.background = `linear-gradient(90deg, ${s.swatch.join(', ')})`;
                 return item('menuitemradio', s.name, s.id === scheme, () => { applyScheme(s.id); build(); }, sw);
             }),
-        );
+        ];
+        menu.replaceChildren(...(phone
+            ? [...phoneRows, historyEntry, creds, aiEntry, markdownEntry, clearEntry, heading('Write'), ...writing, ...themeRows]
+            : [creds, aiEntry, ...writing, historyEntry, clearEntry, markdownEntry, ...themeRows]));
     }
 
     let markdownVersions = true; // whether .md versions of web pages are looked for; the menu bar can change it too

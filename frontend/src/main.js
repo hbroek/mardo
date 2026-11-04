@@ -17,6 +17,7 @@ import {initAsk, refreshAsk, toggleAsk} from './ask.js';
 import {initReading} from './reading.js';
 import {initSplitters} from './splitter.js';
 import {initCompare, openCompare} from './compare.js';
+import './phone.js';
 import {initCredentials, openCredentials, credentialOrigins} from './creds.js';
 
 const $ = (id) => document.getElementById(id);
