@@ -141,12 +141,26 @@ function changes(before, after) {
         : el('span', {className: `diff-${l.type}`, textContent: `${mark[l.type]}${l.text}\n`})));
 }
 
-export function fallback(p, onCredentials) {
+/**
+ * The buttons that turn an HTML page into markdown: `convert.rules` with fixed rules, `convert.ai` with the model, which
+ * shows once `convert.aiAvailable` (a promise) says one is set up.
+ */
+function convertBar(convert) {
+    const ai = el('button', {type: 'button', textContent: 'Convert with AI', hidden: true, title: 'Have the AI model rewrite the page as markdown. It can leave out or change things, so check the result.', onclick: convert.ai});
+    Promise.resolve(convert.aiAvailable).then((on) => { ai.hidden = !on; }).catch(() => {});
+    return el('p', {className: 'convert-bar'},
+        el('button', {type: 'button', className: 'primary', textContent: 'Convert to markdown', title: 'Map the page\'s headings, lists, links, tables and so on to markdown', onclick: convert.rules}),
+        ai,
+    );
+}
+
+export function fallback(p, onCredentials, convert) {
     const links = p.links ?? [];
     const origin = originOf(p.url);
     return el('section', {className: 'fallback'},
         el('h1', {textContent: p.title}),
         el('p', {className: 'note', textContent: `No markdown available (${p.contentType || 'unknown type'}). ${links.length} link${links.length === 1 ? '' : 's'} found.`}),
+        convert && /html/i.test(p.contentType ?? '') ? convertBar(convert) : '',
         origin ? el('p', {className: 'note'}, 'Expected a signed-in page? ',
             el('a', {href: '#', textContent: `Add credentials for ${origin}`, onclick: (e) => { e.preventDefault(); onCredentials(origin); }})) : '',
         el('ul', {}, ...links.map((l) => el('li', {},

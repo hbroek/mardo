@@ -354,3 +354,16 @@ func TestOrganizeWithinAFolderDropsAnswersOutsideIt(t *testing.T) {
 		t.Errorf("system prompt = %q", gotSystem)
 	}
 }
+
+func TestUnfence(t *testing.T) {
+	for in, want := range map[string]string{
+		"```markdown\n# Hi\n\ntext\n```": "# Hi\n\ntext",
+		"```\n# Hi\n```\n":               "# Hi",
+		"# Hi\n\n```go\ncode\n```":       "# Hi\n\n```go\ncode\n```", // a fence inside is the page's own
+		"plain":                          "plain",
+	} {
+		if got := unfence(in); got != want {
+			t.Errorf("unfence(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

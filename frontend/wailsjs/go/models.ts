@@ -371,6 +371,30 @@ export namespace core {
 	        this.millis = source["millis"];
 	    }
 	}
+	export class Converted {
+	    title: string;
+	    source: string;
+	    html: string;
+	    how: string;
+	    model: string;
+	    millis: number;
+	    truncated: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Converted(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.title = source["title"];
+	        this.source = source["source"];
+	        this.html = source["html"];
+	        this.how = source["how"];
+	        this.model = source["model"];
+	        this.millis = source["millis"];
+	        this.truncated = source["truncated"];
+	    }
+	}
 	export class FilingInput {
 	    id: string;
 	    title: string;

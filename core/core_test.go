@@ -697,3 +697,36 @@ func TestSaveSourceWritesBackAndReloads(t *testing.T) {
 		t.Error("saved to another server")
 	}
 }
+
+func TestConvertPageRulesAndMarkdownPages(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/md" {
+			w.Header().Set("Content-Type", "text/markdown")
+			w.Write([]byte("# Already\n"))
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head><title>T</title></head><body><nav>menu</nav><main><h1>Head</h1><p>Some <b>bold</b> text and a <a href="/x">link</a>.</p></main></body></html>`))
+	}))
+	defer srv.Close()
+	app := New(Config{Dir: t.TempDir()})
+	got, err := app.ConvertPage("", srv.URL+"/page", "rules")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got.Source, "# Head") || !strings.Contains(got.Source, "**bold**") || !strings.Contains(got.Source, "]("+srv.URL+"/x)") || strings.Contains(got.Source, "menu") {
+		t.Errorf("source: %q", got.Source)
+	}
+	if !strings.Contains(got.HTML, "<strong>bold</strong>") || got.How != "rules" || got.Title != "T" {
+		t.Errorf("converted: %+v", got)
+	}
+	if _, err := app.ConvertPage("", srv.URL+"/md", "rules"); err == nil || !strings.Contains(err.Error(), "markdown already") {
+		t.Errorf("a markdown page: %v", err)
+	}
+	if _, err := app.ConvertPage("", srv.URL+"/page", "ai"); err == nil || !strings.Contains(err.Error(), "no AI provider") {
+		t.Errorf("without a provider: %v", err)
+	}
+	if _, err := app.ConvertPage("", srv.URL+"/page", "other"); err == nil {
+		t.Error("an unknown way was accepted")
+	}
+}

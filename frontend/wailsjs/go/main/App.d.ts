@@ -38,6 +38,8 @@ export function CloseTab(arg1:number):Promise<void>;
 
 export function CompareTabs(arg1:string,arg2:Array<string>,arg3:string):Promise<core.AISummary>;
 
+export function ConvertPage(arg1:string,arg2:string,arg3:string):Promise<core.Converted>;
+
 export function Credentials():Promise<Array<auth.Info>>;
 
 export function DeleteBookmark(arg1:string):Promise<void>;

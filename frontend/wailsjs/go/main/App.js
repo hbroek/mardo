@@ -62,6 +62,10 @@ export function CompareTabs(arg1, arg2, arg3) {
   return window['go']['main']['App']['CompareTabs'](arg1, arg2, arg3);
 }
 
+export function ConvertPage(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ConvertPage'](arg1, arg2, arg3);
+}
+
 export function Credentials() {
   return window['go']['main']['App']['Credentials']();
 }

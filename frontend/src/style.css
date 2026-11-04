@@ -797,3 +797,10 @@ html.wide .source-wrap, html.wide .summary, html.wide .variant-bar { max-width: 
 /* no zooming on a phone: a double tap or a field under 16px would resize the whole page */
 html.phone { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 html.phone input, html.phone textarea, html.phone select, html.phone .source-edit { font-size: 16px; }
+
+/* converting an HTML page to markdown */
+.convert-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.convert-bar button { padding: 6px 16px; border: 1px solid var(--border); border-radius: 6px; background: var(--bar); color: var(--fg); font: inherit; cursor: pointer; }
+.convert-bar button.primary { background: var(--grad-btn); border-color: transparent; color: #fff; }
+.convert-bar button[hidden] { display: none; }
+html.phone .convert-bar button { min-height: 44px; }

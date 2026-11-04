@@ -1,6 +1,6 @@
 import './style.css';
 import './schemes.css';
-import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, MarkdownVersions, SetMarkdownVersions} from '../wailsjs/go/main/App';
+import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, MarkdownVersions, SetMarkdownVersions, ConvertPage} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -245,7 +245,7 @@ function render() {
     const body = (
         !p ? view.welcome()
             : p.kind === 'markdown' ? (showSource ? view.source(p, editor()) : view.markdown(p))
-            : p.kind === 'fallback' ? view.fallback(p, (origin) => openCredentials({origin}))
+            : p.kind === 'fallback' ? view.fallback(p, (origin) => openCredentials({origin}), {rules: () => convertPage('rules'), ai: () => convertPage('ai'), aiAvailable: aiReady()})
             : view.error(p, () => goActive((id) => Navigate(id, p.url)), (page) => openCredentials({origin: page.origin, kind: page.authScheme === 'basic' ? 'basic' : page.authScheme === 'bearer' ? 'bearer' : 'cookie'})));
     const extras = [active?.draft != null ? null : copyBar(p), variantBar(p), searchSwitch(p), // no copy button over the text box while editing
         active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
@@ -374,8 +374,55 @@ function displayAddress(url) {
     return (url.startsWith(MEANING_PREFIX) ? '@' : '?') + searchQueryOf(url);
 }
 
+/** On an HTML page that was converted to markdown: say how, and offer the page as it was. */
+function convertedBar(p) {
+    const c = p.converted;
+    const bar = document.createElement('p');
+    bar.className = 'variant-bar note';
+    const back = document.createElement('a');
+    back.href = '#';
+    back.textContent = 'Show the original page';
+    back.addEventListener('click', (e) => { e.preventDefault(); active.page = c.original; display(); });
+    if (c.how === 'ai') {
+        const secs = Math.max(1, Math.round(c.millis / 1000));
+        bar.append(`Converted from HTML by ${c.model} in ${secs}s. A model can leave out or change things, so check it against the original before relying on it. `
+            + (c.truncated ? 'The page was too long to send whole; the end is missing. ' : ''), back);
+    } else {
+        bar.append('Converted from HTML with fixed rules, keeping the main content. Complicated layouts can come out untidy. ', back);
+    }
+    return bar;
+}
+
+/** Converts the HTML page of the active tab to markdown: how is "rules" or "ai" (the configured model). */
+async function convertPage(how) {
+    const tab = active;
+    const original = tab?.page;
+    if (original?.kind !== 'fallback') return;
+    if (how === 'ai' && !(await aiReady())) return openAI();
+    const requestId = newRequestId();
+    const title = 'Conversion to markdown';
+    const mine = {state: 'loading', url: original.url, requestId, title, busy: how === 'ai' ? 'Asking the model to rewrite the page as markdown' : 'Converting the page to markdown'};
+    tab.summary = mine;
+    if (tab === active) render();
+    let r;
+    try {
+        r = await ConvertPage(requestId, original.url, how);
+    } catch (e) {
+        if (tab.summary === mine) { tab.summary = {state: 'error', url: original.url, title, error: String(e)}; if (tab === active) render(); }
+        return;
+    }
+    if (tab.summary !== mine || tab.page !== original) return; // cancelled, or the tab moved on
+    tab.summary = null;
+    tab.showSource = false;
+    tab.page = {...original, kind: 'markdown', title: r.title || original.title, html: r.html, source: r.source, links: [], editUrl: '', etag: '', markdownOf: '',
+        converted: {how: r.how, model: r.model, millis: r.millis, truncated: r.truncated, original}};
+    renderTabs();
+    if (tab === active) display();
+}
+
 /** On the markdown version of a web page: say so, and offer the page as it is. */
 function variantBar(p) {
+    if (p?.converted) return convertedBar(p);
     if (!p?.markdownOf) return null;
     const bar = document.createElement('p');
     bar.className = 'variant-bar note';

@@ -18,6 +18,7 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 - Not markdown? Shows the page title and the links found on it. Before that, a web page (HTML) is checked for a markdown version by the
   convention that `/about` has one at `/about.md` (`/docs/` at `/docs/index.md`, `/guide.html` at `/guide.md`; a site's root also tries `/llms.txt`); if the server has it, you get that, with a
   note and a link to the original page. Addresses with a query are not checked. Turn this off under ☰ or Tools > Look for Markdown Versions
+- An HTML page with no markdown version has a **Convert to markdown** button: its headings, paragraphs, emphasis, links, images, lists, quotes, code and tables are mapped to markdown syntax, keeping the main content and leaving out navigation, scripts and forms. With an AI provider set up there is also **Convert with AI**, which has the model rewrite the page; it says so on the result, since a model can leave out or change things. The converted page can be saved or copied like any markdown page, and the original is one click away
 - RSS and Atom feeds render as a list of posts; an item's `<source:markdown>` is used when present
 - `http`, `https` and `file://`; drop a `.md` file on the window to open it. Relative links and images work,
   including local images for pages opened from disk
