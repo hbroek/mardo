@@ -358,8 +358,18 @@ function searchQueryOf(url) {
     const prefix = url.startsWith(MEANING_PREFIX) ? MEANING_PREFIX : SEARCH_PREFIX;
     try { return decodeURIComponent(url.slice(prefix.length).replace(/\+/g, ' ')); } catch { return ''; }
 }
+// On iOS the pages the reader saves or opens live in the app's Documents folder, which Files shows as Mardo;
+// Swift says where it is. The address bar shows that as Mardo/name.md instead of the long sandbox path.
+const docsDir = globalThis.mardoDocuments ?? '';
+const docsPrefix = docsDir ? `file://${docsDir}/` : '';
+function fromAddress(text) {
+    return docsDir && text.startsWith('Mardo/') ? docsPrefix + encodeURI(text.slice('Mardo/'.length)) : text;
+}
 function displayAddress(url) {
     if (url === NEW_DOC) return '';
+    if (docsPrefix && url.startsWith(docsPrefix)) {
+        try { return 'Mardo/' + decodeURIComponent(url.slice(docsPrefix.length)); } catch { return url; }
+    }
     if (!isSearch(url)) return url;
     return (url.startsWith(MEANING_PREFIX) ? '@' : '?') + searchQueryOf(url);
 }
@@ -403,6 +413,7 @@ function display() {
     $('back').disabled = !p?.canBack;
     $('forward').disabled = !p?.canForward;
     $('reload').disabled = !p?.url || p.url === NEW_DOC;
+    shareBtn.disabled = active?.draft == null && (!p?.url || p.url === NEW_DOC || p.kind === 'error');
     document.body.classList.toggle('loading', Boolean(active?.loading));
     render();
     refreshAsk();
@@ -646,13 +657,22 @@ function toggleSource() {
 }
 
 address.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { const url = address.value; goActive((id) => Navigate(id, url)); }
+    if (e.key === 'Enter') { const url = fromAddress(address.value); goActive((id) => Navigate(id, url)); }
 });
 address.addEventListener('focus', () => address.select());
 $('back').addEventListener('click', () => goActive(Back));
 $('forward').addEventListener('click', () => goActive(Forward));
 $('reload').addEventListener('click', () => goActive(Reload));
 sourceBtn.addEventListener('click', () => (sourceBtn.classList.contains('pencil') ? toggleEdit() : toggleSource()));
+
+// The iOS share sheet (the app answers the message itself, not the Go core): the page's address, the file it
+// came from, or the draft while it is being edited.
+const shareBtn = $('share');
+shareBtn.hidden = !docsDir;
+shareBtn.addEventListener('click', () => {
+    const item = active?.draft ?? currentPage()?.url;
+    if (item && item !== NEW_DOC) globalThis.webkit?.messageHandlers?.mardo?.postMessage({method: 'Share', args: JSON.stringify([item])});
+});
 
 // Links in rendered content navigate inside the browser; fragments scroll in place.
 content.addEventListener('click', (e) => {

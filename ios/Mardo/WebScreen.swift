@@ -10,6 +10,8 @@ struct WebScreen: UIViewRepresentable {
         let config = WKWebViewConfiguration()
         config.setURLSchemeHandler(core.assets, forURLScheme: Core.scheme)
         config.userContentController.addScriptMessageHandler(core.bridge, contentWorld: .page, name: "mardo")
+        // Where the pages the reader saves live; the page shows addresses there as Mardo/name.md.
+        config.userContentController.addUserScript(WKUserScript(source: "window.mardoDocuments = \(DeviceHost.literal(DeviceHost.documents.path));", injectionTime: .atDocumentStart, forMainFrameOnly: true))
         #if DEBUG
         // The page's errors and console output, in Xcode's console (and `simctl spawn booted log stream`).
         config.userContentController.add(core.log, name: "mardoLog")
