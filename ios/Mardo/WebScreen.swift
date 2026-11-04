@@ -26,6 +26,9 @@ struct WebScreen: UIViewRepresentable {
         }
         web.navigationDelegate = core.log
         #endif
+        web.scrollView.pinchGestureRecognizer?.isEnabled = false // the page sizes itself for the phone; a stray pinch would resize all of it
+        web.scrollView.minimumZoomScale = 1
+        web.scrollView.maximumZoomScale = 1
         web.scrollView.contentInsetAdjustmentBehavior = .never // the page handles the safe area itself
         core.attach(web)
         web.load(URLRequest(url: URL(string: "\(Core.scheme)://app/index.html")!))

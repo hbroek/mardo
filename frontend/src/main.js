@@ -524,7 +524,7 @@ function renderTabs() {
     saveTabs();
     tabStrip.replaceChildren(
         ...tabs.map((t) => {
-            const label = (t.loading ? '\u23F3 ' : '') + tabLabel(t);
+            const label = (t.loading ? '\u2026 ' : '') + tabLabel(t);
             const close = document.createElement('button');
             close.type = 'button';
             close.className = 'tab-close';

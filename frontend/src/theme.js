@@ -7,9 +7,9 @@ const $ = (id) => document.getElementById(id);
 const root = document.documentElement;
 
 const themes = [
-    {id: 'system', name: 'Follow system', icon: '\u25D0'},
-    {id: 'light', name: 'Light', icon: '\u2600'},
-    {id: 'dark', name: 'Dark', icon: '\u263E'},
+    {id: 'system', name: 'Follow system', icon: 'contrast'},
+    {id: 'light', name: 'Light', icon: 'sun'},
+    {id: 'dark', name: 'Dark', icon: 'moon'},
 ];
 const schemes = [
     {id: '', name: 'Violet', swatch: ['#4f46e5', '#c026d3', '#f97316']},
@@ -102,15 +102,15 @@ export function initMenu(actions) {
         const phone = root.classList.contains('phone');
         const press = (id) => () => { close(); $(id).click(); };
         const phoneRows = !phone ? [] : [
-            item('menuitem', 'Forward', null, press('forward'), span('menu-icon', '\u2192')),
-            item('menuitem', 'Reload', null, press('reload'), span('menu-icon', '\u21BB')),
-            ...(!$('share').hidden ? [item('menuitem', 'Share\u2026', null, press('share'), span('menu-icon', '\u2191'))] : []),
+            item('menuitem', 'Forward', null, press('forward'), icon('forward')),
+            item('menuitem', 'Reload', null, press('reload'), icon('reload')),
+            ...(!$('share').hidden ? [item('menuitem', 'Share\u2026', null, press('share'), icon('share'))] : []),
         ];
         // Reading comes first on a phone; writing is a section of its own at the end.
-        const writing = [newEntry, openEntry, saveEntry, ...(phone ? [item('menuitem', 'View source or edit', null, press('source'), span('menu-icon', '</>'))] : [])];
+        const writing = [newEntry, openEntry, saveEntry, ...(phone ? [item('menuitem', 'View source or edit', null, press('source'), icon('code'))] : [])];
         const themeRows = [
             heading('Theme'),
-            ...themes.map((t) => item('menuitemradio', t.name, t.id === theme, () => { applyTheme(t.id); build(); }, span('menu-icon', t.icon))),
+            ...themes.map((t) => item('menuitemradio', t.name, t.id === theme, () => { applyTheme(t.id); build(); }, icon(t.icon))),
             heading('Color scheme'),
             ...schemes.map((s) => {
                 const sw = span('swatch');

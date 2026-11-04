@@ -394,7 +394,7 @@ body.resizing #content { pointer-events: none; }
 .tree-row:not(.folder) .tree-label { color: var(--link); }
 .caret { width: 1em; flex: none; color: var(--muted); }
 .pencil { padding: 0 6px; opacity: 0.45; }
-.pencil span { display: inline-block; transform: scaleX(-1); }
+.pencil .inline-icon { display: block; }
 .tree-row:hover .pencil, .pencil:focus-visible { opacity: 1; }
 /* drag and drop */
 body.moving, body.moving * { cursor: progress !important; }
@@ -793,3 +793,7 @@ html.wide .source-wrap, html.wide .summary, html.wide .variant-bar { max-width: 
     pointer-events: none;
 }
 #link-status[hidden], html.phone #link-status { display: none; }
+
+/* no zooming on a phone: a double tap or a field under 16px would resize the whole page */
+html.phone { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+html.phone input, html.phone textarea, html.phone select, html.phone .source-edit { font-size: 16px; }

@@ -68,7 +68,7 @@ function el(tag, props = {}, ...children) {
 function pencil(label, onClick) {
     // The glyph points to the lower right; the span is mirrored in CSS so it points lower left.
     // Not a tab stop: from the keyboard, "e" on the row does the same.
-    return el('button', {type: 'button', className: 'pencil', tabIndex: -1, title: label, onclick: (e) => { e.stopPropagation(); onClick(); }}, el('span', {textContent: '✎'}));
+    return el('button', {type: 'button', className: 'pencil', tabIndex: -1, title: label, onclick: (e) => { e.stopPropagation(); onClick(); }}, svgIcon('pencil'));
 }
 
 function newRow(key, folder, depth, ...children) {
