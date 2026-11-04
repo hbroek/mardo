@@ -40,15 +40,43 @@ final class DeviceHost: NSObject, MobileHostProtocol, UIDocumentPickerDelegate {
         }
     }
 
-    /// There is no save panel to give a path on iOS: a new file goes to the Documents folder under a name
-    /// that is not taken yet, and the Files app shows it there.
+    /// There is no save panel to give a path on iOS: the reader names the file in an alert, and it goes to
+    /// the Documents folder, which the Files app shows. A name that is taken gets a number. Canceling gives "".
     func pickSave(_ title: String?, dir: String?, name: String?, filtersJSON: String?, error: NSErrorPointer) -> String {
-        let name = (name?.isEmpty == false) ? name! : "untitled.md"
-        return Self.unique(Self.documents.appendingPathComponent(name)).path
+        let suggestion = (name?.isEmpty == false) ? name! : "untitled.md"
+        var chosen: String?
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: title ?? "Save", message: "Name the file. It is saved in the Mardo folder in Files.", preferredStyle: .alert)
+            alert.addTextField { field in
+                field.text = suggestion
+                field.autocapitalizationType = .none
+                field.autocorrectionType = .no
+                field.clearButtonMode = .whileEditing
+            }
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in chosen = nil; self.pickerDone.signal() })
+            alert.addAction(UIAlertAction(title: "Save", style: .default) { _ in
+                chosen = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines)
+                self.pickerDone.signal()
+            })
+            Self.topController()?.present(alert, animated: true) {
+                // Select the name without its extension, so typing replaces just that.
+                if let field = alert.textFields?.first, let dot = suggestion.lastIndex(of: "."), let start = field.position(from: field.beginningOfDocument, offset: 0), let end = field.position(from: field.beginningOfDocument, offset: suggestion.distance(from: suggestion.startIndex, to: dot)) {
+                    field.selectedTextRange = field.textRange(from: start, to: end)
+                }
+            }
+        }
+        pickerDone.wait()
+        guard let chosen, !chosen.isEmpty else { return "" }
+        // Only a file name: no folders from the typed text.
+        let file = (chosen as NSString).lastPathComponent
+        return Self.unique(Self.documents.appendingPathComponent(file)).path
     }
 
     func emit(_ event: String?, dataJSON: String?) {
         guard let event, let dataJSON else { return }
+        #if DEBUG
+        if event == "net" { NSLog("[net] %@", String(dataJSON.prefix(400))) }
+        #endif
         let js = "window.mardoEmit && window.mardoEmit(\(Self.literal(event)), \(Self.literal(dataJSON)))"
         DispatchQueue.main.async { self.web?.evaluateJavaScript(js) }
     }

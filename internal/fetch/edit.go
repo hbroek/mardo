@@ -3,8 +3,10 @@ package fetch
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -118,6 +120,25 @@ func hasRel(rels, want string) bool {
 // ErrChanged means the document changed on the server after it was loaded.
 var ErrChanged = errors.New("the page changed after you opened it (someone else saved it); reload to see the new version")
 
+// ErrPending means the server accepted a save (202) without applying it yet.
+var ErrPending = errors.New("the server accepted the change but has not applied it yet, so the page still shows the old text")
+
+// pendingNote is the server's own explanation, when its 202 answer has one: the message of a JSON body, else its text.
+func pendingNote(body []byte) string {
+	var j map[string]any
+	if json.Unmarshal(body, &j) == nil {
+		for _, k := range []string{"message", "detail", "status", "state", "error"} {
+			if v, ok := j[k].(string); ok && v != "" {
+				return ": " + v
+			}
+		}
+	}
+	if t := strings.TrimSpace(string(body)); t != "" {
+		return ": " + t
+	}
+	return ""
+}
+
 // Put replaces the document at rawURL with body, sending the saved credentials. etag is the
 // ETag the page was loaded with; the server refuses the save if the document has changed since.
 func (f *Fetcher) Put(ctx context.Context, rawURL string, body []byte, etag string) error {
@@ -151,6 +172,11 @@ func (f *Fetcher) Put(ctx context.Context, rawURL string, body []byte, etag stri
 		return fmt.Errorf("the server redirected the save to %s, which is not supported", resp.Request.URL)
 	}
 	switch {
+	case resp.StatusCode == http.StatusAccepted:
+		// 202: the server took the change but has not applied it (a review queue, a job). Saying "saved"
+		// would be wrong, and the page would reload with the old text.
+		note, _ := io.ReadAll(io.LimitReader(resp.Body, 600))
+		return fmt.Errorf("%w%s", ErrPending, pendingNote(note))
 	case resp.StatusCode >= 200 && resp.StatusCode < 300:
 		return nil
 	case resp.StatusCode == http.StatusPreconditionFailed:

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -80,6 +81,19 @@ func TestPut(t *testing.T) {
 	}
 	if err := f.Put(ctx, "/tmp/a.md", []byte("x"), ""); err == nil {
 		t.Error("a local file was PUT")
+	}
+}
+
+func TestPutAcceptedIsNotSaved(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		io.WriteString(w, `{"message":"queued for review"}`)
+	}))
+	defer srv.Close()
+	err := NewFetcher(nil, nil).Put(context.Background(), srv.URL+"/a.md", []byte("x"), "")
+	if !errors.Is(err, ErrPending) || !strings.Contains(err.Error(), "queued for review") {
+		t.Errorf("202 = %v", err)
 	}
 }
 

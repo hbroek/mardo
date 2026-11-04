@@ -17,11 +17,11 @@ final class Bridge: NSObject, WKScriptMessageHandlerWithReply {
         // ask for a file picker, which waits for the main thread.
         DispatchQueue.global(qos: .userInitiated).async {
             #if DEBUG
-            NSLog("[page] call %@ %@", method, String(args.prefix(120)))
+            NSLog("[page] call %@ (%d chars) %@", method, args.count, String(args.prefix(120)))
             #endif
             let answer = self.engine.call(method, argsJSON: args)
             #if DEBUG
-            NSLog("[page] answered %@: %@", method, String(answer.prefix(120)))
+            NSLog("[page] answered %@: %@", method, String(answer.prefix(method == "SaveSource" ? 600 : 120)))
             #endif
             replyHandler(answer, nil)
         }
