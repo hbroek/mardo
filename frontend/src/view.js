@@ -92,7 +92,7 @@ export function source(p, ed) {
                 el('button', {type: 'button', textContent: 'Edit', onclick: ed.onEdit})),
             el('pre', {className: 'source'}, el('code', {textContent: p.source})));
     }
-    const area = el('textarea', {className: 'source-edit', value: ed.draft, spellcheck: false, disabled: ed.saving, ariaLabel: 'Markdown source'});
+    const area = el('textarea', {className: 'source-edit', value: ed.draft, spellcheck: false, autocapitalize: 'off', autocorrect: 'off', disabled: ed.saving, ariaLabel: 'Markdown source'});
     area.addEventListener('input', () => ed.onInput(area.value));
     area.addEventListener('keydown', (e) => {
         if ((e.metaKey || e.ctrlKey) && (e.key === 'Enter' || e.key.toLowerCase() === 's')) { e.preventDefault(); ed.onSave(); }

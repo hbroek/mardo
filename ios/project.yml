@@ -1,4 +1,4 @@
-# The iPhone app. `make ios-framework ios-web` first (they make the Go core and the page it shows), then
+# The iPhone and iPad app. `make ios-framework ios-web` first (they make the Go core and the page it shows), then
 # `cd ios && xcodegen generate` and open Mardo.xcodeproj; xcodegen turns this file into the project.
 name: Mardo
 options:
@@ -22,12 +22,17 @@ targets:
     dependencies:
       - framework: ../build/Mardo.xcframework
         embed: false   # gomobile builds it as a static library in a framework wrapper
+    entitlements:
+      path: Mardo/Mardo.entitlements
+      properties:
+        keychain-access-groups: ["$(AppIdentifierPrefix)com.hbroek.mardo"]   # the Keychain refuses writes (-34018) without it
     info:
       path: Mardo/Info.plist
       properties:
         CFBundleDisplayName: Mardo
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         UIFileSharingEnabled: true            # saved pages are in the Files app, under Mardo
         LSSupportsOpeningDocumentsInPlace: true
     settings:
