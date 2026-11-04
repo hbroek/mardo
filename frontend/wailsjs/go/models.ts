@@ -64,6 +64,7 @@ export namespace auth {
 	    token?: string;
 	    username?: string;
 	    password?: string;
+	    allowHttp?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Credential(source);
@@ -77,12 +78,14 @@ export namespace auth {
 	        this.token = source["token"];
 	        this.username = source["username"];
 	        this.password = source["password"];
+	        this.allowHttp = source["allowHttp"];
 	    }
 	}
 	export class Info {
 	    origin: string;
 	    kind: string;
 	    username?: string;
+	    allowHttp?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Info(source);
@@ -93,6 +96,7 @@ export namespace auth {
 	        this.origin = source["origin"];
 	        this.kind = source["kind"];
 	        this.username = source["username"];
+	        this.allowHttp = source["allowHttp"];
 	    }
 	}
 

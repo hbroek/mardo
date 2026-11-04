@@ -38,6 +38,20 @@ func TestNormalizeOrigin(t *testing.T) {
 	}
 }
 
+func TestAllowedHTTPEnv(t *testing.T) {
+	t.Setenv(AllowHTTPEnv, " wako.example.com ,192.168.1.5")
+	for _, o := range []string{"http://wako.example.com", "http://WAKO.example.com:8080", "http://192.168.1.5"} {
+		if !Allowed(o) {
+			t.Errorf("Allowed(%q) = false", o)
+		}
+	}
+	for _, o := range []string{"http://example.com", "http://evil.wako.example.com", "http://wako.example.com.evil.com"} {
+		if Allowed(o) {
+			t.Errorf("Allowed(%q) = true", o)
+		}
+	}
+}
+
 func TestAllowed(t *testing.T) {
 	yes := []string{"https://example.com", "http://localhost:3000", "http://127.0.0.1:8080", "http://henry.localhost:8080", "http://[::1]:80"}
 	no := []string{"http://example.com", "http://192.168.1.5", "http://localhost.evil.com"}
@@ -180,5 +194,25 @@ func TestOrigin(t *testing.T) {
 	u, _ := url.Parse("HTTPS://Example.COM:443/x")
 	if got := Origin(u); got != "https://example.com" {
 		t.Errorf("Origin = %q", got)
+	}
+}
+
+func TestAllowHTTPPerSite(t *testing.T) {
+	m := NewManager(&MemorySecrets{}, "")
+	if _, err := m.Save(Credential{Origin: "http://nas.lan", Kind: Bearer, Token: "x"}); err == nil {
+		t.Fatal("plain http saved without the opt-in")
+	}
+	if _, err := m.Save(Credential{Origin: "http://nas.lan", Kind: Bearer, Token: "x", AllowHTTP: true}); err != nil {
+		t.Fatal(err)
+	}
+	req, _ := http.NewRequest("GET", "http://nas.lan/a", nil)
+	m.Apply(req)
+	if req.Header.Get("Authorization") != "Bearer x" {
+		t.Errorf("opted-in site got %q", req.Header.Get("Authorization"))
+	}
+	other, _ := http.NewRequest("GET", "http://other.lan/a", nil)
+	m.Apply(other)
+	if other.Header.Get("Authorization") != "" {
+		t.Error("another http site got the token")
 	}
 }

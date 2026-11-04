@@ -152,7 +152,7 @@ How credentials are handled:
   never shown again or sent back to the UI.
 - They are sent only to the exact origin (scheme, host and port) they were saved for, and are dropped on
   redirects to another origin.
-- They are refused for plain `http` except for `localhost` and loopback addresses.
+- They are refused for plain `http` except for `localhost` and loopback addresses. To allow a host you trust on your own network, list it in the `MARDO_ALLOW_HTTP` environment variable (comma separated, exact host names, e.g. `MARDO_ALLOW_HTTP=wako.example.com,192.168.1.5`).
 - Cookies a site sets are kept between runs in `cookies.bin`, encrypted with a key held in the keychain.
   "Clear saved cookies" removes them.
 - The app does **not** read cookies out of other browsers.

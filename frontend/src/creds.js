@@ -23,11 +23,11 @@ async function refreshList() {
     list.replaceChildren(...items.map((c) => {
         const li = document.createElement('li');
         const label = document.createElement('span');
-        label.textContent = `${c.origin} · ${c.kind}${c.username ? ` (${c.username})` : ''}`;
+        label.textContent = `${c.origin} · ${c.kind}${c.username ? ` (${c.username})` : ''}${c.allowHttp ? ' · plain http' : ''}`;
         const edit = document.createElement('button');
         edit.type = 'button';
         edit.textContent = 'Replace';
-        edit.onclick = () => { $('cred-origin').value = c.origin; $('cred-kind').value = c.kind; showKind(); say(''); };
+        edit.onclick = () => { $('cred-origin').value = c.origin; $('cred-kind').value = c.kind; $('cred-allowhttp').checked = !!c.allowHttp; showKind(); say(''); };
         const del = document.createElement('button');
         del.type = 'button';
         del.textContent = 'Remove';
@@ -49,6 +49,7 @@ export async function openCredentials(prefill = {}) {
     say('');
     $('cred-origin').value = prefill.origin ?? '';
     $('cred-kind').value = prefill.kind ?? 'cookie';
+    $('cred-allowhttp').checked = false;
     showKind();
     await refreshList().catch((e) => say(String(e), true));
     if (!dialog.open) dialog.showModal();
@@ -70,6 +71,7 @@ export function initCredentials(savedCallback) {
             token: $('cred-token').value.trim(),
             username: $('cred-user').value,
             password: $('cred-pass').value,
+            allowHttp: $('cred-allowhttp').checked,
         };
         try {
             const origin = await SaveCredential(cred);

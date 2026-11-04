@@ -20,7 +20,7 @@
     <button id="forward" title="Forward" disabled>&#8594;</button>
     <button id="reload" title="Reload" disabled>&#8635;</button>
     <button id="bookmark-add" title="Add bookmark (Ctrl/Cmd+D)" aria-haspopup="dialog" disabled><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 3.5h12v17l-6-4.2-6 4.2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
-    <input id="address" type="text" spellcheck="false" placeholder="Enter a URL, search bookmarks and history, or @ to search by meaning" autocomplete="off"/>
+    <input id="address" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="Enter a URL, search bookmarks and history, or @ to search by meaning" autocomplete="off"/>
     <div class="menu-wrap">
         <button id="reading" title="AI tools: summarize, outline, translate, explain a selection" aria-haspopup="true" aria-expanded="false" aria-label="AI tools" disabled><svg class="icon" viewBox="0 -0.5 24 24" aria-hidden="true"><path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8z"/><path d="M18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></svg></button>
         <div id="reading-menu" class="menu settings-menu" role="menu" hidden></div>
@@ -65,7 +65,7 @@
         </div>
         <div id="ask-log" role="log" aria-live="polite"></div>
         <form id="ask-form">
-            <textarea id="ask-input" rows="2" placeholder="Ask about this page&hellip;" aria-label="Your question"></textarea>
+            <textarea id="ask-input" rows="2" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="Ask about this page&hellip;" aria-label="Your question"></textarea>
             <button type="submit" id="ask-send" class="primary">Ask</button>
         </form>
     </aside>
@@ -97,7 +97,7 @@
     <p class="note">Stored in your system keychain and sent only to the exact site you enter.</p>
     <ul id="cred-list"></ul>
     <form id="cred-form" autocomplete="off">
-        <label>Site <input id="cred-origin" type="text" spellcheck="false" placeholder="https://example.com" required></label>
+        <label>Site <input id="cred-origin" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="https://example.com" required></label>
         <label>Type
             <select id="cred-kind">
                 <option value="cookie">Cookies (logged-in session)</option>
@@ -106,17 +106,18 @@
             </select>
         </label>
         <div data-kind="cookie">
-            <label>Cookie header <textarea id="cred-cookie" rows="3" spellcheck="false" placeholder="name=value; name2=value2"></textarea></label>
+            <label>Cookie header <textarea id="cred-cookie" rows="3" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="name=value; name2=value2"></textarea></label>
             <p class="note">Paste the <code>Cookie</code> request header from your browser's dev tools, or import a <code>cookies.txt</code> export for this site:</p>
             <input id="cred-cookiefile" type="file" accept=".txt,text/plain">
         </div>
         <div data-kind="bearer" hidden>
-            <label>Token <input id="cred-token" type="password" spellcheck="false"></label>
+            <label>Token <input id="cred-token" type="password" spellcheck="false" autocapitalize="off" autocorrect="off"></label>
         </div>
         <div data-kind="basic" hidden>
-            <label>Username <input id="cred-user" type="text" spellcheck="false"></label>
+            <label>Username <input id="cred-user" type="text" spellcheck="false" autocapitalize="off" autocorrect="off"></label>
             <label>Password <input id="cred-pass" type="password"></label>
         </div>
+        <label class="radio"><input id="cred-allowhttp" type="checkbox"> Allow plain http for this site (the secret travels unencrypted)</label>
         <p id="cred-status" role="status"></p>
         <div class="dialog-actions">
             <button type="button" id="cred-clear-cookies" title="Forget cookies that sites have set">Clear saved cookies</button>
@@ -130,7 +131,7 @@
     <h2 id="bookmark-title">Add bookmark</h2>
     <form id="bookmark-form" autocomplete="off">
         <label>Title <input id="bookmark-name" type="text"></label>
-        <label>Address <input id="bookmark-url" type="text" spellcheck="false" required></label>
+        <label>Address <input id="bookmark-url" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" required></label>
         <label>Description <textarea id="bookmark-desc" rows="3"></textarea></label>
         <label>Keywords <input id="bookmark-keywords" type="text" placeholder="comma, separated"></label>
         <label>Folder <select id="bookmark-folder"></select></label>
@@ -179,7 +180,7 @@
         <label class="radio"><input type="radio" name="storage-backend" value="linkagogo"> LinkaGoGo</label>
         <div id="storage-lgg" hidden>
             <label>API key
-                <input id="storage-key" type="password" spellcheck="false" placeholder="lgg_&hellip;">
+                <input id="storage-key" type="password" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="lgg_&hellip;">
             </label>
             <p class="note">Create one under Account Settings &rarr; API Keys on linkagogo.com (needs a Plus or Premium plan).
                 It is kept in your system keychain, never in a file.</p>
@@ -256,7 +257,7 @@
     <div id="cmp-setup" class="stack">
         <p id="cmp-summary" class="note"></p>
         <div id="cmp-tabs" class="stack" role="group" aria-label="Pages to compare"></div>
-        <label>What should I compare? (optional) <input type="text" id="cmp-focus" maxlength="500" placeholder="e.g. price, privacy, how they handle errors" autocomplete="off"></label>
+        <label>What should I compare? (optional) <input type="text" id="cmp-focus" autocapitalize="off" autocorrect="off" maxlength="500" placeholder="e.g. price, privacy, how they handle errors" autocomplete="off"></label>
     </div>
     <div id="cmp-run" class="stack" hidden></div>
     <div id="cmp-result" class="stack" hidden>
@@ -275,9 +276,9 @@
     <form id="ai-form" autocomplete="off">
         <label>Provider <select id="ai-preset"></select></label>
         <p id="ai-note" class="note" hidden></p>
-        <label>Server address <input id="ai-url" type="text" spellcheck="false" placeholder="https://&hellip;/v1"></label>
-        <label>Model <input id="ai-model" type="text" spellcheck="false"></label>
-        <label id="ai-key-wrap">API key <input id="ai-key" type="password" spellcheck="false"></label>
+        <label>Server address <input id="ai-url" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="https://&hellip;/v1"></label>
+        <label>Model <input id="ai-model" type="text" spellcheck="false" autocapitalize="off" autocorrect="off"></label>
+        <label id="ai-key-wrap">API key <input id="ai-key" type="password" spellcheck="false" autocapitalize="off" autocorrect="off"></label>
         <label id="ai-consent-wrap" class="radio" hidden><input id="ai-consent" type="checkbox"> <span id="ai-consent-text"></span></label>
         <p class="note">The key is kept in your system keychain, never in a file. Summaries and bookmark suggestions send the
             text of the page to the provider you choose; a server on this computer sends nothing out.</p>

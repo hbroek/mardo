@@ -29,19 +29,21 @@ const (
 // Credential is what the user saves for one origin. It never goes back to the
 // frontend; the frontend only sees Info.
 type Credential struct {
-	Origin   string `json:"origin"`
-	Kind     Kind   `json:"kind"`
-	Cookie   string `json:"cookie,omitempty"`
-	Token    string `json:"token,omitempty"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Origin    string `json:"origin"`
+	Kind      Kind   `json:"kind"`
+	Cookie    string `json:"cookie,omitempty"`
+	Token     string `json:"token,omitempty"`
+	Username  string `json:"username,omitempty"`
+	Password  string `json:"password,omitempty"`
+	AllowHTTP bool   `json:"allowHttp,omitempty"` // the user accepted sending this over plain http
 }
 
 // Info is the non-secret description of a saved credential.
 type Info struct {
-	Origin   string `json:"origin"`
-	Kind     Kind   `json:"kind"`
-	Username string `json:"username,omitempty"`
+	Origin    string `json:"origin"`
+	Kind      Kind   `json:"kind"`
+	Username  string `json:"username,omitempty"`
+	AllowHTTP bool   `json:"allowHttp,omitempty"`
 }
 
 // Manager implements fetch.Authorizer. Secrets live in the keychain; a small
@@ -103,8 +105,24 @@ func NormalizeOrigin(input string) (string, error) {
 	return Origin(u), nil
 }
 
+// AllowHTTPEnv names the environment variable listing hosts, comma separated, that may receive
+// credentials over plain http, for a home network or a dev box.
+const AllowHTTPEnv = "MARDO_ALLOW_HTTP"
+
+// allowedHTTPHost reports whether host is listed in MARDO_ALLOW_HTTP. Hosts match exactly; there are no wildcards.
+func allowedHTTPHost(host string) bool {
+	host = strings.ToLower(host)
+	for _, h := range strings.Split(os.Getenv(AllowHTTPEnv), ",") {
+		if h = strings.ToLower(strings.TrimSpace(h)); h != "" && h == host {
+			return true
+		}
+	}
+	return false
+}
+
 // Allowed reports whether credentials may be sent to origin: https, or http
-// only for loopback hosts, so secrets never cross the network in clear text.
+// only for loopback hosts and the hosts in MARDO_ALLOW_HTTP, so secrets never
+// cross the network in clear text unless the user said so.
 func Allowed(origin string) bool {
 	u, err := url.Parse(origin)
 	if err != nil {
@@ -113,8 +131,10 @@ func Allowed(origin string) bool {
 	if u.Scheme == "https" {
 		return true
 	}
-	return u.Scheme == "http" && IsLoopbackHost(u.Hostname())
+	return u.Scheme == "http" && (IsLoopbackHost(u.Hostname()) || allowedHTTPHost(u.Hostname()))
 }
+
+func isHTTP(origin string) bool { return strings.HasPrefix(origin, "http://") }
 
 // IsLoopbackHost reports whether host is localhost, *.localhost or a loopback IP.
 func IsLoopbackHost(host string) bool {
@@ -164,8 +184,8 @@ func (m *Manager) Save(c Credential) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if !Allowed(origin) {
-		return "", errors.New("credentials are only sent over https (or http on localhost)")
+	if !Allowed(origin) && !(c.AllowHTTP && isHTTP(origin)) {
+		return "", errors.New("credentials are only sent over https (or http on localhost); tick \"Allow plain http\" to send them unencrypted anyway")
 	}
 	c.Origin = origin
 	if err := c.validate(); err != nil {
@@ -181,7 +201,7 @@ func (m *Manager) Save(c Credential) (string, error) {
 		return "", fmt.Errorf("cannot write to the keychain: %w", err)
 	}
 	m.cache[origin] = c
-	m.index[origin] = Info{Origin: origin, Kind: c.Kind, Username: c.Username}
+	m.index[origin] = Info{Origin: origin, Kind: c.Kind, Username: c.Username, AllowHTTP: c.AllowHTTP}
 	m.saveIndex()
 	return origin, nil
 }
@@ -245,11 +265,8 @@ func (m *Manager) lookup(origin string) (Credential, bool) {
 // Apply attaches the saved credential, if any, for req's exact origin.
 func (m *Manager) Apply(req *http.Request) {
 	origin := Origin(req.URL)
-	if !Allowed(origin) {
-		return
-	}
 	c, ok := m.lookup(origin)
-	if !ok {
+	if !ok || !(Allowed(origin) || (c.AllowHTTP && isHTTP(origin))) {
 		return
 	}
 	switch c.Kind {
@@ -325,6 +342,9 @@ func (m *Manager) ImportCookiesTxt(origin, text string) (int, error) {
 	if len(pairs) == 0 {
 		return 0, fmt.Errorf("no unexpired cookies for %s in that file", host)
 	}
-	_, err = m.Save(Credential{Origin: origin, Kind: Cookie, Cookie: strings.Join(pairs, "; ")})
+	m.mu.Lock()
+	allow := m.index[origin].AllowHTTP // keep the choice made when this site was first saved
+	m.mu.Unlock()
+	_, err = m.Save(Credential{Origin: origin, Kind: Cookie, Cookie: strings.Join(pairs, "; "), AllowHTTP: allow})
 	return len(pairs), err
 }
