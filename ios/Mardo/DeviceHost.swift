@@ -11,7 +11,7 @@ final class DeviceHost: NSObject, MobileHostProtocol, UIDocumentPickerDelegate {
     private var picked: URL?
     private let pickerDone = DispatchSemaphore(value: 0)
 
-    /// Pages the reader opens or saves live here, in the app's Documents folder (visible in the Files app).
+    /// Where pages go when no other folder is chosen, and what the page shows as ~/ : the app's Documents folder (Files > On My iPad > Mardo).
     static var documents: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
@@ -19,45 +19,39 @@ final class DeviceHost: NSObject, MobileHostProtocol, UIDocumentPickerDelegate {
     // MARK: MobileHostProtocol
 
     /// Shows the document picker and waits for it. The core calls this off the main thread (see Bridge).
+    /// The file is opened where it is, so saving writes back to it, and access to it is kept across restarts.
     func pickOpen(_ title: String?, filtersJSON: String?, error: NSErrorPointer) -> String {
-        picked = nil
-        DispatchQueue.main.async {
-            let types: [UTType] = [.plainText, .text, UTType(filenameExtension: "md") ?? .plainText, UTType(filenameExtension: "markdown") ?? .plainText, .html, .data]
-            let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: true) // a copy the app may change
-            picker.delegate = self
-            picker.allowsMultipleSelection = false
-            Self.topController()?.present(picker, animated: true)
-        }
-        pickerDone.wait()
-        guard let url = picked else { return "" }
-        // Keep the copy in Documents so that it stays, and so that saving writes to a file the app owns.
-        let target = Self.unique(Self.documents.appendingPathComponent(url.lastPathComponent))
-        do {
-            try FileManager.default.copyItem(at: url, to: target)
-            return target.path
-        } catch {
-            return url.path
-        }
+        let types: [UTType] = [.plainText, .text, UTType(filenameExtension: "md") ?? .plainText, UTType(filenameExtension: "markdown") ?? .plainText, .html, .data]
+        guard let url = pick(types, asCopy: false) else { return "" }
+        Scoped.shared.retain(url)
+        return url.path
     }
 
-    /// There is no save panel to give a path on iOS: the reader names the file in an alert, and it goes to
-    /// the Documents folder, which the Files app shows. A name that is taken gets a number. Canceling gives "".
+    /// There is no save panel to give a path on iOS. The reader names the file in an alert; it goes to the folder
+    /// chosen the first time (or with "Choose Folder…"), anywhere in Files, such as iCloud Drive: outside the
+    /// app, so it survives deleting and reinstalling it. A name that is taken gets a number. Canceling gives "".
     func pickSave(_ title: String?, dir: String?, name: String?, filtersJSON: String?, error: NSErrorPointer) -> String {
         let suggestion = (name?.isEmpty == false) ? name! : "untitled.md"
+        let current = Scoped.shared.saveFolder
         var chosen: String?
+        var changeFolder = current == nil
         DispatchQueue.main.async {
-            let alert = UIAlertController(title: title ?? "Save", message: "Name the file. It is saved in the Mardo folder in Files.", preferredStyle: .alert)
+            let where_ = current.map { "in \"\($0.lastPathComponent)\"" } ?? "in a folder you choose next"
+            let alert = UIAlertController(title: title ?? "Save", message: "Name the file. It is saved \(where_), in Files.", preferredStyle: .alert)
             alert.addTextField { field in
                 field.text = suggestion
                 field.autocapitalizationType = .none
                 field.autocorrectionType = .no
                 field.clearButtonMode = .whileEditing
             }
-            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in chosen = nil; self.pickerDone.signal() })
-            alert.addAction(UIAlertAction(title: "Save", style: .default) { _ in
+            let finish = { (folder: Bool) in
                 chosen = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines)
+                changeFolder = changeFolder || folder
                 self.pickerDone.signal()
-            })
+            }
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in chosen = nil; self.pickerDone.signal() })
+            if current != nil { alert.addAction(UIAlertAction(title: "Choose Folder…", style: .default) { _ in finish(true) }) }
+            alert.addAction(UIAlertAction(title: "Save", style: .default) { _ in finish(false) })
             Self.topController()?.present(alert, animated: true) {
                 // Select the name without its extension, so typing replaces just that.
                 if let field = alert.textFields?.first, let dot = suggestion.lastIndex(of: "."), let start = field.position(from: field.beginningOfDocument, offset: 0), let end = field.position(from: field.beginningOfDocument, offset: suggestion.distance(from: suggestion.startIndex, to: dot)) {
@@ -67,9 +61,16 @@ final class DeviceHost: NSObject, MobileHostProtocol, UIDocumentPickerDelegate {
         }
         pickerDone.wait()
         guard let chosen, !chosen.isEmpty else { return "" }
+        var folder = current
+        if changeFolder {
+            guard let picked = pick([.folder], asCopy: false) else { return "" }
+            Scoped.shared.saveFolder = picked
+            folder = picked
+        }
+        guard let folder else { return "" }
         // Only a file name: no folders from the typed text.
         let file = (chosen as NSString).lastPathComponent
-        return Self.unique(Self.documents.appendingPathComponent(file)).path
+        return Self.unique(folder.appendingPathComponent(file)).path
     }
 
     func emit(_ event: String?, dataJSON: String?) {
@@ -96,6 +97,19 @@ final class DeviceHost: NSObject, MobileHostProtocol, UIDocumentPickerDelegate {
     }
 
     // MARK: helpers
+
+    /// Shows the system picker and waits for the answer (called off the main thread).
+    private func pick(_ types: [UTType], asCopy: Bool) -> URL? {
+        picked = nil
+        DispatchQueue.main.async {
+            let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: asCopy)
+            picker.delegate = self
+            picker.allowsMultipleSelection = false
+            Self.topController()?.present(picker, animated: true)
+        }
+        pickerDone.wait()
+        return picked
+    }
 
     /// `name.md`, or `name 2.md`, `name 3.md` … when that exists already.
     static func unique(_ url: URL) -> URL {

@@ -13,6 +13,7 @@ final class Core {
     let log = Log()
 
     init() {
+        Scoped.shared.restore() // folders and files picked earlier, before the page restores its tabs
         let dir = (try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             .appendingPathComponent("mardo", isDirectory: true)) ?? URL(fileURLWithPath: NSTemporaryDirectory())
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

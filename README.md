@@ -193,7 +193,7 @@ open ios/Mardo.xcodeproj             # run it from Xcode
 ```
 
 Not done yet: a layout for the phone screen (the page is still the desktop one), opening `.md` files and links from
-other apps, and a Share extension. Opened and new pages are saved in the app's Documents folder, which the Files app shows.
+other apps, and a Share extension. A new page is saved in a folder you choose in Files, such as iCloud Drive, so it survives deleting and reinstalling the app; the first save asks for the folder and later saves reuse it (Choose Folder… changes it). Open Page opens a file where it is, so saving writes back to it. Mardo keeps access to those places across restarts. Addresses in the app's own Documents folder show as `~/name.md`.
 
 ## Releases
 
