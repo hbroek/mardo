@@ -35,6 +35,9 @@ const tabs = [];
 let active = null;
 let saved = null;        // the bookmark for the active tab's page, if any
 
+/** Puts the cursor in the address field, except on a phone, where that would raise the keyboard over the page. */
+const focusAddress = () => { if (!document.documentElement.classList.contains('phone')) address.focus(); };
+
 const currentPage = () => active?.page ?? null;
 
 /** The state of editing the active tab's source, for view.source. */
@@ -168,7 +171,7 @@ function clearPage(tab) {
     tab.showDiff = false;
     tab.aiDraft = false;
     tab.saveError = '';
-    if (tab === active) { display(); address.focus(); }
+    if (tab === active) { display(); focusAddress(); }
     renderTabs();
 }
 
@@ -560,7 +563,7 @@ function activate(tab) {
     display();
     content.scrollTop = tab.scroll ?? 0;
     renderTabs();
-    if (!tab.page && !tab.pending) address.focus();
+    if (!tab.page && !tab.pending) focusAddress();
 }
 
 /** Opens a tab, loading `url` in it when given. A background tab does not take over the window. */
@@ -911,4 +914,4 @@ initCompare({
 });
 initConsole();
 Promise.resolve(restoreTabs()).then(openRequested);
-address.focus();
+focusAddress();
