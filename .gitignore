@@ -9,3 +9,4 @@ ios/Mardo.xcodeproj
 ios/build
 ios/Mardo/Info.plist
 ios/build-device
+bookmarks.db
