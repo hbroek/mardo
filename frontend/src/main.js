@@ -18,6 +18,7 @@ import {initReading} from './reading.js';
 import {initSplitters} from './splitter.js';
 import {initCompare, openCompare} from './compare.js';
 import './phone.js';
+import './wide.js';
 import {initCredentials, openCredentials, credentialOrigins} from './creds.js';
 
 const $ = (id) => document.getElementById(id);
