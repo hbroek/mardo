@@ -500,6 +500,7 @@ async function restoreTabs() {
 }
 
 const tabStrip = $('tabs');
+const newTabButton = $('tab-new'); // the last item of the strip, right after the last tab
 
 function tabLabel(t) {
     const p = t.page;
@@ -537,6 +538,7 @@ function renderTabs() {
             });
             return el;
         }),
+        newTabButton,
     );
     tabStrip.querySelector('[aria-selected="true"]')?.scrollIntoView({block: 'nearest', inline: 'nearest'});
 }

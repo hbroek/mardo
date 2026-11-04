@@ -111,6 +111,9 @@ body.wails-drop-target-active #content { outline: 3px dashed var(--accent); outl
     font-size: 1.1em;
     line-height: 1;
     color: var(--muted);
+    position: sticky; /* with many tabs it stays in view at the right edge */
+    right: 0;
+    background: var(--bar);
 }
 
 .toolbar {
