@@ -1,4 +1,4 @@
-// While the pointer is over a link in the page, its address shows in the bottom right corner, as in other browsers.
+// While the pointer is over a link in the page, its address shows in the bottom left corner, as in other browsers.
 import {friendly} from './address.js';
 
 const bar = Object.assign(document.createElement('div'), {id: 'link-status', hidden: true});
