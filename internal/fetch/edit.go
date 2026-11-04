@@ -123,18 +123,30 @@ var ErrChanged = errors.New("the page changed after you opened it (someone else 
 // ErrPending means the server accepted a save (202) without applying it yet.
 var ErrPending = errors.New("the server accepted the change but has not applied it yet, so the page still shows the old text")
 
+// PendingError is a save the server accepted (202) without applying it; Note is what the server said about it, if anything.
+type PendingError struct{ Note string }
+
+func (e *PendingError) Error() string {
+	if e.Note == "" {
+		return ErrPending.Error()
+	}
+	return ErrPending.Error() + ": " + e.Note
+}
+
+func (e *PendingError) Unwrap() error { return ErrPending }
+
 // pendingNote is the server's own explanation, when its 202 answer has one: the message of a JSON body, else its text.
 func pendingNote(body []byte) string {
 	var j map[string]any
 	if json.Unmarshal(body, &j) == nil {
 		for _, k := range []string{"message", "detail", "status", "state", "error"} {
 			if v, ok := j[k].(string); ok && v != "" {
-				return ": " + v
+				return v
 			}
 		}
 	}
 	if t := strings.TrimSpace(string(body)); t != "" {
-		return ": " + t
+		return t
 	}
 	return ""
 }
@@ -176,7 +188,7 @@ func (f *Fetcher) Put(ctx context.Context, rawURL string, body []byte, etag stri
 		// 202: the server took the change but has not applied it (a review queue, a job). Saying "saved"
 		// would be wrong, and the page would reload with the old text.
 		note, _ := io.ReadAll(io.LimitReader(resp.Body, 600))
-		return fmt.Errorf("%w%s", ErrPending, pendingNote(note))
+		return &PendingError{Note: pendingNote(note)}
 	case resp.StatusCode >= 200 && resp.StatusCode < 300:
 		return nil
 	case resp.StatusCode == http.StatusPreconditionFailed:

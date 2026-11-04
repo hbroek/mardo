@@ -78,11 +78,17 @@ func (a *Core) SaveSource(tab int, pageURL, editURL, etag, text string) (page.Pa
 	if len(text) > fetch.MaxBody {
 		return page.Page{}, fmt.Errorf("page larger than %d MB", fetch.MaxBody>>20)
 	}
-	if err := a.fetcher.Put(a.ctx, editURL, []byte(text), etag); err != nil {
+	err := a.fetcher.Put(a.ctx, editURL, []byte(text), etag)
+	var pending *fetch.PendingError
+	if err != nil && !errors.As(err, &pending) {
 		return page.Page{}, err
 	}
 	a.pageMu.Lock()
 	delete(a.pageCache, pageURL) // the AI must not answer from the old text
 	a.pageMu.Unlock()
-	return a.browser.Reload(a.ctx, tab), nil
+	fresh := a.browser.Reload(a.ctx, tab)
+	if pending != nil { // waiting for review: the page is still the old text, and the reader is told why
+		fresh.Submitted, fresh.SubmittedNote = true, pending.Note
+	}
+	return fresh, nil
 }

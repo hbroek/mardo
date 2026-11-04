@@ -209,7 +209,10 @@ async function saveEdit() {
         if (fresh.kind === 'error') throw new Error(fresh.error);
         tab.saving = false;
         show(tab, fresh);
-        toast(p.url === NEW_DOC ? 'Saved.' : p.url.startsWith('file:') ? 'Saved the file.' : 'Saved to the server.');
+        if (fresh.submitted) { // the server queued the change: the page is the old text until someone approves it
+            const note = fresh.submittedNote ? ` (${fresh.submittedNote.slice(0, 160)})` : '';
+            toast(`Submitted for review${note}. The page shows your change once it is approved.`, false, 9000);
+        } else toast(p.url === NEW_DOC ? 'Saved.' : p.url.startsWith('file:') ? 'Saved the file.' : 'Saved to the server.');
     } catch (e) {
         tab.saving = false;
         tab.saveError = String(e).replace(/^Error: /, '');
@@ -249,13 +252,13 @@ function render() {
 let toastTimer = 0;
 
 /** A short message at the bottom of the window. */
-function toast(text, isError = false) {
+function toast(text, isError = false, ms = isError ? 6000 : 3000) {
     const box = $('toast');
     box.textContent = text;
     box.classList.toggle('error', isError);
     box.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { box.hidden = true; }, isError ? 6000 : 3000);
+    toastTimer = setTimeout(() => { box.hidden = true; }, ms);
 }
 
 /** A new, empty markdown document in a tab of its own, already in edit mode. It is only a file once saved. */

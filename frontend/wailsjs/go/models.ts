@@ -613,6 +613,8 @@ export namespace page {
 	    editUrl: string;
 	    etag: string;
 	    error: string;
+	    submitted: boolean;
+	    submittedNote: string;
 	    origin: string;
 	    authScheme: string;
 	    canBack: boolean;
@@ -636,6 +638,8 @@ export namespace page {
 	        this.editUrl = source["editUrl"];
 	        this.etag = source["etag"];
 	        this.error = source["error"];
+	        this.submitted = source["submitted"];
+	        this.submittedNote = source["submittedNote"];
 	        this.origin = source["origin"];
 	        this.authScheme = source["authScheme"];
 	        this.canBack = source["canBack"];

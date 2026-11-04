@@ -92,7 +92,8 @@ func TestPutAcceptedIsNotSaved(t *testing.T) {
 	}))
 	defer srv.Close()
 	err := NewFetcher(nil, nil).Put(context.Background(), srv.URL+"/a.md", []byte("x"), "")
-	if !errors.Is(err, ErrPending) || !strings.Contains(err.Error(), "queued for review") {
+	var pending *PendingError
+	if !errors.Is(err, ErrPending) || !errors.As(err, &pending) || pending.Note != "queued for review" || !strings.Contains(err.Error(), "queued for review") {
 		t.Errorf("202 = %v", err)
 	}
 }
