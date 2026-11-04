@@ -9,7 +9,7 @@ icons="$HOME/.local/share/icons/hicolor/512x512/apps"
 mkdir -p "$bin" "$apps" "$icons"
 install -m 755 "$here/mardo" "$bin/mardo"
 install -m 644 "$here/mardo.png" "$icons/mardo.png"
-sed "s|^Exec=.*|Exec=$bin/mardo|" "$here/mardo.desktop" > "$apps/mardo.desktop"
+sed "s|^Exec=.*|Exec=$bin/mardo %f|" "$here/mardo.desktop" > "$apps/mardo.desktop"
 chmod 644 "$apps/mardo.desktop"
 # Remove what this program was installed as before it was renamed.
 rm -f "$bin/markdown-browser" "$apps/markdown-browser.desktop" "$icons/markdown-browser.png"

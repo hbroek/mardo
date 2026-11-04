@@ -206,6 +206,10 @@ export function SummarizePage(arg1, arg2) {
   return window['go']['main']['App']['SummarizePage'](arg1, arg2);
 }
 
+export function TakeOpenRequests() {
+  return window['go']['main']['App']['TakeOpenRequests']();
+}
+
 export function TestAI(arg1, arg2) {
   return window['go']['main']['App']['TestAI'](arg1, arg2);
 }

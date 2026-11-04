@@ -7,7 +7,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "build:ios": "vite build --mode ios",
-    "test": "node --test src/ios/bridge.test.js"
+    "test": "node --test src/ios/bridge.test.js src/address.test.js"
   },
   "devDependencies": {
     "vite": "^7.0.0"

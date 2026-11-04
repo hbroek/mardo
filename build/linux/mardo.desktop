@@ -2,8 +2,9 @@
 Type=Application
 Name=Mardo
 Comment=A browser for pages served as markdown
-Exec=mardo
+Exec=mardo %f
 Icon=mardo
 Terminal=false
 Categories=Network;WebBrowser;
+MimeType=text/markdown;text/x-markdown;
 StartupWMClass=mardo

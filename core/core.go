@@ -49,6 +49,9 @@ type Core struct {
 	pageCache map[string]pageCacheEntry // page text for AI features, see pageText
 	chats     *chats.Store              // saved Ask this page conversations
 
+	openMu sync.Mutex
+	opens  []string // files to open, see QueueOpen
+
 	aiMu      sync.Mutex
 	aiCancels map[string]context.CancelFunc // running AI requests, by the id the page chose
 }

@@ -7,7 +7,11 @@
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "info": {
-    "productName": "Mardo"
+    "productName": "Mardo",
+    "fileAssociations": [
+      {"ext": "md", "name": "Markdown document", "description": "Markdown document", "iconName": "iconfile", "role": "Editor"},
+      {"ext": "markdown", "name": "Markdown document", "description": "Markdown document", "iconName": "iconfile", "role": "Editor"}
+    ]
   },
   "author": {
     "name": "Henry",

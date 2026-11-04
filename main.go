@@ -41,14 +41,16 @@ func main() {
 			DisableWebViewDrop: true,
 		},
 		// Without Mac options Wails leaves the green zoom button disabled.
-		Mac: &mac.Options{},
+		Mac: &mac.Options{OnFileOpen: func(path string) { core.QueueOpen(app.Core, path) }}, // Finder's Open With, and a double click
 		Linux: &linux.Options{
 			Icon:        icon,
 			ProgramName: "mardo", // what the desktop matches the window to its launcher and icon by
 		},
-		Menu:       bar,
-		OnStartup:  app.startup,
-		OnDomReady: app.domReady,
+		// A second launch (double clicking another .md file) hands its files to the window that is open.
+		SingleInstanceLock: &options.SingleInstanceLock{UniqueId: "com.hbroek.mardo", OnSecondInstanceLaunch: app.secondInstance},
+		Menu:               bar,
+		OnStartup:          app.startup,
+		OnDomReady:         app.domReady,
 		Bind: []interface{}{
 			app,
 		},

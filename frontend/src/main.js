@@ -1,7 +1,8 @@
 import './style.css';
 import './schemes.css';
-import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, NavigateAsIs, MarkdownVersions, SetMarkdownVersions} from '../wailsjs/go/main/App';
+import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, MarkdownVersions, SetMarkdownVersions} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn} from '../wailsjs/runtime/runtime';
+import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
 import {svgIcon} from './icons.js';
 import {initConsole, toggleConsole} from './console.js';
@@ -358,19 +359,9 @@ function searchQueryOf(url) {
     const prefix = url.startsWith(MEANING_PREFIX) ? MEANING_PREFIX : SEARCH_PREFIX;
     try { return decodeURIComponent(url.slice(prefix.length).replace(/\+/g, ' ')); } catch { return ''; }
 }
-// On iOS the pages the reader saves or opens live in the app's Documents folder, which Files shows as Mardo;
-// Swift says where it is. The address bar shows that as Mardo/name.md instead of the long sandbox path.
-const docsDir = globalThis.mardoDocuments ?? '';
-const docsPrefix = docsDir ? `file://${docsDir}/` : '';
-function fromAddress(text) {
-    return docsDir && text.startsWith('Mardo/') ? docsPrefix + encodeURI(text.slice('Mardo/'.length)) : text;
-}
 function displayAddress(url) {
     if (url === NEW_DOC) return '';
-    if (docsPrefix && url.startsWith(docsPrefix)) {
-        try { return 'Mardo/' + decodeURIComponent(url.slice(docsPrefix.length)); } catch { return url; }
-    }
-    if (!isSearch(url)) return url;
+    if (!isSearch(url)) return friendly(url);
     return (url.startsWith(MEANING_PREFIX) ? '@' : '?') + searchQueryOf(url);
 }
 
@@ -657,7 +648,7 @@ function toggleSource() {
 }
 
 address.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { const url = fromAddress(address.value); goActive((id) => Navigate(id, url)); }
+    if (e.key === 'Enter') { const url = real(address.value); goActive((id) => Navigate(id, url)); }
 });
 address.addEventListener('focus', () => address.select());
 $('back').addEventListener('click', () => goActive(Back));
@@ -668,7 +659,7 @@ sourceBtn.addEventListener('click', () => (sourceBtn.classList.contains('pencil'
 // The iOS share sheet (the app answers the message itself, not the Go core): the page's address, the file it
 // came from, or the draft while it is being edited.
 const shareBtn = $('share');
-shareBtn.hidden = !docsDir;
+shareBtn.hidden = !hasDocuments();
 shareBtn.addEventListener('click', () => {
     const item = active?.draft ?? currentPage()?.url;
     if (item && item !== NEW_DOC) globalThis.webkit?.messageHandlers?.mardo?.postMessage({method: 'Share', args: JSON.stringify([item])});
@@ -837,6 +828,15 @@ OnFileDrop((x, y, paths) => {
     if (paths?.length) goActive((id) => Navigate(id, paths[0]));
 }, true);
 
+// Files the system asks the app to open (double click, Open With, a second launch): a new tab each, except in an empty one.
+async function openRequested() {
+    for (const path of (await TakeOpenRequests()) ?? []) {
+        if (active && !active.page && !active.pending && !active.loading) goActive((id) => Navigate(id, path));
+        else openTab(path);
+    }
+}
+EventsOn('open-requests', openRequested);
+
 // Site credentials: after saving for the page's own site, load it again.
 function originOf(url) {
     try { return new URL(url).origin; } catch { return ''; }
@@ -868,7 +868,8 @@ async function updateBookmarkIndicator() {
     bookmarkBtn.title = saved ? 'Edit bookmark (Ctrl/Cmd+D)' : 'Add bookmark (Ctrl/Cmd+D)';
 }
 function openBookmarkDialog() {
-    openBookmark({bookmark: saved, url: currentPage().url, title: currentPage().title});
+    const p = currentPage();
+    openBookmark({bookmark: saved, url: p.url, title: p.title === p.url ? friendly(p.url) : p.title});
 }
 bookmarkBtn.addEventListener('click', openBookmarkDialog);
 initBookmarks(() => { updateBookmarkIndicator(); refreshPanel(); });
@@ -905,5 +906,5 @@ initCompare({
     open: (url, newTab) => (newTab ? openTab(url, {background: true}) : openTab(url)),
 });
 initConsole();
-restoreTabs();
+Promise.resolve(restoreTabs()).then(openRequested);
 address.focus();

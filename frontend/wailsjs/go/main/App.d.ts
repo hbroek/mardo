@@ -110,6 +110,8 @@ export function SuggestFolders(arg1:string,arg2:Array<core.FilingInput>,arg3:Arr
 
 export function SummarizePage(arg1:string,arg2:string):Promise<core.AISummary>;
 
+export function TakeOpenRequests():Promise<Array<string>>;
+
 export function TestAI(arg1:core.AIInput,arg2:string):Promise<string>;
 
 export function UnfiledBookmarks():Promise<Array<bookmarks.Bookmark>>;

@@ -4,6 +4,7 @@
 import {svgIcon} from './icons.js';
 import {BookmarkFolders, BookmarksIn, SaveBookmark, SaveBookmarkFolder, ImportBookmarks, ExportBookmarks} from '../wailsjs/go/main/App';
 import {openBookmark, openFolder, setFolderHint} from './bookmarks.js';
+import {friendly} from './address.js';
 import {openStorage} from './storage.js';
 import {openTagging} from './tagging.js';
 import {openOrganize} from './organize.js';
@@ -113,7 +114,7 @@ function bookmarkRow(b, depth) {
         type: 'button',
         className: 'tree-label plain',
         tabIndex: -1,
-        title: b.description ? `${b.url}\n${b.description}` : b.url,
+        title: b.description ? `${friendly(b.url)}\n${b.description}` : friendly(b.url),
         textContent: b.title,
         onclick: go,
     });

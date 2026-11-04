@@ -1,6 +1,7 @@
 // The bookmark and folder dialogs: add, edit and delete.
 import {BookmarkFolders, SaveBookmark, DeleteBookmark, SaveBookmarkFolder, DeleteBookmarkFolder, SuggestBookmark} from '../wailsjs/go/main/App';
 import {aiReady, openAI, newRequestId, cancelRequest} from './ai.js';
+import {friendly, real} from './address.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -99,7 +100,7 @@ export async function openBookmark({bookmark = null, url = '', title = ''}) {
     say(bookmarkStatus, '');
     $('bookmark-title').textContent = bookmark ? 'Edit bookmark' : 'Add bookmark';
     $('bookmark-name').value = bookmark?.title ?? title;
-    $('bookmark-url').value = bookmark?.url ?? url;
+    $('bookmark-url').value = friendly(bookmark?.url ?? url);
     $('bookmark-desc').value = bookmark?.description ?? '';
     $('bookmark-keywords').value = (bookmark?.keywords ?? []).join(', ');
     $('bookmark-delete').hidden = !bookmark;
@@ -172,7 +173,7 @@ export function initBookmarks(changed) {
                 id: editing?.id ?? '',
                 folderId,
                 title: $('bookmark-name').value,
-                url: $('bookmark-url').value,
+                url: real($('bookmark-url').value),
                 description: $('bookmark-desc').value,
                 keywords: $('bookmark-keywords').value.split(','),
             });
@@ -201,7 +202,7 @@ export function initBookmarks(changed) {
         suggestBtn.textContent = 'Cancel';
         say(bookmarkStatus, 'Reading the page and asking the model\u2026', false, true);
         try {
-            const s = await SuggestBookmark(id, $('bookmark-url').value);
+            const s = await SuggestBookmark(id, real($('bookmark-url').value));
             if (suggesting !== id) return; // cancelled
             const filled = [];
             const title = $('bookmark-name');
