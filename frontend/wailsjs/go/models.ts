@@ -233,6 +233,7 @@ export namespace core {
 	    configured: boolean;
 	    hasKey: boolean;
 	    consented: boolean;
+	    deviceNote: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new AIInfo(source);
@@ -247,6 +248,7 @@ export namespace core {
 	        this.configured = source["configured"];
 	        this.hasKey = source["hasKey"];
 	        this.consented = source["consented"];
+	        this.deviceNote = source["deviceNote"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

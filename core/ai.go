@@ -28,6 +28,8 @@ type AIInfo struct {
 	Configured bool        `json:"configured"`
 	HasKey     bool        `json:"hasKey"`
 	Consented  bool        `json:"consented"`
+	// DeviceNote says why the device's own model cannot be used, on a device that has one to offer; empty otherwise.
+	DeviceNote string `json:"deviceNote"`
 }
 
 // AIInput is a provider choice from the settings dialog.
@@ -102,6 +104,9 @@ func (a *Core) AISettings() AIInfo {
 	cfg := a.settings.AI
 	a.bmMu.RUnlock()
 	info := AIInfo{Presets: ai.Presets, Preset: cfg.Preset, BaseURL: cfg.BaseURL, Model: cfg.Model, Configured: cfg.BaseURL != ""}
+	if _, why, ok := a.deviceAI(); ok && why != "" {
+		info.DeviceNote = why
+	}
 	if a.deviceAvailable() {
 		info.Presets = append([]ai.Preset{devicePreset()}, ai.Presets...)
 		if cfg.BaseURL == "" { // nothing chosen yet: the device's own model is the default

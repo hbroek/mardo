@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 const dialog = $('ai-dialog');
 const status = $('ai-status');
 
-let info = {presets: [], preset: '', baseUrl: '', model: '', configured: false, hasKey: false, consented: false};
+let info = {presets: [], preset: '', baseUrl: '', model: '', configured: false, hasKey: false, consented: false, deviceNote: ''};
 
 function say(text, isError = false, busy = false) {
     status.textContent = text;
@@ -85,6 +85,9 @@ export async function openAI() {
     } catch (e) {
         say(String(e), true);
     }
+    const why = $('ai-device-note');
+    why.hidden = !info.deviceNote;
+    why.textContent = info.deviceNote ? `${info.deviceNote} Choose a provider below instead.` : '';
     $('ai-preset').replaceChildren(...info.presets.map((p) => Object.assign(document.createElement('option'), {value: p.id, textContent: p.name})));
     const first = info.presets[0];
     $('ai-preset').value = info.preset || first?.id || '';

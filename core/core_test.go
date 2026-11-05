@@ -748,6 +748,9 @@ func TestDeviceModelIsTheDefaultWhereThereIsOne(t *testing.T) {
 	host := &deviceHost{}
 	app := New(Config{Dir: t.TempDir(), Host: host})
 	info := app.AISettings()
+	if info.DeviceNote != "" {
+		t.Errorf("no note when it works: %q", info.DeviceNote)
+	}
 	if info.Preset != "device" || !info.Configured || !info.Consented || len(info.Presets) == 0 || info.Presets[0].ID != "device" {
 		t.Fatalf("settings: %+v", info)
 	}
@@ -789,6 +792,9 @@ func TestDeviceModelThatCannotBeUsedIsNotOffered(t *testing.T) {
 	info := app.AISettings()
 	if info.Configured || info.Preset == "device" {
 		t.Errorf("settings: %+v", info)
+	}
+	if !strings.Contains(info.DeviceNote, "turned off") {
+		t.Errorf("the reason should be given: %q", info.DeviceNote)
 	}
 	for _, p := range info.Presets {
 		if p.ID == "device" {
