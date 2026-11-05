@@ -4,7 +4,7 @@ WAILS ?= $(shell command -v wails 2>/dev/null || echo $(HOME)/go/bin/wails)
 export CGO_CFLAGS  += -mmacosx-version-min=13.0
 export CGO_LDFLAGS += -mmacosx-version-min=13.0
 
-.PHONY: dev build test windows linux sign notarize ios-framework ios-web ios-app ios-device
+.PHONY: dev build test windows linux sign notarize ios-framework ios-web ios-app ios-device ios-archive
 
 dev:
 	$(WAILS) dev
@@ -60,3 +60,9 @@ ios-app:
 # Builds for a connected device, signed by your Apple Development team: make ios-device TEAM=XXXXXXXXXX
 ios-device:
 	cd ios && xcodegen generate && xcodebuild -project Mardo.xcodeproj -scheme Mardo -destination 'generic/platform=iOS' -derivedDataPath build-device -allowProvisioningUpdates DEVELOPMENT_TEAM=$(TEAM) CODE_SIGN_STYLE=Automatic build
+
+# Archives for the App Store and uploads it to App Store Connect: make ios-archive TEAM=XXXXXXXXXX BUILD=2
+# Raise BUILD for every upload of the same version. Needs the app record for com.henryvandenbroek.mardo to exist.
+ios-archive: ios-framework ios-web
+	cd ios && xcodegen generate && xcodebuild -project Mardo.xcodeproj -scheme Mardo -destination 'generic/platform=iOS' -archivePath build-archive/Mardo.xcarchive -allowProvisioningUpdates DEVELOPMENT_TEAM=$(TEAM) CODE_SIGN_STYLE=Automatic CURRENT_PROJECT_VERSION=$(BUILD) archive
+	cd ios && xcodebuild -exportArchive -archivePath build-archive/Mardo.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build-archive/export -allowProvisioningUpdates
