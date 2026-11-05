@@ -47,7 +47,7 @@ func main() {
 			ProgramName: "mardo", // what the desktop matches the window to its launcher and icon by
 		},
 		// A second launch (double clicking another .md file) hands its files to the window that is open.
-		SingleInstanceLock: &options.SingleInstanceLock{UniqueId: "com.hbroek.mardo", OnSecondInstanceLaunch: app.secondInstance},
+		SingleInstanceLock: &options.SingleInstanceLock{UniqueId: "com.henryvandenbroek.mardo", OnSecondInstanceLaunch: app.secondInstance},
 		Menu:               bar,
 		OnStartup:          app.startup,
 		OnDomReady:         app.domReady,
