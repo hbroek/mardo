@@ -133,6 +133,7 @@ func (a *App) appMenu() *menu.Menu {
 	}
 	item(tools, "History", "history", nil)
 	item(tools, "Clear History", "clear-history", nil)
+	item(tools, "Open Source Licenses", "licenses", nil)
 	tools.AddSeparator()
 	a.markdownItem = tools.AddCheckbox("Look for Markdown Versions", a.MarkdownVersions(), nil, func(*menu.CallbackData) {
 		go a.SetMarkdownVersions(!a.MarkdownVersions())

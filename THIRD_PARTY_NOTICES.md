@@ -7,7 +7,7 @@ Mardo itself is released under the MIT License (see LICENSE).
 
 License: MIT
 
-```
+~~~~
 The MIT License (MIT)
 
 Copyright (c) 2015 Aymerick JEHANNE
@@ -29,13 +29,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/danieljoos/wincred v1.2.3
 
 License: MIT
 
-```
+~~~~
 The MIT License (MIT)
 
 Copyright (c) 2014 Daniel Joos
@@ -57,13 +57,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/dustin/go-humanize v1.1.0
 
 License: MIT
 
-```
+~~~~
 Copyright (c) 2005-2008  Dustin Sallings <dustin@spy.net>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -85,13 +85,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 <http://www.opensource.org/licenses/mit-license.php>
-```
+~~~~
 
 ## github.com/godbus/dbus/v5 v5.2.2
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2013, Georg Reinke (<guelfey at gmail dot com>), Google
 All rights reserved.
 
@@ -117,13 +117,13 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## github.com/google/uuid v1.6.0
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2009,2014 Google Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -151,13 +151,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## github.com/gorilla/css v1.0.1
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2023 The Gorilla Authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -185,13 +185,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## github.com/leaanthony/go-ansi-parser v1.6.1
 
 License: MIT
 
-```
+~~~~
 MIT License
 
 Copyright (c) 2021-Present Lea Anthony
@@ -213,13 +213,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/leaanthony/slicer v1.6.0
 
 License: MIT
 
-```
+~~~~
 MIT License
 
 Copyright (c) 2019 Lea Anthony
@@ -241,13 +241,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/leaanthony/u v1.1.1
 
 License: MIT
 
-```
+~~~~
 MIT License
 
 Copyright (c) 2023-Present Lea Anthony
@@ -269,13 +269,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/mattn/go-isatty v0.0.24
 
 License: MIT
 
-```
+~~~~
 Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
 
 MIT License (Expat)
@@ -285,13 +285,13 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```
+~~~~
 
 ## github.com/microcosm-cc/bluemonday v1.0.27
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2014, David Kitchen <david@buro9.com>
 
 All rights reserved.
@@ -320,13 +320,13 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## github.com/ncruces/go-strftime v1.1.0
 
 License: MIT
 
-```
+~~~~
 MIT License
 
 Copyright (c) 2022 Nuno Cruces
@@ -348,13 +348,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/pkg/errors v0.9.1
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2015, Dave Cheney <dave@cheney.net>
 All rights reserved.
 
@@ -378,13 +378,13 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2012 The Go Authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -412,13 +412,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## github.com/rivo/uniseg v0.4.7
 
 License: MIT
 
-```
+~~~~
 MIT License
 
 Copyright (c) 2019 Oliver Kuederle
@@ -440,13 +440,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/wailsapp/go-webview2 v1.0.22
 
 License: MIT
 
-```
+~~~~
 MIT License
 
 Copyright (c) 2020 John Chadwick
@@ -469,13 +469,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/wailsapp/wails/v2 v2.17.0
 
 License: MIT
 
-```
+~~~~
 MIT License
 
 Copyright (c) 2018-Present Lea Anthony
@@ -497,13 +497,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/yuin/goldmark v1.8.6
 
 License: MIT
 
-```
+~~~~
 MIT License
 
 Copyright (c) 2019 Yusuke Inuzuka
@@ -525,13 +525,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## github.com/zalando/go-keyring v0.2.8
 
 License: MIT
 
-```
+~~~~
 The MIT License (MIT)
 
 Copyright (c) 2016 Zalando SE
@@ -553,13 +553,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 
 ## golang.org/x/net v0.61.0
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright 2009 The Go Authors.
 
 Redistribution and use in source and binary forms, with or without
@@ -587,13 +587,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## golang.org/x/sys v0.49.0
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright 2009 The Go Authors.
 
 Redistribution and use in source and binary forms, with or without
@@ -621,13 +621,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## golang.org/x/text v0.43.0
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright 2009 The Go Authors.
 
 Redistribution and use in source and binary forms, with or without
@@ -655,13 +655,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## modernc.org/libc v1.79.0
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2017 The Libc Authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -689,11 +689,11 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 Also included with this module (LICENSE-3RD-PARTY.md):
 
-```
+~~~~
 # Third-Party Software Notices
 
 This repository contains code and assets acquired from third-party sources.
@@ -999,13 +999,13 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```
+~~~~
 
 ## modernc.org/mathutil v1.7.1
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2014 The mathutil Authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1033,13 +1033,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## modernc.org/memory v1.12.1
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2017 The Memory Authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1067,11 +1067,11 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 Also included with this module (LICENSE-GO):
 
-```
+~~~~
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1099,17 +1099,17 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 Also included with this module (LICENSE-LOGO):
 
-```
+~~~~
 https://commons.wikimedia.org/wiki/File:Memory_infra_logo.png
-```
+~~~~
 
 Also included with this module (LICENSE-MMAP-GO):
 
-```
+~~~~
 Copyright (c) 2011, Evan Shaw <edsrzf@gmail.com>
 All rights reserved.
 
@@ -1134,13 +1134,13 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 ## modernc.org/sqlite v1.61.0
 
 License: BSD-3-Clause
 
-```
+~~~~
 Copyright (c) 2017 The Sqlite Authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1167,11 +1167,11 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+~~~~
 
 Also included with this module (LICENSE-3RD-PARTY.md):
 
-```
+~~~~
 # Third-Party Licenses
 
 `modernc.org/sqlite` is BSD-3-Clause; that license is in [LICENSE](LICENSE) and it is
@@ -2786,11 +2786,11 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
-```
+~~~~
 
 Also included with this module (LICENSE-SQLITE):
 
-```
+~~~~
 SQLite Is Public Domain
 
 All of the code and documentation in SQLite has been dedicated to the public
@@ -2816,11 +2816,11 @@ has been taken from other projects or from the open internet. Every line of
 code can be traced back to its original author, and all of those authors have
 public domain dedications on file. So the SQLite code base is clean and is
 uncontaminated with licensed code from other projects.
-```
+~~~~
 
 Also included with this module (LICENSE-SQLITE_VEC):
 
-```
+~~~~
 MIT License
 
 Copyright (c) 2024 Alex Garcia
@@ -2842,5 +2842,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
+~~~~
 

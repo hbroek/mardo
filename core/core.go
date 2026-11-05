@@ -23,6 +23,7 @@ import (
 	"mardo/internal/history"
 	"mardo/internal/imgproxy"
 	"mardo/internal/localfile"
+	"mardo/internal/notices"
 	"mardo/internal/page"
 	"mardo/internal/render"
 	"mardo/internal/settings"
@@ -43,6 +44,7 @@ type Core struct {
 	bookmarksErr error
 	settings     settings.Settings
 	settingsPath string
+	licensesPath string // where Licenses writes the notices page; empty uses the temp directory
 	lggURL       string // LinkaGoGo API address; empty is the real one (tests set it)
 
 	pageMu    sync.Mutex
@@ -90,6 +92,7 @@ func New(cfg Config) *Core {
 	a.fetcher.Log.OnEntry = func(e fetch.Entry) { host.Emit("net", e) } // each request is pushed to the console as it completes
 	a.browser = browser.New(history.Open(file("history.json")), a.fetcher)
 
+	a.licensesPath = file("licenses.md")
 	a.settingsPath = file("settings.json")
 	a.settings = settings.Load(a.settingsPath, dir)
 	a.browser.SetMarkdownVersions(!a.settings.Browsing.NoMarkdownVersion)
@@ -139,6 +142,18 @@ func (a *Core) ClearHistory()            { a.browser.ClearHistory() }
 
 // FullHistory opens the whole visit log as a generated markdown page.
 func (a *Core) FullHistory(tab int) page.Page { return a.browser.FullHistory(a.ctx, tab) }
+
+// Licenses opens the open source notices (the libraries Mardo includes and their licenses) as a markdown page.
+func (a *Core) Licenses(tab int) page.Page {
+	path := a.licensesPath
+	if path == "" {
+		path = filepath.Join(os.TempDir(), "mardo-licenses.md")
+	}
+	if os.MkdirAll(filepath.Dir(path), 0o755) == nil {
+		_ = os.WriteFile(path, []byte(notices.Reading()), 0o644) // if this fails, opening the file shows the error
+	}
+	return a.browser.Navigate(a.ctx, tab, path)
+}
 
 // Credentials lists saved credentials without their secrets.
 func (a *Core) Credentials() []auth.Info { return a.auth.List() }

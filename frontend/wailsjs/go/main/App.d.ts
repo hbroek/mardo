@@ -64,6 +64,8 @@ export function ImportBookmarks():Promise<bookmarks.ImportResult>;
 
 export function ImportCookiesTxt(arg1:string,arg2:string):Promise<number>;
 
+export function Licenses(arg1:number):Promise<page.Page>;
+
 export function LinkaGoGoFolders(arg1:string):Promise<Array<bookmarks.Folder>>;
 
 export function MarkdownVersions():Promise<boolean>;

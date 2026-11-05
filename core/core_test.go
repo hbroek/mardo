@@ -19,6 +19,7 @@ import (
 	"mardo/internal/browser"
 	"mardo/internal/fetch"
 	"mardo/internal/history"
+	"mardo/internal/page"
 	"mardo/internal/settings"
 )
 
@@ -829,5 +830,19 @@ func TestDeviceModelCannotRewriteALongDocument(t *testing.T) {
 	}
 	if got, err := app.EditPage("", "T", "# Short", "fix it"); err != nil || got.Text == "" {
 		t.Errorf("a short document: %+v %v", got, err)
+	}
+}
+
+func TestLicensesOpensTheNoticesAsAMarkdownPage(t *testing.T) {
+	a := newCore(t, Config{})
+	tab := a.NewTab()
+	p := a.Licenses(tab)
+	if p.Kind != page.KindMarkdown {
+		t.Fatalf("kind = %v, error %q", p.Kind, p.Error)
+	}
+	for _, want := range []string{"Third-party notices", "goldmark", "Permission is hereby granted"} {
+		if !strings.Contains(p.Source, want) {
+			t.Errorf("licenses page does not contain %q", want)
+		}
 	}
 }

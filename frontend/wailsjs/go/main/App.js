@@ -114,6 +114,10 @@ export function ImportCookiesTxt(arg1, arg2) {
   return window['go']['main']['App']['ImportCookiesTxt'](arg1, arg2);
 }
 
+export function Licenses(arg1) {
+  return window['go']['main']['App']['Licenses'](arg1);
+}
+
 export function LinkaGoGoFolders(arg1) {
   return window['go']['main']['App']['LinkaGoGoFolders'](arg1);
 }
