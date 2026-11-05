@@ -68,7 +68,7 @@ PRIVATE
 ## Other questionnaires
 
 - **Export compliance:** Uses only standard HTTPS provided by the operating system. `ITSAppUsesNonExemptEncryption` is false in the app, so it is not asked on each upload.
-- **Age rating:** Answer "Infrequent/Mild" for "Unrestricted Web Access" (the app is a web browser); expect 17+ or 12+ depending on the answer. Everything else: None.
+- **Age rating:** Answer "Yes" to "Unrestricted Web Access" (the app is a web browser); that makes it 18+ on Apple's newer scale (the choices are 4+, 9+, 13+, 16+, 18+). Everything else: None.
 - **Content rights:** the app shows third-party web content the user navigates to.
 - **Government/Regulated:** none. **Encryption:** exempt as above.
 
