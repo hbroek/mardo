@@ -102,8 +102,6 @@ export function initMenu(actions) {
         const phone = root.classList.contains('phone');
         const press = (id) => () => { close(); $(id).click(); };
         const phoneRows = !phone ? [] : [
-            item('menuitem', 'Forward', null, press('forward'), icon('forward')),
-            item('menuitem', 'Reload', null, press('reload'), icon('reload')),
             ...(!$('share').hidden ? [item('menuitem', 'Share\u2026', null, press('share'), icon('share'))] : []),
         ];
         // Reading comes first on a phone; writing is a section of its own at the end.
