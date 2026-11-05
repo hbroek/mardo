@@ -108,7 +108,7 @@ type apiError struct {
 func (e *apiError) Error() string {
 	switch e.status {
 	case http.StatusUnauthorized, http.StatusForbidden:
-		return fmt.Sprintf("LinkaGoGo rejected the API key (%d). Save a Bearer token for %s with the key button; API keys need a Plus or Premium plan", e.status, e.origin)
+		return fmt.Sprintf("LinkaGoGo rejected the API key (%d). Save a Bearer token for %s with the key button", e.status, e.origin)
 	case http.StatusTooManyRequests:
 		return "LinkaGoGo's daily request limit for this key is used up; try again tomorrow"
 	}
