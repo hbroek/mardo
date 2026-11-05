@@ -268,4 +268,4 @@ frontend/              vanilla HTML/CSS/JS (no framework)
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The open source libraries Mardo includes, and their licenses, are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
