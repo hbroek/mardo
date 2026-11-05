@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mardo - a markdown browser</title>
+<meta name="description" content="Mardo reads the web as markdown and writes it back where the server allows. For macOS, Windows and Linux; iPhone and iPad in development.">
+<link rel="icon" href="icon.png">
+<style>
+:root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #59636e;
+    --bar: #f3f1ff;
+    --border: #d9d6ee;
+    --accent: #4f46e5;
+    --accent2: #a21caf;
+    --accent3: #ea580c;
+    --code: #f5f3ff;
+    --grad: linear-gradient(90deg, #4f46e5, #c026d3, #f97316);
+    --grad-btn: linear-gradient(135deg, #4f46e5, #c026d3);
+    --shadow: 0 18px 50px rgba(79, 70, 229, 0.18);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f0d1a;
+        --fg: #e8e6f5;
+        --muted: #9aa0ab;
+        --bar: #181530;
+        --border: #2f2b55;
+        --accent: #8b83ff;
+        --accent2: #e879f9;
+        --accent3: #fb923c;
+        --code: #17142b;
+        --shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+    }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-text-size-adjust: 100%;
+}
+a { color: var(--accent); }
+.wrap { width: min(1080px, 100% - 40px); margin: 0 auto; }
+
+/* top bar */
+header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+header.top .wrap { display: flex; align-items: center; gap: 24px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; color: var(--fg); text-decoration: none; }
+.brand img { width: 30px; height: 30px; border-radius: 7px; }
+nav { margin-left: auto; display: flex; gap: 22px; }
+nav a { color: var(--muted); text-decoration: none; font-size: 0.95rem; }
+nav a:hover { color: var(--fg); }
+
+/* hero */
+.hero { padding: 72px 0 40px; text-align: center; }
+.hero h1 { margin: 0 0 18px; font-size: clamp(2.2rem, 6vw, 3.8rem); line-height: 1.1; letter-spacing: -0.02em; }
+.grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p.lead { max-width: 40rem; margin: 0 auto 30px; font-size: 1.2rem; color: var(--muted); }
+.buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.btn { display: inline-block; padding: 12px 24px; border-radius: 10px; border: 1px solid var(--border); background: var(--bar); color: var(--fg); font-weight: 600; text-decoration: none; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { border-color: transparent; background: var(--grad-btn); color: #fff; }
+.hero .small { margin-top: 16px; font-size: 0.9rem; color: var(--muted); }
+
+/* screenshots */
+.shots { position: relative; margin: 40px auto 20px; padding-bottom: 20px; }
+.shot-desktop { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+.shot-phone { position: absolute; height: auto; right: -10px; bottom: -30px; width: 21%; border-radius: 22px; border: 6px solid #111; box-shadow: var(--shadow); }
+@media (max-width: 720px) { .shot-phone { display: none; } }
+
+/* sections */
+section { padding: 56px 0; }
+section h2 { margin: 0 0 8px; font-size: clamp(1.6rem, 4vw, 2.2rem); letter-spacing: -0.01em; }
+section .sub { margin: 0 0 32px; color: var(--muted); max-width: 40rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.card { padding: 22px; border: 1px solid var(--border); border-radius: 14px; background: var(--bar); }
+.card h3 { margin: 0 0 8px; font-size: 1.1rem; }
+.card p { margin: 0; color: var(--muted); font-size: 0.98rem; }
+.card h3::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 10px; border-radius: 3px; background: var(--grad-btn); }
+
+/* how it reads */
+.how { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; }
+@media (max-width: 800px) { .how { grid-template-columns: 1fr; } }
+pre { margin: 0; padding: 20px; overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--code); font: 0.88rem/1.6 var(--mono); }
+.k { color: var(--accent2); }
+.c { color: var(--muted); }
+ol.steps { margin: 0; padding-left: 1.2em; }
+ol.steps li { margin-bottom: 10px; }
+
+/* downloads */
+.dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+.dl .card { display: flex; flex-direction: column; gap: 10px; }
+.dl .card .btn { margin-top: auto; text-align: center; }
+.tag { align-self: flex-start; padding: 2px 10px; border-radius: 99px; background: var(--code); border: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; }
+
+footer { padding: 36px 0 60px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.92rem; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="top">
+    <div class="wrap">
+        <a class="brand" href="#"><img src="icon.png" alt="">Mardo</a>
+        <nav>
+            <a href="#features">Features</a>
+            <a href="#ai">AI</a>
+            <a href="#download">Download</a>
+            <a href="https://github.com/hbroek/mardo">GitHub</a>
+        </nav>
+    </div>
+</header>
+
+<main>
+<div class="wrap">
+    <div class="hero">
+        <h1>Read the web as <span class="grad">markdown</span>.<br>Write it back.</h1>
+        <p class="lead">Mardo is a small browser and author for markdown. It asks servers for markdown, shows it cleanly, and saves your changes back where the server allows.</p>
+        <div class="buttons">
+            <a class="btn primary" href="https://github.com/hbroek/mardo/releases/latest">Download Mardo</a>
+            <a class="btn" href="https://github.com/hbroek/mardo">View on GitHub</a>
+        </div>
+        <p class="small">Free and open source (MIT). macOS, Windows and Linux. iPhone and iPad in development.</p>
+    </div>
+
+    <div class="shots">
+        <img class="shot-desktop" src="mardo-desktop.jpg" width="1600" height="1030" alt="Mardo on a Mac, showing a markdown page with its toolbar, tabs and address bar">
+        <img class="shot-phone" src="mardo-phone.jpg" alt="Mardo on an iPhone, reading a markdown page with the toolbar along the bottom">
+    </div>
+</div>
+
+<section id="features">
+    <div class="wrap">
+        <h2>A browser that prefers markdown</h2>
+        <p class="sub">Plain text pages load fast, read well and are easy to keep, copy and hand to an AI.</p>
+        <div class="grid">
+            <div class="card"><h3>Asks for markdown</h3><p>Sends <code>Accept: text/markdown</code>, and looks for a <code>.md</code> version of ordinary pages and a site's <code>llms.txt</code>. Tables, task lists and footnotes render properly.</p></div>
+            <div class="card"><h3>Convert any page</h3><p>No markdown version? One click maps an HTML page's headings, lists, links, images and tables to markdown, or has your AI model rewrite it.</p></div>
+            <div class="card"><h3>Write it back</h3><p>Where a server allows it, Mardo turns into an editor and saves with <code>PUT</code>, using your saved login and warning you if the page changed meanwhile.</p></div>
+            <div class="card"><h3>Bookmarks that you own</h3><p>Folders, descriptions, keywords and search by typing in the address bar. Keep them on your computer or in a LinkaGoGo folder.</p></div>
+            <div class="card"><h3>Tabs and history</h3><p>Tabs with their own history, restored on the next start. History is itself a markdown page you can save.</p></div>
+            <div class="card"><h3>Private by default</h3><p>Logins for each site go in your system keychain and are sent only to that exact site. Nothing is sent to an AI service until you allow it.</p></div>
+            <div class="card"><h3>Open any .md file</h3><p>Double click a markdown file to read it. Save any page as a <code>.md</code> file, or copy its markdown in one click.</p></div>
+            <div class="card"><h3>Your look</h3><p>Follows light and dark, with six color schemes, and a full-width mode for big screens.</p></div>
+            <div class="card"><h3>A network console</h3><p>See every request with its status, headers, timing and size. Cookie and token values stay hidden.</p></div>
+        </div>
+    </div>
+</section>
+
+<section id="how">
+    <div class="wrap how">
+        <div>
+            <h2>How a page gets here</h2>
+            <p class="sub">Mardo asks first, falls back politely, and always tells you which one you got.</p>
+            <ol class="steps">
+                <li>Ask the server for markdown with a normal request.</li>
+                <li>No luck? Look for the page's <code>.md</code> twin, or the site's <code>llms.txt</code>.</li>
+                <li>Still none? Show the title and links, with a <b>Convert to markdown</b> button.</li>
+            </ol>
+        </div>
+<pre><span class="c"># what Mardo sends</span>
+<span class="k">GET</span> /docs/guide
+<span class="k">Accept:</span> text/markdown, text/x-markdown;q=0.9, …
+
+<span class="c"># what it can send back, when the server allows</span>
+<span class="k">PUT</span> /docs/guide
+<span class="k">If-Match:</span> "3f9a…"
+<span class="k">Content-Type:</span> text/markdown</pre>
+    </div>
+</section>
+
+<section id="ai">
+    <div class="wrap">
+        <h2>AI that reads with you</h2>
+        <p class="sub">Use the model you like: Claude, OpenAI, Gemini, a local Ollama, or any compatible server. On an iPhone it can be Apple Intelligence, running on the device itself.</p>
+        <div class="grid">
+            <div class="card"><h3>Summarize, outline, translate</h3><p>Condense a long page, find your way around it, or read it in another language. The result appears above the page.</p></div>
+            <div class="card"><h3>Ask about the page</h3><p>Chat with the page open. Conversations are saved per page and you can delete them any time.</p></div>
+            <div class="card"><h3>Compare tabs</h3><p>Pick several open pages and see what they agree on and where they differ.</p></div>
+            <div class="card"><h3>Edit with words</h3><p>Tell the AI what to change in a markdown page, review the highlighted differences, and keep or discard them.</p></div>
+            <div class="card"><h3>Tidy your bookmarks</h3><p>Suggest titles, keywords and folders. You review every suggestion before anything changes.</p></div>
+            <div class="card"><h3>You decide what leaves</h3><p>Page text goes only to the provider you choose, and only after you allow it. A model on your own computer sends nothing out.</p></div>
+        </div>
+    </div>
+</section>
+
+<section id="download">
+    <div class="wrap">
+        <h2>Download</h2>
+        <p class="sub">Pick your system on the latest release page. Or build it yourself from the source; the README shows how.</p>
+        <div class="dl">
+            <div class="card"><h3>macOS</h3><span class="tag">Apple silicon, macOS 13+</span><p>Signed and notarized by Apple, so it opens without warnings.</p><a class="btn primary" href="https://github.com/hbroek/mardo/releases/latest">Download for Mac</a></div>
+            <div class="card"><h3>Windows</h3><span class="tag">64-bit</span><p>Not code-signed yet, so SmartScreen may warn about an unknown publisher: choose More info, then Run anyway.</p><a class="btn" href="https://github.com/hbroek/mardo/releases/latest">Download for Windows</a></div>
+            <div class="card"><h3>Linux</h3><span class="tag">64-bit, GTK and WebKit</span><p>A tarball with an installer script and desktop entry. Needs <code>libgtk-3</code> and <code>libwebkit2gtk-4.1</code>.</p><a class="btn" href="https://github.com/hbroek/mardo/releases/latest">Download for Linux</a></div>
+            <div class="card"><h3>iPhone and iPad</h3><span class="tag">In development</span><p>The same core runs in an iOS app with a thumb-friendly layout and Apple Intelligence built in. Not released yet.</p><a class="btn" href="https://github.com/hbroek/mardo">Follow on GitHub</a></div>
+        </div>
+    </div>
+</section>
+</main>
+
+<footer>
+    <div class="wrap">
+        <span>Mardo is open source under the <a href="https://github.com/hbroek/mardo/blob/main/LICENSE">MIT license</a>.</span>
+        <span><a href="https://github.com/hbroek/mardo">Source</a> &middot; <a href="https://github.com/hbroek/mardo/releases">Releases</a> &middot; <a href="https://github.com/hbroek/mardo/issues">Issues</a></span>
+    </div>
+</footer>
+
+</body>
+</html>
