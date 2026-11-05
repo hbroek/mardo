@@ -23,7 +23,7 @@ Text and settings to paste into App Store Connect, and the steps to upload a bui
 - **Marketing URL:** https://mardo.henryvandenbroek.com/
 - **Privacy Policy URL:** https://mardo.henryvandenbroek.com/privacy.html
 - **Copyright:** 2026 Henry van den Broek
-- **Keywords (100):** markdown,browser,reader,notes,editor,bookmarks,AI,summarize,writer,web,text
+- **Keywords (100):** markdown,browser,reader,notes,editor,bookmarks,AI,summarize,writer,web,text,textcasting,bigundo
 
 **Promotional text (170):**
 Read pages as clean markdown, keep bookmarks in folders, and use AI tools to summarize, outline or translate what you read. Private by design.
