@@ -85,6 +85,22 @@ func testApp(t *testing.T, api *miniLinkaGoGo) *Core {
 	return a
 }
 
+// newCore starts a core with its files in a folder of its own, and closes its database before the folder
+// is deleted: Windows cannot delete a file that is open.
+func newCore(t *testing.T, cfg Config) *Core {
+	t.Helper()
+	cfg.Dir = t.TempDir()
+	a := New(cfg)
+	t.Cleanup(func() {
+		a.bmMu.Lock()
+		defer a.bmMu.Unlock()
+		if a.bookmarks != nil {
+			a.bookmarks.Close()
+		}
+	})
+	return a
+}
+
 func TestUseLinkaGoGoCreatesAndUsesRootFolder(t *testing.T) {
 	api := &miniLinkaGoGo{folders: []map[string]any{{"id": 1, "name": "Existing", "folder_id": 0}}}
 	a := testApp(t, api)
@@ -709,7 +725,7 @@ func TestConvertPageRulesAndMarkdownPages(t *testing.T) {
 		w.Write([]byte(`<html><head><title>T</title></head><body><nav>menu</nav><main><h1>Head</h1><p>Some <b>bold</b> text and a <a href="/x">link</a>.</p></main></body></html>`))
 	}))
 	defer srv.Close()
-	app := New(Config{Dir: t.TempDir()})
+	app := newCore(t, Config{})
 	got, err := app.ConvertPage("", srv.URL+"/page", "rules")
 	if err != nil {
 		t.Fatal(err)
@@ -746,7 +762,7 @@ func (h *deviceHost) DeviceAIChat(messagesJSON string) (string, error) {
 
 func TestDeviceModelIsTheDefaultWhereThereIsOne(t *testing.T) {
 	host := &deviceHost{}
-	app := New(Config{Dir: t.TempDir(), Host: host})
+	app := newCore(t, Config{Host: host})
 	info := app.AISettings()
 	if info.DeviceNote != "" {
 		t.Errorf("no note when it works: %q", info.DeviceNote)
@@ -788,7 +804,7 @@ func TestDeviceModelIsTheDefaultWhereThereIsOne(t *testing.T) {
 }
 
 func TestDeviceModelThatCannotBeUsedIsNotOffered(t *testing.T) {
-	app := New(Config{Dir: t.TempDir(), Host: &deviceHost{why: "Apple Intelligence is turned off in Settings"}})
+	app := newCore(t, Config{Host: &deviceHost{why: "Apple Intelligence is turned off in Settings"}})
 	info := app.AISettings()
 	if info.Configured || info.Preset == "device" {
 		t.Errorf("settings: %+v", info)
@@ -807,7 +823,7 @@ func TestDeviceModelThatCannotBeUsedIsNotOffered(t *testing.T) {
 }
 
 func TestDeviceModelCannotRewriteALongDocument(t *testing.T) {
-	app := New(Config{Dir: t.TempDir(), Host: &deviceHost{}})
+	app := newCore(t, Config{Host: &deviceHost{}})
 	if _, err := app.EditPage("", "T", strings.Repeat("word ", 2000), "fix it"); err == nil || !strings.Contains(err.Error(), "too small") {
 		t.Errorf("edit: %v", err)
 	}

@@ -1,9 +1,12 @@
 package core
 
-import "testing"
+import (
+	"path/filepath"
+	"testing"
+)
 
 func TestOpenRequests(t *testing.T) {
-	a := New(Config{Dir: t.TempDir()})
+	a := newCore(t, Config{})
 	if got := a.TakeOpenRequests(); got == nil || len(got) != 0 {
 		t.Fatalf("nothing queued: %#v", got)
 	}
@@ -23,7 +26,7 @@ func TestOpenablePath(t *testing.T) {
 			t.Errorf("OpenablePath(%q) = %v", arg, ok)
 		}
 	}
-	if p, _ := OpenablePath("/w", "n.md"); p != "/w/n.md" {
+	if p, _ := OpenablePath("/w", "n.md"); p != filepath.Join("/w", "n.md") { // with backslashes on Windows
 		t.Errorf("relative = %q", p)
 	}
 }

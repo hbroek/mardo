@@ -36,7 +36,7 @@ func TestSaveSourceTellsWhenTheServerOnlyQueuedTheChange(t *testing.T) {
 		io.WriteString(w, "# Old\n")
 	}))
 	defer srv.Close()
-	a := New(Config{Dir: t.TempDir()})
+	a := newCore(t, Config{})
 	SetContext(a, context.Background())
 	tab := a.NewTab()
 	a.Navigate(tab, srv.URL+"/a.md")
