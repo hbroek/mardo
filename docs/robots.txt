@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mardo.henryvandenbroek.com/sitemap.xml
