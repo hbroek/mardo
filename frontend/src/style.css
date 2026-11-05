@@ -830,3 +830,6 @@ html.phone .convert-bar button { min-height: 44px; }
 
 /* a label is display: flex in dialogs, which would otherwise win over the hidden attribute */
 dialog label[hidden] { display: none; }
+
+/* a width remembered from dragging a panel's edge (an inline style) must not shrink a sheet that spans the screen */
+html.phone #bookmarks-panel, html.phone #ask-panel { width: auto !important; }
