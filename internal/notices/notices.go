@@ -1,4 +1,4 @@
-// Package notices holds the third-party license text shown under Licenses in the menu.
+// Package notices holds the third-party license text linked from the About page.
 package notices
 
 import (

@@ -1,5 +1,8 @@
 WAILS ?= $(shell command -v wails 2>/dev/null || echo $(HOME)/go/bin/wails)
 
+# The day of the build, shown on the About page.
+BUILT := $(shell date -u +%Y-%m-%d)
+
 # Keep the macOS deployment target in line with Info.plist (silences linker warnings).
 export CGO_CFLAGS  += -mmacosx-version-min=13.0
 export CGO_LDFLAGS += -mmacosx-version-min=13.0
@@ -10,7 +13,7 @@ dev:
 	$(WAILS) dev
 
 build:
-	$(WAILS) build
+	$(WAILS) build -ldflags "-X mardo/internal/about.Date=$(BUILT)"
 
 test:
 	go vet ./...
@@ -47,7 +50,7 @@ notarize: sign
 # The Go core as a framework for an iPhone app (the Swift shell is not in this repository yet).
 # Needs Xcode and both tools: go install golang.org/x/mobile/cmd/gomobile@latest golang.org/x/mobile/cmd/gobind@latest
 ios-framework:
-	gomobile bind -target ios,iossimulator -o build/Mardo.xcframework ./mobile
+	gomobile bind -ldflags "-X mardo/internal/about.Date=$(BUILT)" -target ios,iossimulator -o build/Mardo.xcframework ./mobile
 
 # The page for the iPhone app, calling the Go core through the app's bridge (frontend/src/ios/bridge.js).
 ios-web:

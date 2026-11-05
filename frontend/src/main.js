@@ -1,6 +1,6 @@
 import './style.css';
 import './schemes.css';
-import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, Licenses, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, MarkdownVersions, SetMarkdownVersions, ConvertPage} from '../wailsjs/go/main/App';
+import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, MarkdownVersions, SetMarkdownVersions, ConvertPage} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -758,7 +758,7 @@ const menuItems = {
     markdownVersions: () => MarkdownVersions(),
     setMarkdownVersions: (on) => SetMarkdownVersions(on),
     history: () => goActive(FullHistory),
-    licenses: () => goActive(Licenses),
+    about: () => goActive(About),
     clearHistory: () => ClearHistory(),
 };
 
@@ -805,7 +805,7 @@ const menuActions = {
     ai: menuItems.ai,
     credentials: menuItems.credentials,
     history: menuItems.history,
-    licenses: menuItems.licenses,
+    about: menuItems.about,
     'clear-history': menuItems.clearHistory,
 };
 // Select All depends on where you are: a field selects its text, the bookmarks panel its

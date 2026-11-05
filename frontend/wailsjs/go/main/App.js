@@ -6,6 +6,10 @@ export function AISettings() {
   return window['go']['main']['App']['AISettings']();
 }
 
+export function About(arg1) {
+  return window['go']['main']['App']['About'](arg1);
+}
+
 export function ApplyFiling(arg1) {
   return window['go']['main']['App']['ApplyFiling'](arg1);
 }
@@ -112,10 +116,6 @@ export function ImportBookmarks() {
 
 export function ImportCookiesTxt(arg1, arg2) {
   return window['go']['main']['App']['ImportCookiesTxt'](arg1, arg2);
-}
-
-export function Licenses(arg1) {
-  return window['go']['main']['App']['Licenses'](arg1);
 }
 
 export function LinkaGoGoFolders(arg1) {

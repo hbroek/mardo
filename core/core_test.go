@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -833,16 +834,26 @@ func TestDeviceModelCannotRewriteALongDocument(t *testing.T) {
 	}
 }
 
-func TestLicensesOpensTheNoticesAsAMarkdownPage(t *testing.T) {
+func TestAboutShowsTheVersionAndLinksToTheLicenses(t *testing.T) {
 	a := newCore(t, Config{})
 	tab := a.NewTab()
-	p := a.Licenses(tab)
+	p := a.About(tab)
 	if p.Kind != page.KindMarkdown {
 		t.Fatalf("kind = %v, error %q", p.Kind, p.Error)
 	}
-	for _, want := range []string{"Third-party notices", "goldmark", "Permission is hereby granted"} {
+	for _, want := range []string{"About Mardo", "| Version |", "(licenses.md)"} {
 		if !strings.Contains(p.Source, want) {
-			t.Errorf("licenses page does not contain %q", want)
+			t.Errorf("about page does not contain %q", want)
 		}
+	}
+	// The link is relative to the About page, so it must resolve to the notices next to it.
+	base, err := url.Parse(p.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	link, _ := url.Parse("licenses.md")
+	l := a.Navigate(tab, base.ResolveReference(link).String())
+	if l.Kind != page.KindMarkdown || !strings.Contains(l.Source, "Third-party notices") {
+		t.Errorf("the licenses link opens kind %v, error %q", l.Kind, l.Error)
 	}
 }

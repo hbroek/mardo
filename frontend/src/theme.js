@@ -78,7 +78,7 @@ function heading(text) {
 const icon = (name) => { const s = span('menu-icon'); s.append(svgIcon(name)); return s; };
 const span = (className, text = '') => Object.assign(document.createElement('span'), {className, textContent: text});
 
-/** `actions` has the functions behind the menu's first entries: credentials, ai, savePage, history, clearHistory and licenses. */
+/** `actions` has the functions behind the menu's first entries: credentials, ai, savePage, history, clearHistory and about. */
 export function initMenu(actions) {
     const btn = $('menu');
     const menu = $('settings-menu');
@@ -97,7 +97,7 @@ export function initMenu(actions) {
         const openEntry = item('menuitem', 'Open page\u2026', null, () => { close(); actions.openFile(); }, icon('folder'));
         const saveEntry = item('menuitem', 'Save page\u2026', null, () => { close(); actions.savePage(); }, icon('save'));
         const historyEntry = item('menuitem', 'History', null, () => { close(); actions.history(); }, icon('clock'));
-        const licensesEntry = item('menuitem', 'Open source licenses', null, () => { close(); actions.licenses(); }, icon('info'));
+        const aboutEntry = item('menuitem', 'About Mardo', null, () => { close(); actions.about(); }, icon('info'));
         const clearEntry = item('menuitem', 'Clear history', null, async () => { close(); await actions.clearHistory(); }, icon('trash'));
         // On a phone the toolbar leaves out what is rarely needed there; it is here instead.
         const phone = root.classList.contains('phone');
@@ -118,8 +118,8 @@ export function initMenu(actions) {
             }),
         ];
         menu.replaceChildren(...(phone
-            ? [...phoneRows, historyEntry, creds, aiEntry, markdownEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), licensesEntry]
-            : [creds, aiEntry, ...writing, historyEntry, clearEntry, markdownEntry, licensesEntry, ...themeRows]));
+            ? [...phoneRows, historyEntry, creds, aiEntry, markdownEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), aboutEntry]
+            : [creds, aiEntry, ...writing, historyEntry, clearEntry, markdownEntry, ...themeRows, aboutEntry]));
     }
 
     let markdownVersions = true; // whether .md versions of web pages are looked for; the menu bar can change it too

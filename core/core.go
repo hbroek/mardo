@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 
+	"mardo/internal/about"
 	"mardo/internal/auth"
 	"mardo/internal/bookmarks"
 	"mardo/internal/bookmarks/linkagogo"
@@ -44,7 +45,7 @@ type Core struct {
 	bookmarksErr error
 	settings     settings.Settings
 	settingsPath string
-	licensesPath string // where Licenses writes the notices page; empty uses the temp directory
+	licensesPath string // where About writes the notices page; empty uses the temp directory
 	lggURL       string // LinkaGoGo API address; empty is the real one (tests set it)
 
 	pageMu    sync.Mutex
@@ -143,14 +144,16 @@ func (a *Core) ClearHistory()            { a.browser.ClearHistory() }
 // FullHistory opens the whole visit log as a generated markdown page.
 func (a *Core) FullHistory(tab int) page.Page { return a.browser.FullHistory(a.ctx, tab) }
 
-// Licenses opens the open source notices (the libraries Mardo includes and their licenses) as a markdown page.
-func (a *Core) Licenses(tab int) page.Page {
-	path := a.licensesPath
-	if path == "" {
-		path = filepath.Join(os.TempDir(), "mardo-licenses.md")
+// About opens the About page: version, build date and a link to the open source licenses.
+func (a *Core) About(tab int) page.Page {
+	licenses := a.licensesPath
+	if licenses == "" {
+		licenses = filepath.Join(os.TempDir(), "mardo-licenses.md")
 	}
+	path := filepath.Join(filepath.Dir(licenses), "about.md")
 	if os.MkdirAll(filepath.Dir(path), 0o755) == nil {
-		_ = os.WriteFile(path, []byte(notices.Reading()), 0o644) // if this fails, opening the file shows the error
+		_ = os.WriteFile(licenses, []byte(notices.Reading()), 0o644) // the page's link goes to this file
+		_ = os.WriteFile(path, []byte(about.Current().Markdown(filepath.Base(licenses))), 0o644)
 	}
 	return a.browser.Navigate(a.ctx, tab, path)
 }

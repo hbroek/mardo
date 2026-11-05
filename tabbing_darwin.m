@@ -44,12 +44,13 @@ void routeSelectAll(void) {
             if (item.action == @selector(copy:)) copyAt = [edit indexOfItem:item];
             if (item.action == @selector(copyAllClicked:)) haveCopyAll = YES;
         }
-        // Site Credentials and the AI setup are settings of the app, so they go at the top of the Mardo menu.
+        // About Mardo is the first entry of the Mardo menu, then the app's settings: Site Credentials and the AI setup.
         NSMenu *app = [[[NSApp mainMenu] itemAtIndex:0] submenu];
         if (app && [app indexOfItemWithTitle:@"AI Assistant…"] < 0) {
             NSInteger at = 0; // at the top: Wails' app menu starts with Hide
-            NSArray *entries = @[@[@"Site Credentials…", @"credentials"], @[@"AI Assistant…", @"ai"]];
+            NSArray *entries = @[@[@"About Mardo", @"about"], @[@"-"], @[@"Site Credentials…", @"credentials"], @[@"AI Assistant…", @"ai"]];
             for (NSArray *e in entries) {
+                if ([e[0] isEqualToString:@"-"]) { [app insertItem:[NSMenuItem separatorItem] atIndex:at++]; continue; }
                 NSMenuItem *m = [[NSMenuItem alloc] initWithTitle:e[0] action:@selector(appItemClicked:) keyEquivalent:@""];
                 m.target = target;
                 m.representedObject = e[1];
