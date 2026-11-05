@@ -7,7 +7,14 @@ BUILT := $(shell date -u +%Y-%m-%d)
 export CGO_CFLAGS  += -mmacosx-version-min=13.0
 export CGO_LDFLAGS += -mmacosx-version-min=13.0
 
-.PHONY: dev build test windows linux sign notarize ios-framework ios-web ios-app ios-device ios-archive
+.PHONY: site dev build test windows linux sign notarize ios-framework ios-web ios-app ios-device ios-archive
+
+# The website page written in markdown (docs/find-markdown.md) becomes its HTML twin. Run it after editing the .md.
+site:
+	pandoc -f gfm -t html5 --no-highlight --template docs/_page.html -V name=find-markdown \
+		-V pagetitle="Where can I find markdown on the web?" \
+		-V description="Feeds, sites and directories that serve Markdown directly, and how to search for more." \
+		-o docs/find-markdown.html docs/find-markdown.md
 
 dev:
 	$(WAILS) dev

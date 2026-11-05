@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where can I find markdown on the web?</title>
+<meta name="description" content="Feeds, sites and directories that serve Markdown directly, and how to search for more.">
+<link rel="icon" href="icon.png">
+<link rel="canonical" href="https://mardo.henryvandenbroek.com/find-markdown.html">
+<link rel="alternate" type="text/markdown" href="find-markdown.md">
+<style>
+body{font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:56rem;margin:2rem auto;padding:0 1.2rem;color:#1c1b22}
+h1,h2,h3{line-height:1.25}a{color:#4f46e5}
+code,pre{font:0.88em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{background:#f1effc;padding:.1em .3em;border-radius:4px}
+pre{background:#f1effc;padding:.8rem 1rem;border-radius:8px;overflow-x:auto}pre code{background:none;padding:0}
+table{border-collapse:collapse;display:block;overflow-x:auto;margin:1rem 0}
+th,td{border:1px solid #d9d6ee;padding:.4rem .7rem;text-align:left;vertical-align:top}th{background:#f1effc}
+hr{border:0;border-top:1px solid #d9d6ee;margin:2rem 0}
+@media(prefers-color-scheme:dark){body{background:#15141a;color:#e8e6f0}a{color:#a5a0ff}code,pre,th{background:#211f2e}th,td,hr{border-color:#3a3750}hr{border-top-color:#3a3750}}
+</style>
+<script defer data-domain="mardo.henryvandenbroek.com" src="https://analytics.henryvandenbroek.com/js/webpulse.js"></script>
+</head>
+<body>
+<p><a href="/">&larr; Mardo</a></p>
+<h1 id="where-to-find-markdown-on-the-web">Where to Find Markdown on the
+Web</h1>
+<p>A guide to feeds, sites and directories that serve <strong>Markdown
+directly</strong>, plus search tricks for finding more.</p>
+<p><em>Compiled November 5, 2026. Everything here was found through web
+search; the links were not fetched one by one, so test before you rely
+on them.</em></p>
+<hr />
+<h2 id="contents">Contents</h2>
+<ol type="1">
+<li><a href="#1-the-four-ways-the-web-serves-markdown">The four ways the
+web serves Markdown</a></li>
+<li><a href="#2-rss-feeds-with-sourcemarkdown">RSS feeds with
+<code>&lt;source:markdown&gt;</code></a></li>
+<li><a
+href="#3-feed-readers-and-tools-that-understand-markdown-in-rss">Feed
+readers and tools that understand Markdown in RSS</a></li>
+<li><a href="#4-sites-with-md-versions-of-their-pages">Sites with
+<code>.md</code> versions of their pages</a></li>
+<li><a href="#5-sites-that-answer-accept-textmarkdown">Sites that answer
+<code>Accept: text/markdown</code></a></li>
+<li><a href="#6-platforms-that-make-every-site-markdown-ready">Platforms
+that make every site Markdown-ready</a></li>
+<li><a href="#7-llmstxt-directories"><code>llms.txt</code>
+directories</a></li>
+<li><a href="#8-how-to-search-for-more">How to search for more</a></li>
+<li><a href="#9-checkers-and-test-commands">Checkers and test
+commands</a></li>
+</ol>
+<hr />
+<h2 id="1-the-four-ways-the-web-serves-markdown">1. The four ways the
+web serves Markdown</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>What it looks like</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong><code>&lt;source:markdown&gt;</code> in RSS</strong></td>
+<td>Each feed item carries the original Markdown next to the usual HTML
+<code>&lt;description&gt;</code></td>
+<td>Blogs, microblogs, feed readers</td>
+</tr>
+<tr class="even">
+<td><strong><code>.md</code> URL suffix</strong></td>
+<td><code>example.com/docs/page</code> →
+<code>example.com/docs/page.md</code></td>
+<td>Documentation sites, some blogs</td>
+</tr>
+<tr class="odd">
+<td><strong>Content negotiation</strong></td>
+<td>Same URL; send the header <code>Accept: text/markdown</code> and get
+Markdown back instead of HTML</td>
+<td>Agents, scripts, CDN-level support</td>
+</tr>
+<tr class="even">
+<td><strong><code>llms.txt</code> /
+<code>llms-full.txt</code></strong></td>
+<td>A Markdown index at the site root that links to Markdown versions of
+the pages</td>
+<td>Finding a site's Markdown pages</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-rss-feeds-with-sourcemarkdown">2. RSS feeds with
+<code>&lt;source:markdown&gt;</code></h2>
+<p><code>source:markdown</code> is an element from Dave Winer's
+<strong>Source namespace</strong> for RSS. A reader that can render
+Markdown can use it in place of the item's
+<code>&lt;description&gt;</code>. The namespace is declared at the top
+of the feed:</p>
+<pre class="xml"><code>&lt;rss version=&quot;2.0&quot; xmlns:source=&quot;https://source.scripting.com/&quot;&gt;
+  ...
+  &lt;item&gt;
+    &lt;description&gt;&amp;lt;p&amp;gt;Watching &amp;lt;a href=&quot;...&quot;&amp;gt;Edge of Tomorrow&amp;lt;/a&amp;gt;&amp;lt;/p&amp;gt;&lt;/description&gt;
+    &lt;source:markdown&gt;Watching [Edge of Tomorrow](https://www.themoviedb.org/movie/137113)&lt;/source:markdown&gt;
+  &lt;/item&gt;</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th>Feed / source</th>
+<th>Feed URL</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Scripting News</strong> (Dave Winer)</td>
+<td><code>http://scripting.com/rss.xml</code></td>
+<td>Supports <code>source:markdown</code>, per Winer's GitHub issue
+#336</td>
+</tr>
+<tr class="even">
+<td><strong>daveverse</strong> (Dave Winer, written in WordLand)</td>
+<td><code>https://wordland.social/scripting/246529703/rss.xml</code></td>
+<td>WordLand "shadow feed": every item includes
+<code>source:markdown</code></td>
+</tr>
+<tr class="odd">
+<td><strong>Manton Reece</strong> (Micro.blog)</td>
+<td><code>https://www.manton.org/feed.xml</code></td>
+<td>Micro.blog adds <code>source:markdown</code> to every blog by
+default</td>
+</tr>
+<tr class="even">
+<td><strong>Any Micro.blog blog</strong></td>
+<td><code>https://&lt;blog&gt;/feed.xml</code></td>
+<td>Same default for all Micro.blog-hosted blogs</td>
+</tr>
+<tr class="odd">
+<td><strong>Any WordLand user</strong></td>
+<td>WordLand shadow feed for each WordPress site</td>
+<td>Only includes posts written in WordLand</td>
+</tr>
+<tr class="even">
+<td><strong>lqdev.me</strong> (Luis Quintanilla)</td>
+<td>See the site's feeds</td>
+<td>Added Markdown to its RSS feeds after the Micro.blog
+announcement</td>
+</tr>
+<tr class="odd">
+<td><strong>Source namespace spec</strong></td>
+<td><code>https://source.scripting.com/markdown.opml</code></td>
+<td>Winer's page on Markdown in RSS, published as an OPML outline</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Related namespaces</strong></p>
+<ul>
+<li><strong><code>now:markdown</code></strong> – from Colin Walker's
+<em>Now</em> namespace, for sharing /now-page updates in Markdown. Works
+the same way as <code>source:markdown</code>. <a
+href="https://github.com/colin-walker/Now-Namespace">Spec</a></li>
+<li><strong><code>derived:code</code></strong> – from Rubenerd's
+<em>derived</em> namespace. Links to a post's original Markdown source
+file instead of embedding it:
+<code>&lt;derived:code type="text/markdown" url="..."/&gt;</code>. <a
+href="https://rubenerd.com/derived">Spec</a></li>
+</ul>
+<hr />
+<h2 id="3-feed-readers-and-tools-that-understand-markdown-in-rss">3.
+Feed readers and tools that understand Markdown in RSS</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Tool</th>
+<th>Type</th>
+<th>What it does with Markdown</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a
+href="https://netnewswire.blog/2025/11/05/netnewswire-for-mac-and-ios.html">NetNewsWire
+6.2+</a></td>
+<td>Mac/iOS feed reader</td>
+<td>Saves <code>source:markdown</code> and renders it in the article
+view</td>
+</tr>
+<tr class="even">
+<td>FeedLand</td>
+<td>Web feed reader (Dave Winer)</td>
+<td>Reads and passes along Markdown from feeds</td>
+</tr>
+<tr class="odd">
+<td>WordLand (<code>wordland.social</code>)</td>
+<td>Writing app for WordPress</td>
+<td>Stores posts in Markdown and publishes feeds that include
+<code>source:markdown</code></td>
+</tr>
+<tr class="even">
+<td><a href="https://micro.blog">Micro.blog</a></td>
+<td>Blog host</td>
+<td>Puts the original Markdown in every feed</td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/a8cteam51/team51-markdown-rss">Markdown
+RSS (a8cteam51)</a></td>
+<td>WordPress plugin</td>
+<td>Adds <code>&lt;source:markdown&gt;</code> to WordPress RSS
+feeds</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/roots/post-content-to-markdown">Post
+Content to Markdown (Roots)</a></td>
+<td>WordPress plugin</td>
+<td>Full Markdown feed at <code>/feed/markdown/</code>, <code>.md</code>
+URLs, <code>Accept: text/markdown</code>, and an
+<code>&lt;atom:link type="text/markdown"&gt;</code> in the RSS feed so
+readers can find it</td>
+</tr>
+<tr class="odd">
+<td><a
+href="https://github.com/scripting/feedToMasto">feedToMasto</a></td>
+<td>Node app</td>
+<td>Posts feeds to Mastodon, Bluesky and WordPress; can send
+<code>source:markdown</code> instead of HTML</td>
+</tr>
+<tr class="even">
+<td>FreshRSS</td>
+<td>Self-hosted reader</td>
+<td>Support requested in <a
+href="https://github.com/FreshRSS/FreshRSS/issues/8191">issue #8191</a>,
+not confirmed as shipped</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-sites-with-md-versions-of-their-pages">4. Sites with
+<code>.md</code> versions of their pages</h2>
+<p>Add <code>.md</code> to a page URL (or follow the "Markdown" link on
+the page).</p>
+<table>
+<thead>
+<tr class="header">
+<th>Site</th>
+<th>Example</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Vercel</strong> blog &amp; changelog</td>
+<td><code>vercel.com/blog/&lt;post&gt;.md</code></td>
+<td>Also has Markdown sitemaps: <code>vercel.com/blog/sitemap.md</code>,
+<code>vercel.com/changelog/sitemap.md</code></td>
+</tr>
+<tr class="even">
+<td><strong>Stripe</strong> docs</td>
+<td><code>docs.stripe.com/&lt;page&gt;.md</code></td>
+<td>Example:
+<code>docs.stripe.com/stripe-apps/pkce-oauth-flow.md</code></td>
+</tr>
+<tr class="odd">
+<td><strong>Claude Code</strong> docs</td>
+<td><code>code.claude.com/docs/en/memory.md</code></td>
+<td>Index at <code>code.claude.com/docs/llms.txt</code></td>
+</tr>
+<tr class="even">
+<td><strong>Cloudflare</strong> developer docs</td>
+<td><code>developers.cloudflare.com/&lt;path&gt;/index.md</code></td>
+<td>Also answers <code>Accept: text/markdown</code></td>
+</tr>
+<tr class="odd">
+<td><strong>GitBook</strong> docs</td>
+<td><code>gitbook.com/docs/&lt;page&gt;.md</code></td>
+<td>All GitBook-hosted docs offer this</td>
+</tr>
+<tr class="even">
+<td><strong>Google Search Central</strong> docs</td>
+<td>Download menu on each page</td>
+<td>Files are <code>.md.txt</code>; Google says they aren't used for
+Search</td>
+</tr>
+<tr class="odd">
+<td><strong>GeekNews</strong> (Korean tech news)</td>
+<td><code>news.hada.io/topic/21957.md</code></td>
+<td>Every story is available as Markdown</td>
+</tr>
+<tr class="even">
+<td><strong>Flavio Copes</strong></td>
+<td><code>flaviocopes.com/npm.md</code></td>
+<td>Every post has a <code>.md</code> version</td>
+</tr>
+<tr class="odd">
+<td><strong>HackMD</strong></td>
+<td><code>hackmd.io/@user/note.md</code></td>
+<td>Notes are written and stored in Markdown</td>
+</tr>
+<tr class="even">
+<td><strong>Any Discourse forum</strong></td>
+<td><code>&lt;forum&gt;/t/&lt;topic&gt;.md</code></td>
+<td>Topics and topic lists, on by default for hosted forums (<a
+href="https://blog.discourse.org/2026/10/markdown-endpoints-your-community-in-a-format-that-ai-agents-can-read/">announcement</a>)</td>
+</tr>
+<tr class="odd">
+<td><strong>Any WordPress site</strong> with the Roots plugin</td>
+<td><code>/&lt;post-slug&gt;.md</code></td>
+<td>See section 3</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-sites-that-answer-accept-textmarkdown">5. Sites that answer
+<code>Accept: text/markdown</code></h2>
+<p>Same URL as the web page; ask for Markdown in the request header:</p>
+<pre class="bash"><code>curl -H &quot;Accept: text/markdown&quot; https://blog.cloudflare.com/markdown-for-agents/</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th>Site</th>
+<th>What's covered</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Cloudflare Blog</strong> –
+<code>blog.cloudflare.com</code></td>
+<td>All posts</td>
+</tr>
+<tr class="even">
+<td><strong>Cloudflare Developer Docs</strong> –
+<code>developers.cloudflare.com</code></td>
+<td>All docs; the response includes an <code>x-markdown-tokens</code>
+header with an estimated token count</td>
+</tr>
+<tr class="odd">
+<td><strong>Vercel</strong> – <code>vercel.com/docs</code>,
+<code>/blog</code>, <code>/changelog</code></td>
+<td>Docs, blog and changelog; Markdown responses end with a
+<code>sitemap.md</code> link</td>
+</tr>
+<tr class="even">
+<td><strong>HackMD</strong> – <code>hackmd.io</code></td>
+<td>Notes</td>
+</tr>
+<tr class="odd">
+<td><strong>Mintlify-hosted docs</strong></td>
+<td>Every page (also <code>Accept: text/plain</code>)</td>
+</tr>
+<tr class="even">
+<td><strong>Discourse forums</strong></td>
+<td>Topics and topic lists</td>
+</tr>
+<tr class="odd">
+<td><strong>roots.io</strong></td>
+<td>Reference implementation used by acceptmarkdown.com</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-platforms-that-make-every-site-markdown-ready">6. Platforms
+that make every site Markdown-ready</h2>
+<p>If a site is built on one of these platforms, its pages are probably
+available as Markdown even if the site doesn't advertise it.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Platform</th>
+<th>Markdown support</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Cloudflare – Markdown for Agents</strong></td>
+<td>Converts HTML to Markdown at the edge for
+<code>Accept: text/markdown</code> requests. Beta, free on Pro, Business
+and Enterprise plans. The site owner has to turn it on</td>
+</tr>
+<tr class="even">
+<td><strong>Mintlify</strong> (docs host)</td>
+<td><code>.md</code> on every page, <code>Accept: text/markdown</code>,
+and automatic Markdown for known AI agents</td>
+</tr>
+<tr class="odd">
+<td><strong>GitBook</strong> (docs host)</td>
+<td><code>.md</code> on every page, plus <code>llms.txt</code></td>
+</tr>
+<tr class="even">
+<td><strong>Discourse</strong> (forums)</td>
+<td><code>.md</code> and <code>Accept: text/markdown</code> on every
+topic</td>
+</tr>
+<tr class="odd">
+<td><strong>Micro.blog</strong> (blogs)</td>
+<td><code>source:markdown</code> in every RSS feed</td>
+</tr>
+<tr class="even">
+<td><strong>WordLand</strong> (WordPress front-end)</td>
+<td><code>source:markdown</code> in its shadow feeds</td>
+</tr>
+<tr class="odd">
+<td><strong>Hugo</strong> (static sites)</td>
+<td>Can output a Markdown version of every page through output
+formats</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-llmstxt-directories">7. <code>llms.txt</code> directories</h2>
+<p>An <code>llms.txt</code> file is itself Markdown: an H1 with the site
+name, a blockquote summary, then H2 sections of links. Good
+<code>llms.txt</code> files link straight to <code>.md</code> pages.
+These directories list sites that have one:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Directory</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a
+href="https://directory.llmstxt.cloud/">directory.llmstxt.cloud</a></td>
+<td>Widely cited directory with thousands of entries</td>
+</tr>
+<tr class="even">
+<td><a href="https://llms-txt-hub.vercel.app/">llms.txt hub</a>
+(llmstxthub.com)</td>
+<td>About 1,240 sites, grouped by category. It's open to anyone, so
+expect some spam listings</td>
+</tr>
+<tr class="odd">
+<td><a
+href="https://github.com/krish-adi/llmstxt-site">llmstxt.site</a></td>
+<td>Community directory with token counts for each file</td>
+</tr>
+<tr class="even">
+<td>llmtxt.app</td>
+<td>Says it lists 1,300+ sites</td>
+</tr>
+<tr class="odd">
+<td><a href="https://trends.builtwith.com/robots/LLMS-Text">BuiltWith:
+LLMS Text trends</a></td>
+<td>Usage statistics</td>
+</tr>
+<tr class="even">
+<td><a href="https://llmstxt.org">llmstxt.org</a></td>
+<td>The proposal itself</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-how-to-search-for-more">8. How to search for more</h2>
+<h3 id="google">Google</h3>
+<p>Google's own documentation says <code>filetype:</code> matches
+<strong>either the HTTP <code>Content-Type</code> header or the file
+extension</strong>, so in principle it can find files served as
+<code>text/markdown</code>. In practice <code>filetype:</code> has been
+unreliable since 2024 and works best combined with <code>site:</code> or
+<code>inurl:</code>. These queries are worth trying (not yet
+tested):</p>
+<pre class="text"><code>filetype:md site:github.com &lt;topic&gt;
+filetype:md -site:github.com &lt;topic&gt;        # the &quot;-site:&quot; trick re-enables filetype:
+inurl:llms.txt &lt;topic&gt;
+inurl:&quot;llms-full.txt&quot;
+inurl:sitemap.md
+&quot;source:markdown&quot; inurl:rss
+&quot;source:markdown&quot; inurl:feed
+&quot;xmlns:source&quot; &quot;source.scripting.com&quot;</code></pre>
+<h3 id="github-code-search-needs-a-github-login">GitHub code search
+(needs a GitHub login)</h3>
+<pre class="text"><code>&quot;source:markdown&quot; path:*.xml              # feeds committed to repos
+&quot;xmlns:source&quot; path:*.xml
+&quot;rel=\&quot;alternate\&quot; type=\&quot;text/markdown\&quot;&quot;  # pages advertising a Markdown twin
+filename:llms.txt</code></pre>
+<h3 id="discovery-tags-to-look-for-in-a-pages-html">Discovery tags to
+look for in a page's HTML</h3>
+<pre class="html"><code>&lt;link rel=&quot;alternate&quot; type=&quot;text/markdown&quot; href=&quot;/page.md&quot;&gt;
+&lt;atom:link href=&quot;/feed/markdown/&quot; rel=&quot;alternate&quot; type=&quot;text/markdown&quot;/&gt;</code></pre>
+<hr />
+<h2 id="9-checkers-and-test-commands">9. Checkers and test commands</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://acceptmarkdown.com">acceptmarkdown.com</a></td>
+<td>Tests whether any URL serves Markdown (<code>Accept</code>,
+<code>Vary</code>, <code>406</code>) and tracks which AI agents send the
+header</td>
+</tr>
+<tr class="even">
+<td><a href="https://buildwithfern.com/agent-score">Fern Agent
+Score</a></td>
+<td>Scores documentation sites on <code>llms.txt</code>,
+<code>.md</code> URLs and content negotiation</td>
+</tr>
+<tr class="odd">
+<td>Mintlify score</td>
+<td>Similar scorecard; results are published as <code>.md</code>
+pages</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Check whether a URL serves Markdown:</strong></p>
+<pre class="bash"><code># Content negotiation
+curl -sI -H &quot;Accept: text/markdown&quot; https://vercel.com/docs | grep -i content-type
+
+# .md suffix
+curl -sI https://docs.stripe.com/stripe-apps/pkce-oauth-flow.md | grep -i content-type
+
+# Does a feed include source:markdown?
+curl -s https://www.manton.org/feed.xml | grep -c &quot;&lt;source:markdown&gt;&quot;</code></pre>
+<hr />
+<h2 id="sources">Sources</h2>
+<ul>
+<li><a
+href="https://www.manton.org/2025/11/11/markdown-in-rss.html">Manton
+Reece – Markdown in RSS</a></li>
+<li><a
+href="http://scripting.com/2022/07/19/152235.html?title=devNotesForMarkdownInRss">Scripting
+News – Dev notes for Markdown in RSS</a></li>
+<li><a
+href="https://github.com/scripting/Scripting-News/issues/336">Scripting
+News issue #336 – source:markdown in the Scripting News feed</a></li>
+<li><a href="https://github.com/scripting/wordlandDev/issues/3">WordLand
+shadow feeds</a> · <a
+href="https://gist.github.com/scripting/deca6d866b76d566b05673c94e8610de">daveverse
+feed sample</a></li>
+<li><a
+href="https://netnewswire.blog/2025/11/05/netnewswire-for-mac-and-ios.html">NetNewsWire
+6.2 release notes</a></li>
+<li><a
+href="https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents">Cloudflare
+– Markdown for Agents docs</a></li>
+<li><a
+href="https://vercel.com/blog/making-agent-friendly-pages-with-content-negotiation">Vercel
+– Making agent-friendly pages with content negotiation</a> · <a
+href="https://vercel.com/docs/agent-resources/markdown-access">Vercel –
+Markdown access</a></li>
+<li><a href="https://mintlify.com/docs/ai/markdown-export">Mintlify –
+Markdown export</a></li>
+<li><a
+href="https://blog.discourse.org/2026/10/markdown-endpoints-your-community-in-a-format-that-ai-agents-can-read/">Discourse
+– Markdown endpoints</a></li>
+<li><a
+href="https://hackmd.io/blog/2026/03/22/agentic-workflow-2026">HackMD –
+Markdown-native content negotiation</a></li>
+<li><a
+href="https://roots.io/serve-your-wordpress-posts-as-markdown.md">Roots
+– Serve your WordPress posts as Markdown</a></li>
+<li><a
+href="https://specification.website/spec/agent-readiness/markdown-source-endpoints/">Website
+Spec – Markdown source endpoints</a></li>
+<li><a
+href="https://developers.google.com/search/docs/monitor-debug/search-operators">Google
+Search Central – Search operators</a></li>
+<li><a
+href="https://searchenginejournal.com/filetype-search-operator-missing/509656">Search
+Engine Journal – filetype: operator issue</a> · <a
+href="https://booleanstrings.com/2024/02/27/googles-filetype-decline/">Boolean
+Strings – filetype: workaround</a></li>
+<li><a
+href="https://www.seroundtable.com/google-adds-markdown-files-to-help-docs-41342.html">Search
+Engine Roundtable – Google adds Markdown files to help docs</a></li>
+</ul>
+<p><a href="/">Back to Mardo</a> &middot; <a href="find-markdown.md">This page as Markdown</a></p>
+</body>
+</html>

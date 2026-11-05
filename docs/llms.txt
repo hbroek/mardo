@@ -1,0 +1,14 @@
+# Mardo
+
+> Mardo is a free, open source browser and author for markdown, for macOS, Windows and Linux (iPhone and iPad in development). It asks servers for markdown, converts other pages, and saves changes back where the server allows.
+
+## Pages
+
+- [Mardo](https://mardo.henryvandenbroek.com/index.md): what Mardo does, how a page gets there, the AI tools and downloads
+- [Where can I find markdown on the web?](https://mardo.henryvandenbroek.com/find-markdown.md): feeds, sites and directories that serve Markdown directly, and how to search for more
+- [Privacy policy](https://mardo.henryvandenbroek.com/privacy.md): what Mardo stores, what it sends, and to whom
+
+## Project
+
+- [Source code](https://github.com/hbroek/mardo): the repository and README
+- [Releases](https://github.com/hbroek/mardo/releases/latest): downloads for each system
