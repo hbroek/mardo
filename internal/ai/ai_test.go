@@ -367,3 +367,26 @@ func TestUnfence(t *testing.T) {
 		}
 	}
 }
+
+func TestFitKeepsInstructionsAndQuestion(t *testing.T) {
+	long := strings.Repeat("x", 500)
+	msgs := []Message{{"system", "page " + long}, {"user", "old question"}, {"assistant", "old answer"}, {"user", "new question"}}
+	got := Fit(msgs, 520)
+	if len(got) != 2 || got[0].Role != "system" || got[1].Content != "new question" {
+		t.Fatalf("older turns should go first: %+v", got)
+	}
+	got = Fit([]Message{{"system", long}, {"user", "q"}}, 100)
+	total := 0
+	for _, m := range got {
+		total += len([]rune(m.Content))
+	}
+	if total > 100 || !strings.HasSuffix(got[0].Content, "cut to fit the model]") || got[1].Content != "q" {
+		t.Errorf("the longest message should be cut: %d %+v", total, got)
+	}
+	if got := Fit(msgs, 0); len(got) != 4 {
+		t.Errorf("no limit changes nothing: %+v", got)
+	}
+	if msgs[0].Content[:4] != "page" || len(msgs) != 4 {
+		t.Error("the input was changed")
+	}
+}

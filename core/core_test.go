@@ -730,3 +730,82 @@ func TestConvertPageRulesAndMarkdownPages(t *testing.T) {
 		t.Error("an unknown way was accepted")
 	}
 }
+
+// deviceHost is a host with a model of its own, as an iPhone has.
+type deviceHost struct {
+	noHost
+	why   string
+	asked []string
+}
+
+func (h *deviceHost) DeviceAIStatus() string { return h.why }
+func (h *deviceHost) DeviceAIChat(messagesJSON string) (string, error) {
+	h.asked = append(h.asked, messagesJSON)
+	return "The device says hello.", nil
+}
+
+func TestDeviceModelIsTheDefaultWhereThereIsOne(t *testing.T) {
+	host := &deviceHost{}
+	app := New(Config{Dir: t.TempDir(), Host: host})
+	info := app.AISettings()
+	if info.Preset != "device" || !info.Configured || !info.Consented || len(info.Presets) == 0 || info.Presets[0].ID != "device" {
+		t.Fatalf("settings: %+v", info)
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("<html><head><title>T</title></head><body><main><p>Some text of the page.</p></main></body></html>"))
+	}))
+	defer srv.Close()
+	got, err := app.SummarizePage("", srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got.HTML, "The device says hello.") || len(host.asked) != 1 || !strings.Contains(host.asked[0], "Some text of the page.") {
+		t.Errorf("summary %+v, asked %v", got, host.asked)
+	}
+	if !strings.Contains(got.Source, "Apple Intelligence") {
+		t.Errorf("source %q", got.Source)
+	}
+	// choosing another provider replaces it, and choosing the device again brings it back
+	if err := app.SaveAI(AIInput{Preset: "ollama", BaseURL: "http://127.0.0.1:11434/v1", Model: "llama3.2"}, ""); err != nil {
+		t.Fatal(err)
+	}
+	if info := app.AISettings(); info.Preset != "ollama" {
+		t.Errorf("after choosing ollama: %+v", info)
+	}
+	if err := app.SaveAI(AIInput{Preset: "device", BaseURL: "device://apple"}, ""); err != nil {
+		t.Fatal(err)
+	}
+	if info := app.AISettings(); info.Preset != "device" || !info.Consented {
+		t.Errorf("after choosing the device: %+v", info)
+	}
+	if reply, err := app.TestAI(AIInput{BaseURL: "device://apple"}, ""); err != nil || reply != "The device says hello." {
+		t.Errorf("test: %q %v", reply, err)
+	}
+}
+
+func TestDeviceModelThatCannotBeUsedIsNotOffered(t *testing.T) {
+	app := New(Config{Dir: t.TempDir(), Host: &deviceHost{why: "Apple Intelligence is turned off in Settings"}})
+	info := app.AISettings()
+	if info.Configured || info.Preset == "device" {
+		t.Errorf("settings: %+v", info)
+	}
+	for _, p := range info.Presets {
+		if p.ID == "device" {
+			t.Error("the device model is offered although it cannot be used")
+		}
+	}
+	if err := app.SaveAI(AIInput{Preset: "device", BaseURL: "device://apple"}, ""); err == nil || !strings.Contains(err.Error(), "turned off") {
+		t.Errorf("save: %v", err)
+	}
+}
+
+func TestDeviceModelCannotRewriteALongDocument(t *testing.T) {
+	app := New(Config{Dir: t.TempDir(), Host: &deviceHost{}})
+	if _, err := app.EditPage("", "T", strings.Repeat("word ", 2000), "fix it"); err == nil || !strings.Contains(err.Error(), "too small") {
+		t.Errorf("edit: %v", err)
+	}
+	if got, err := app.EditPage("", "T", "# Short", "fix it"); err != nil || got.Text == "" {
+		t.Errorf("a short document: %+v %v", got, err)
+	}
+}

@@ -102,6 +102,17 @@ func (a *Core) AISettings() AIInfo {
 	cfg := a.settings.AI
 	a.bmMu.RUnlock()
 	info := AIInfo{Presets: ai.Presets, Preset: cfg.Preset, BaseURL: cfg.BaseURL, Model: cfg.Model, Configured: cfg.BaseURL != ""}
+	if a.deviceAvailable() {
+		info.Presets = append([]ai.Preset{devicePreset()}, ai.Presets...)
+		if cfg.BaseURL == "" { // nothing chosen yet: the device's own model is the default
+			info.Preset, info.BaseURL, info.Configured, info.Consented = deviceAIPreset, deviceAIURL, true, true
+			return info
+		}
+	}
+	if isDeviceURL(cfg.BaseURL) {
+		info.Consented = true // it never leaves the device
+		return info
+	}
 	if origin, remote, err := aiOrigin(cfg.BaseURL); err == nil {
 		info.HasKey = a.aiHasKey(origin)
 		info.Consented = !remote || cfg.Consent == origin
@@ -114,6 +125,12 @@ func (a *Core) AISettings() AIInfo {
 func (a *Core) SaveAI(in AIInput, apiKey string) error {
 	in.BaseURL = strings.TrimSpace(in.BaseURL)
 	in.Model = strings.TrimSpace(in.Model)
+	if isDeviceURL(in.BaseURL) {
+		if _, err := a.deviceModel(); err != nil {
+			return err
+		}
+		return a.storeAI(settings.AI{Preset: deviceAIPreset, BaseURL: deviceAIURL})
+	}
 	origin, remote, err := aiOrigin(in.BaseURL)
 	if err != nil {
 		return err
@@ -136,6 +153,11 @@ func (a *Core) SaveAI(in AIInput, apiKey string) error {
 	if remote {
 		cfg.Consent = origin
 	}
+	return a.storeAI(cfg)
+}
+
+// storeAI keeps the provider in the settings.
+func (a *Core) storeAI(cfg settings.AI) error {
 	a.bmMu.Lock()
 	a.settings.AI = cfg
 	a.bmMu.Unlock()
@@ -149,20 +171,40 @@ func (a *Core) SaveAI(in AIInput, apiKey string) error {
 
 // TestAI checks a provider with a one-word request, using the typed key or the saved one.
 func (a *Core) TestAI(in AIInput, apiKey string) (string, error) {
+	if isDeviceURL(in.BaseURL) {
+		m, err := a.deviceModel()
+		if err != nil {
+			return "", err
+		}
+		return m.Chat(a.bookmarkCtx(), "Answer with the single word OK.", "ping")
+	}
 	c := &ai.Client{BaseURL: in.BaseURL, Model: in.Model, Key: strings.TrimSpace(apiKey), Authorize: a.auth.Apply, MaxTokens: 16}
 	return c.Chat(a.bookmarkCtx(), "Answer with the single word OK.", "ping")
 }
 
 // aiClient is the configured provider, if the user has allowed using it.
-func (a *Core) aiClient() (*ai.Client, error) {
+func (a *Core) aiClient() (aiProvider, error) {
 	info := a.AISettings()
 	if !info.Configured {
 		return nil, errors.New("no AI provider is set up yet (menu → AI assistant)")
+	}
+	if isDeviceURL(info.BaseURL) {
+		m, err := a.deviceModel()
+		if err != nil {
+			return nil, fmt.Errorf("%w (menu → AI assistant to choose another provider)", err)
+		}
+		return m, nil
 	}
 	if !info.Consented {
 		return nil, errors.New("sending page text to this AI server is not allowed yet (menu → AI assistant)")
 	}
 	return &ai.Client{BaseURL: info.BaseURL, Model: info.Model, Authorize: a.auth.Apply}, nil
+}
+
+// aiProvider is the model that answers: a server, or the device's own.
+type aiProvider interface {
+	ai.Chatter
+	ai.Completer
 }
 
 // pageCache remembers the text of recently read pages, so a conversation about
@@ -414,7 +456,14 @@ func (a *Core) EditPage(requestID, title, current, instruction string) (AIEdit, 
 	if err != nil {
 		return AIEdit{}, err
 	}
-	c.MaxTokens = max(ai.DefaultMaxTokens, utf8.RuneCountInString(current)/2+4096) // the whole document comes back, besides any thinking
+	switch m := c.(type) {
+	case *ai.Client:
+		m.MaxTokens = max(ai.DefaultMaxTokens, utf8.RuneCountInString(current)/2+4096) // the whole document comes back, besides any thinking
+	case ai.Native:
+		if utf8.RuneCountInString(current) > m.MaxRunes/3 { // the whole document must go in and come back out of its small window
+			return AIEdit{}, errors.New("the model on this device is too small to rewrite a document this long; choose another provider (menu → AI assistant)")
+		}
+	}
 	ctx, done := a.aiContext(requestID)
 	defer done()
 	started := time.Now()

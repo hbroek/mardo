@@ -253,6 +253,9 @@ function render() {
     content.scrollTop = 0;
 }
 
+// A message from another part of the page (the AI settings), shown the way a toast is.
+document.addEventListener('mardo-notice', (e) => toast(e.detail.text, false, e.detail.ms));
+
 // --- save as markdown ---
 
 let toastTimer = 0;

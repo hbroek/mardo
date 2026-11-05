@@ -30,6 +30,10 @@ type Host interface {
 	Emit(event, dataJSON string)
 	// SetChecked ticks a menu item; a phone has no menu bar and can ignore it.
 	SetChecked(id string, on bool)
+	// AIStatus is "" when the device's own language model (Apple Intelligence) can be used, else why it cannot.
+	AIStatus() string
+	// AIChat has the device's model answer a conversation; messagesJSON is [{"role": "system", "content": "..."}, ...].
+	AIChat(messagesJSON string) (string, error)
 }
 
 // Secrets is the keychain. Get answers "" when nothing is stored under the name.
@@ -166,6 +170,12 @@ func (a hostAdapter) Emit(event string, data any) {
 }
 
 func (a hostAdapter) SetChecked(id string, on bool) { a.h.SetChecked(id, on) }
+
+// The device's language model, offered to the core as core.DeviceAI.
+func (a hostAdapter) DeviceAIStatus() string { return a.h.AIStatus() }
+func (a hostAdapter) DeviceAIChat(messagesJSON string) (string, error) {
+	return a.h.AIChat(messagesJSON)
+}
 
 type secretStore struct{ s Secrets }
 

@@ -18,6 +18,25 @@ final class DeviceHost: NSObject, MobileHostProtocol, UIDocumentPickerDelegate {
 
     // MARK: MobileHostProtocol
 
+    /// Whether Apple Intelligence can answer, and if not, why. The core offers it as the default AI provider.
+    func aiStatus() -> String { DeviceAI.status() }
+
+    /// Has Apple Intelligence answer a conversation. The core calls this off the main thread, so it waits for the model here.
+    func aiChat(_ messagesJSON: String?, error: NSErrorPointer) -> String {
+        guard let data = messagesJSON?.data(using: .utf8), let list = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return "" }
+        let messages = list.map { (role: $0["role"] as? String ?? "user", content: $0["content"] as? String ?? "") }
+        let done = DispatchSemaphore(value: 0)
+        var answer = ""
+        var failure: Error?
+        Task {
+            do { answer = try await DeviceAI.chat(messages) } catch let e { failure = e }
+            done.signal()
+        }
+        done.wait()
+        if let failure { error?.pointee = failure as NSError }
+        return answer
+    }
+
     /// Shows the document picker and waits for it. The core calls this off the main thread (see Bridge).
     /// The file is opened where it is, so saving writes back to it, and access to it is kept across restarts.
     func pickOpen(_ title: String?, filtersJSON: String?, error: NSErrorPointer) -> String {

@@ -31,8 +31,11 @@ function refresh() {
     const remote = host !== '' && !isLocal(host);
     $('ai-note').hidden = !p?.note;
     $('ai-note').textContent = p?.note ?? '';
-    $('ai-consent-wrap').hidden = !remote;
-    $('ai-consent-text').textContent = remote ? `Allow sending page text to ${host}` : '';
+    // Apple Intelligence on the device has no server, model or key to set, and sends nothing anywhere.
+    const device = $('ai-preset').value === 'device';
+    for (const id of ['ai-url', 'ai-model', 'ai-key']) $(id).closest('label').hidden = device;
+    $('ai-consent-wrap').hidden = !remote || device;
+    $('ai-consent-text').textContent = remote && !device ? `Allow sending page text to ${host}` : '';
     const sameServer = info.configured && info.hasKey && info.baseUrl.trim() === $('ai-url').value.trim();
     $('ai-key').placeholder = sameServer ? '(saved \u2013 leave empty to keep it)' : (p?.keyRequired ? 'required' : 'optional');
 }
@@ -53,9 +56,25 @@ export const newRequestId = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.
 /** Stops the request with this id (and the call to the model) on the Go side. */
 export const cancelRequest = (id) => { CancelAI(id).catch(() => {}); };
 
+const NOTICE_KEY = 'aiDeviceNotice';
+
+/** The first time the device's own model answers, say so, and that another one can be chosen. */
+function tellAboutDeviceModel() {
+    try {
+        if (localStorage.getItem(NOTICE_KEY)) return;
+        localStorage.setItem(NOTICE_KEY, '1');
+    } catch { /* told again next time */ }
+    document.dispatchEvent(new CustomEvent('mardo-notice', {detail: {
+        text: 'The AI here is Apple Intelligence, running on this device: page text never leaves it. It is a small model, so long pages are cut short. For a bigger one, choose another provider under \u2630 > AI assistant.',
+        ms: 15000,
+    }}));
+}
+
 export async function aiReady() {
     const i = await AISettings();
-    return i.configured && i.consented;
+    const ready = i.configured && i.consented;
+    if (ready && i.preset === 'device') tellAboutDeviceModel();
+    return ready;
 }
 
 export async function openAI() {
@@ -111,6 +130,7 @@ export function initAI() {
 export async function describeProvider() {
     try {
         const info = await AISettings();
+        if (info.preset === 'device') return 'Apple Intelligence, on this device';
         const preset = info.presets.find((p) => p.id === info.preset);
         const model = info.model ? `the model ${info.model}` : 'the server\'s default model';
         const provider = preset && preset.id !== 'custom' ? ` (${preset.name})` : '';

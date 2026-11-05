@@ -29,7 +29,7 @@ func (a *Core) ConvertPage(requestID, rawURL, how string) (Converted, error) {
 	if how != "rules" && how != "ai" {
 		return Converted{}, fmt.Errorf("unknown way to convert a page: %q", how)
 	}
-	var c *ai.Client
+	var c aiProvider
 	if how == "ai" {
 		var err error
 		if c, err = a.aiClient(); err != nil {
@@ -61,7 +61,11 @@ func (a *Core) ConvertPage(requestID, rawURL, how string) (Converted, error) {
 		if strings.TrimSpace(simple) == "" {
 			return Converted{}, errors.New("the page has nothing to convert")
 		}
-		out.Truncated = len([]rune(simple)) > ai.MaxPageRunes
+		limit := ai.MaxPageRunes
+		if n, ok := c.(ai.Native); ok {
+			limit = n.MaxRunes
+		}
+		out.Truncated = len([]rune(simple)) > limit
 		started := time.Now()
 		reply, err := ai.ConvertHTML(ctx, c, title, res.URL, simple)
 		if err != nil {

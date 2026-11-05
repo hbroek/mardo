@@ -804,3 +804,6 @@ html.phone input, html.phone textarea, html.phone select, html.phone .source-edi
 .convert-bar button.primary { background: var(--grad-btn); border-color: transparent; color: #fff; }
 .convert-bar button[hidden] { display: none; }
 html.phone .convert-bar button { min-height: 44px; }
+
+/* a label is display: flex in dialogs, which would otherwise win over the hidden attribute */
+dialog label[hidden] { display: none; }

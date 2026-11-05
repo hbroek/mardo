@@ -25,6 +25,10 @@ func (h *fakeHost) PickSave(title, dir, name, filters string) (string, error) {
 func (h *fakeHost) Emit(event, data string) { h.events = append(h.events, event+" "+data) }
 func (h *fakeHost) SetChecked(string, bool) {}
 
+func (h *fakeHost) AIStatus() string { return "" }
+
+func (h *fakeHost) AIChat(string) (string, error) { return "from the device", nil }
+
 type fakeSecrets map[string]string
 
 func (s fakeSecrets) Get(name string) string       { return s[name] }
