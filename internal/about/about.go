@@ -10,7 +10,7 @@ import (
 
 // Version is the release number. It is the same as MARKETING_VERSION in ios/project.yml and productVersion in
 // wails.json, and a test keeps them equal.
-var Version = "0.12.0"
+var Version = "0.13.0"
 
 // Date is when the build was made (2006-01-02). The Makefile sets it with -ldflags; without it the date of the
 // commit is used, and failing that it stays empty.
