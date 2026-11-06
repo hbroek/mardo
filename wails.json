@@ -8,7 +8,7 @@
   "frontend:dev:serverUrl": "auto",
   "info": {
     "productName": "Mardo",
-    "productVersion": "0.13.0",
+    "productVersion": "0.13.1",
     "fileAssociations": [
       {"ext": "md", "name": "Markdown document", "description": "Markdown document", "iconName": "iconfile", "role": "Editor"},
       {"ext": "markdown", "name": "Markdown document", "description": "Markdown document", "iconName": "iconfile", "role": "Editor"}
