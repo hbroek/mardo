@@ -9,8 +9,10 @@ Text and settings to paste into App Store Connect, and the steps to upload a bui
 2. App Store Connect > Apps > + > New App: platform iOS, name Mardo, primary language English,
    bundle ID `com.henryvandenbroek.mardo`, SKU `mardo-ios`.
 3. Agreements, Tax, and Banking: accept the Free Apps agreement.
-4. `make ios-archive TEAM=8YUXRC9P9J BUILD=1` archives and uploads. Raise BUILD for each upload of one version.
-   The version number is `MARKETING_VERSION` in `ios/project.yml`.
+4. `make ios-archive TEAM=8YUXRC9P9J BUILD=1` archives and opens the archive in Xcode's Organizer. There click
+   Distribute App > App Store Connect > Upload. (Uploading from the command line hung every time.) Raise BUILD for
+   each upload of one version. The version number is `MARKETING_VERSION` in `ios/project.yml`.
+   If the upload sits at "Preparing to upload" for more than a minute or two, restart the Mac and try again.
 5. In App Store Connect pick the processed build under the version, fill in the page, Submit for Review.
 
 ## Listing

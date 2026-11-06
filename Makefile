@@ -71,8 +71,10 @@ ios-app:
 ios-device:
 	cd ios && xcodegen generate && xcodebuild -project Mardo.xcodeproj -scheme Mardo -destination 'generic/platform=iOS' -derivedDataPath build-device -allowProvisioningUpdates DEVELOPMENT_TEAM=$(TEAM) CODE_SIGN_STYLE=Automatic build
 
-# Archives for the App Store and uploads it to App Store Connect: make ios-archive TEAM=XXXXXXXXXX BUILD=2
-# Raise BUILD for every upload of the same version. Needs the app record for com.henryvandenbroek.mardo to exist.
+# Archives for the App Store and opens it in Xcode's Organizer: make ios-archive TEAM=XXXXXXXXXX BUILD=2
+# Then Distribute App > App Store Connect > Upload. (xcodebuild -exportArchive with destination upload hung on this
+# Mac every time, while Organizer's upload worked.) Raise BUILD for every upload of the same version. Needs the app
+# record for com.henryvandenbroek.mardo to exist.
 ios-archive: ios-framework ios-web
 	cd ios && xcodegen generate && xcodebuild -project Mardo.xcodeproj -scheme Mardo -destination 'generic/platform=iOS' -archivePath build-archive/Mardo.xcarchive -allowProvisioningUpdates DEVELOPMENT_TEAM=$(TEAM) CODE_SIGN_STYLE=Automatic CURRENT_PROJECT_VERSION=$(BUILD) archive
-	cd ios && xcodebuild -exportArchive -archivePath build-archive/Mardo.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build-archive/export -allowProvisioningUpdates
+	open ios/build-archive/Mardo.xcarchive
