@@ -53,10 +53,42 @@ PRIVATE
 ## App Review information
 
 - **Sign-in required:** No. No demo account needed.
-- **Notes for the reviewer:**
-  Mardo is a browser for markdown. Type any address, for example https://mardo.henryvandenbroek.com/ or https://github.com/hbroek/mardo/blob/main/README.md.
-  The AI tools are optional: they use Apple Intelligence where available, or an API key the user adds under Menu > AI assistant. Without a provider, everything else works.
-  The app is free, has no in-app purchases and no accounts.
+- **Notes for the reviewer** (paste into the Notes field; under 4000 characters). Attach the screen recording as mardo-review.mp4 under App Review Information > Attachment:
+
+```
+SCREEN RECORDING (physical iPhone, latest iOS): attached to this submission as mardo-review.mp4.
+It starts with launching the app and shows: opening a page, reading it as markdown, tabs, converting an HTML page, bookmarks and folders, the AI tools, writing and saving a page, and the licenses in About.
+
+PURPOSE AND AUDIENCE
+Mardo is a web browser for markdown. It asks websites for markdown, and shows a page as clean, fast, readable text without ads or clutter. Pages that only exist as HTML are converted to markdown with one tap. It also lets people write markdown pages and keep bookmarks in folders. It is for readers, writers, students and developers who read documentation, blogs and notes, and for people who like plain text. It is a general web browser: pages are shown with WebKit (WKWebView) and fetched over HTTPS.
+
+HOW TO USE IT (no account, no login, no sample files needed)
+1. Open the app and type an address in the address bar, for example:
+   https://mardo.henryvandenbroek.com/  (a page with a markdown version)
+   https://github.com/hbroek/mardo/blob/main/README.md
+   https://blog.henryvandenbroek.com  (shows the blog's RSS feed)
+2. Convert: on a page with no markdown version, tap "Convert to markdown".
+3. Bookmarks: tap the bookmark button to save a page, and the folder button to add a folder.
+4. Write: Menu (top right) > New page, type markdown, and save it to Files.
+5. AI tools (optional): tap the sparkle button to summarize, outline, translate or ask a question. They use Apple Intelligence on supported devices. Otherwise the user adds their own API key under Menu > AI assistant. Without one, all other features work.
+6. About: Menu > About Mardo shows the version and the open source licenses.
+
+EXTERNAL SERVICES
+- The websites the user chooses to open (Mardo is a browser).
+- AI providers, only if the user turns them on and adds their own key: Anthropic, OpenAI, or any OpenAI-compatible server the user names. Apple Intelligence (on device) needs no key.
+- LinkaGoGo (linkagogo.com), an optional bookmark storage service the user can choose. Bookmarks are stored only on the device by default.
+- No analytics, advertising, authentication or payment services. The developer receives no data.
+
+ACCOUNTS, PURCHASES AND USER CONTENT
+Mardo has no accounts to create or delete, no in-app purchases and no subscriptions. It does not host or share user-generated content: pages the user writes are files on their own device, and bookmarks are private. So there is no reporting or blocking mechanism to show.
+
+REGIONS
+The app works the same in every region. Only Apple Intelligence depends on the device, language and region Apple supports; elsewhere the user can use their own AI key, or skip the AI tools.
+
+REGULATED INDUSTRY / THIRD-PARTY MATERIAL
+None. The app shows web pages the user chooses to visit. It includes open source libraries under MIT and BSD licenses, listed in the app under Menu > About Mardo > Open source licenses.
+```
+
 - **Contact:** your name, phone and email (required by App Store Connect)
 
 ## App Privacy questionnaire
