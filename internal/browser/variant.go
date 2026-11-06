@@ -13,6 +13,22 @@ import (
 	"mardo/internal/render"
 )
 
+// githubRaw is where GitHub keeps the plain file behind a markdown file's page: github.com/o/r/blob/main/README.md
+// is a web page around raw.githubusercontent.com/o/r/main/README.md.
+func githubRaw(u *url.URL) string {
+	if u.Host != "github.com" && u.Host != "www.github.com" {
+		return ""
+	}
+	if ext := strings.ToLower(path.Ext(u.Path)); ext != ".md" && ext != ".markdown" {
+		return ""
+	}
+	parts := strings.SplitN(strings.TrimPrefix(u.Path, "/"), "/", 5) // owner, repo, "blob", ref, file
+	if len(parts) < 5 || parts[2] != "blob" || parts[0] == "" || parts[1] == "" || parts[3] == "" || parts[4] == "" {
+		return ""
+	}
+	return "https://raw.githubusercontent.com/" + parts[0] + "/" + parts[1] + "/" + parts[3] + "/" + parts[4]
+}
+
 // markdownURLs are the places the markdown version of a web page would be, best first, by the convention that a
 // page at /about has one at /about.md, /docs/ at /docs/index.md and /guide.html at /guide.md. The root of a site
 // may also have an /llms.txt, the site's overview for language models, which is markdown.
@@ -28,6 +44,9 @@ func markdownURLs(raw string) []string {
 		return c.String()
 	}
 	p := u.Path
+	if raw := githubRaw(u); raw != "" {
+		return []string{raw}
+	}
 	switch ext := strings.ToLower(path.Ext(p)); {
 	case p == "" || p == "/":
 		return []string{with("/index.md"), with("/llms.txt")}
@@ -64,7 +83,9 @@ func (b *Browser) markdownVersion(ctx context.Context, res *fetch.Result, on boo
 			switch {
 			case a.Type == "text/markdown" || a.Type == "text/x-markdown":
 				tries = append(tries, a.Href)
-			case render.IsFeedType(a.Type):
+			case render.IsFeedType(a.Type) && (base.Path == "" || base.Path == "/") && base.RawQuery == "":
+				// Only a site's front page stands for its feed. Wikipedia and MDN name a site-wide feed on every
+				// article, which would take the place of the article.
 				feeds = append(feeds, a.Href)
 			}
 		}

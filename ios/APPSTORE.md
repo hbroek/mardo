@@ -66,10 +66,10 @@ Mardo is a web browser for markdown. It asks websites for markdown, and shows a 
 
 HOW TO USE IT (no account, no login, no sample files needed)
 1. Open the app and type an address in the address bar, for example:
-   https://mardo.henryvandenbroek.com/  (a page with a markdown version)
-   https://github.com/hbroek/mardo/blob/main/README.md
+   https://blog.cloudflare.com/markdown-for-agents/  (a site that answers a request for markdown)
+   https://raw.githubusercontent.com/golang/go/master/README.md
    https://blog.henryvandenbroek.com  (shows the blog's RSS feed)
-2. Convert: on a page with no markdown version, tap "Convert to markdown".
+2. Convert: open https://www.gnu.org/philosophy/free-sw.html (an ordinary web page with no markdown version) and tap "Convert to markdown".
 3. Bookmarks: tap the bookmark button to save a page, and the folder button to add a folder.
 4. Write: Menu (top right) > New page, type markdown, and save it to Files.
 5. AI tools (optional): tap the sparkle button to summarize, outline, translate or ask a question. They use Apple Intelligence on supported devices. Otherwise the user adds their own API key under Menu > AI assistant. Without one, all other features work.

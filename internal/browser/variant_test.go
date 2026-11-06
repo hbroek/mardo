@@ -14,16 +14,19 @@ import (
 
 func TestMarkdownURLs(t *testing.T) {
 	for in, want := range map[string][]string{
-		"https://x.test/about":       {"https://x.test/about.md"},
-		"https://x.test/docs/":       {"https://x.test/docs/index.md"},
-		"https://x.test":             {"https://x.test/index.md", "https://x.test/llms.txt"},
-		"https://x.test/":            {"https://x.test/index.md", "https://x.test/llms.txt"},
-		"https://x.test/guide.html":  {"https://x.test/guide.md"},
-		"https://x.test/a/b#section": {"https://x.test/a/b.md"},
-		"https://x.test/a.md":        nil,
-		"https://x.test/logo.png":    nil,
-		"https://x.test/search?q=go": nil,
-		"file:///tmp/a":              nil,
+		"https://x.test/about":                       {"https://x.test/about.md"},
+		"https://x.test/docs/":                       {"https://x.test/docs/index.md"},
+		"https://x.test":                             {"https://x.test/index.md", "https://x.test/llms.txt"},
+		"https://x.test/":                            {"https://x.test/index.md", "https://x.test/llms.txt"},
+		"https://x.test/guide.html":                  {"https://x.test/guide.md"},
+		"https://x.test/a/b#section":                 {"https://x.test/a/b.md"},
+		"https://x.test/a.md":                        nil,
+		"https://x.test/logo.png":                    nil,
+		"https://x.test/search?q=go":                 nil,
+		"file:///tmp/a":                              nil,
+		"https://github.com/o/r/blob/main/docs/a.md": {"https://raw.githubusercontent.com/o/r/main/docs/a.md"},
+		"https://github.com/o/r/blob/main/main.go":   nil,
+		"https://github.com/o/r/tree/main/docs":      {"https://github.com/o/r/tree/main/docs.md"},
 	} {
 		got := markdownURLs(in)
 		if len(got) != len(want) {
@@ -114,13 +117,21 @@ func TestMarkdownVersionOffOrAsIs(t *testing.T) {
 // A page that advertises a feed, like a Ghost or WordPress blog's home page, shows the feed.
 func TestPageThatAdvertisesAFeedShowsTheFeed(t *testing.T) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/blog/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
 		w.Header().Set("Content-Type", "text/html")
 		w.Write([]byte(`<html><head><title>Blog</title><link rel="alternate" type="application/rss+xml" title="Blog" href="/rss/"></head><body><a href="/x">x</a></body></html>`))
 	})
 	mux.HandleFunc("/rss/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/rss+xml")
 		w.Write([]byte(`<?xml version="1.0"?><rss version="2.0"><channel><title>The Blog</title><item><title>First post</title><link>https://x.test/1</link></item></channel></rss>`))
+	})
+	mux.HandleFunc("/article", func(w http.ResponseWriter, r *http.Request) { // names the site's feed, but is not the front page
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head><title>Article</title><link rel="alternate" type="application/rss+xml" href="/rss/"></head></html>`))
 	})
 	mux.HandleFunc("/plain/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
@@ -130,18 +141,21 @@ func TestPageThatAdvertisesAFeedShowsTheFeed(t *testing.T) {
 	defer srv.Close()
 	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
 
-	p := b.load(context.Background(), srv.URL+"/blog/")
+	p := b.load(context.Background(), srv.URL+"/")
 	if p.Kind != page.KindMarkdown || p.Title != "The Blog" || !strings.Contains(p.HTML, "First post") {
 		t.Fatalf("blog page = kind %v title %q error %q", p.Kind, p.Title, p.Error)
 	}
-	if p.MarkdownOf != srv.URL+"/blog/" {
+	if p.MarkdownOf != srv.URL+"/" {
 		t.Errorf("MarkdownOf = %q, so there is no way back to the original page", p.MarkdownOf)
 	}
 	if p := b.load(context.Background(), srv.URL+"/plain/"); p.Kind != page.KindFallback {
 		t.Errorf("a page with no feed should stay a fallback page, got kind %v", p.Kind)
 	}
+	if p := b.load(context.Background(), srv.URL+"/article"); p.Kind != page.KindFallback {
+		t.Errorf("an article that names the site's feed should still show the article, got kind %v", p.Kind)
+	}
 	b.SetMarkdownVersions(false)
-	if p := b.load(context.Background(), srv.URL+"/blog/"); p.Kind != page.KindFallback {
+	if p := b.load(context.Background(), srv.URL+"/"); p.Kind != page.KindFallback {
 		t.Errorf("with the markdown lookup off the feed is not looked for either, got kind %v", p.Kind)
 	}
 }
