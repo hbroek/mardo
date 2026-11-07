@@ -1,6 +1,6 @@
 # Mardo
 
-> Mardo is a free, open source browser and author for markdown, for macOS, Windows and Linux (iPhone and iPad in development). It asks servers for markdown, converts other pages, and saves changes back where the server allows.
+> Mardo is a free, open source browser and author for markdown, for macOS, Windows, Linux, iPhone and iPad (https://apps.apple.com/app/id6830193468). It asks servers for markdown, converts other pages, and saves changes back where the server allows.
 
 ## Pages
 

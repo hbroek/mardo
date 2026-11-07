@@ -1,6 +1,6 @@
 # Mardo
 
-**Website and downloads: [mardo.henryvandenbroek.com](https://mardo.henryvandenbroek.com/)**
+**Website and downloads: [mardo.henryvandenbroek.com](https://mardo.henryvandenbroek.com/)** · [iPhone and iPad: App Store](https://apps.apple.com/app/id6830193468)
 
 A small desktop browser and author for markdown: read pages, and write them back where the server allows. It asks servers for markdown, renders it, and falls back to a
 title plus link list when a page is not markdown. Go backend, HTML/CSS/JS frontend, built with
@@ -183,7 +183,7 @@ The Linux release is a folder with the program, `install.sh`, a launcher entry a
 `~/.local` (program, application-menu entry and icon; delete those three files to uninstall). Without it the program runs but
 Wayland desktops have no launcher to take the taskbar icon from; X11 desktops show the window icon either way. A GitHub Actions workflow builds all three platforms.
 
-## iPhone (work in progress)
+## iPhone and iPad
 
 The iPhone app runs the same Go core inside the app and shows the same page in a web view. The page calls the core
 through a message bridge (`frontend/src/ios/bridge.js`), the web view loads it from a `mardo://app` scheme served from the

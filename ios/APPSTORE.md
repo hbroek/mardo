@@ -12,7 +12,9 @@ Text and settings to paste into App Store Connect, and the steps to upload a bui
 4. `make ios-archive TEAM=8YUXRC9P9J BUILD=1` archives and opens the archive in Xcode's Organizer. There click
    Distribute App > App Store Connect > Upload. (Uploading from the command line hung every time.) Raise BUILD for
    each upload of one version. The version number is `MARKETING_VERSION` in `ios/project.yml`.
-   If the upload sits at "Preparing to upload" for more than a minute or two, restart the Mac and try again.
+   If the upload sits at "Preparing to upload" forever, Rosetta is probably missing: Xcode 27's `swinfo` falls back to an
+   Intel-only `/Library/Developer/CommandLineTools/usr/bin/dwarfdump-classic` and waits for it. Check with
+   `arch -x86_64 /usr/bin/true`; fix with `sudo softwareupdate --install-rosetta --agree-to-license`.
 5. In App Store Connect pick the processed build under the version, fill in the page, Submit for Review.
 
 ## Listing
@@ -50,7 +52,9 @@ WRITE
 PRIVATE
 - No account, no ads, no tracking. Your bookmarks and settings stay on your device. Mardo is free and open source.
 
-**What's new (0.11.0):** First release on iPhone and iPad.
+**What's new (0.13.0):** First release on iPhone and iPad.
+
+Status: approved and live. App Store id 6830193468, https://apps.apple.com/app/id6830193468
 
 ## App Review information
 
