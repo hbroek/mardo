@@ -795,6 +795,31 @@ html.phone #console { display: none; }
 html.wide .markdown, html.wide .fallback, html.wide .error, html.wide .welcome, html.wide .source,
 html.wide .source-wrap, html.wide .summary, html.wide .variant-bar { max-width: none; }
 
+/* where the images of a page sit (see imagealign.js); the default leaves them as they are */
+#image-align {
+    position: fixed;
+    z-index: 4;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--muted);
+    cursor: pointer;
+    opacity: 0.6;
+}
+#image-align:hover, #image-align:focus-visible, #image-align[aria-pressed="true"] { opacity: 1; color: var(--accent); }
+#image-align[hidden] { display: none; }
+html.img-left .markdown img { float: left; max-width: 50%; margin: 0.3rem 1.25rem 0.75rem 0; }
+html.img-right .markdown img { float: right; max-width: 50%; margin: 0.3rem 0 0.75rem 1.25rem; }
+html.img-center .markdown img { float: none; display: block; margin: 1rem auto; }
+html.img-left .markdown img.zoomed, html.img-right .markdown img.zoomed { float: none; max-width: none; margin: 0; }
+html.img-left .markdown :is(h1, h2, h3, h4, hr, pre, table),
+html.img-right .markdown :is(h1, h2, h3, h4, hr, pre, table) { clear: both; }
+
 /* the address of the link under the pointer, at the bottom left */
 #link-status {
     position: fixed;

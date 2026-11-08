@@ -19,6 +19,7 @@ import {initSplitters} from './splitter.js';
 import {initCompare, openCompare} from './compare.js';
 import './phone.js';
 import './wide.js';
+import './imagealign.js';
 import './linkstatus.js';
 import {initCredentials, openCredentials, credentialOrigins} from './creds.js';
 
