@@ -65,5 +65,26 @@ void routeSelectAll(void) {
             all.target = target;
             [edit insertItem:all atIndex:copyAt + 1];
         }
+        // Find: Cmd+F opens the page's find bar, Cmd+G and Shift+Cmd+G step through the matches.
+        if (copyAt >= 0 && [edit indexOfItemWithTitle:@"Find\u2026"] < 0) {
+            NSArray *finds = @[
+                @[@"Find\u2026", @"find", @"f", @(NSEventModifierFlagCommand)],
+                @[@"Find and Replace\u2026", @"replace", @"f", @(NSEventModifierFlagCommand | NSEventModifierFlagOption)],
+                @[@"Find Next", @"find-next", @"g", @(NSEventModifierFlagCommand)],
+                @[@"Find Previous", @"find-prev", @"g", @(NSEventModifierFlagCommand | NSEventModifierFlagShift)],
+            ];
+            NSInteger at = [edit numberOfItems]; // below Select All (the end of the standard items, if it is not found)
+            for (NSMenuItem *item in edit.itemArray) {
+                if (item.action == @selector(selectAllClicked:)) at = [edit indexOfItem:item] + 1;
+            }
+            [edit insertItem:[NSMenuItem separatorItem] atIndex:at++];
+            for (NSArray *f in finds) {
+                NSMenuItem *m = [[NSMenuItem alloc] initWithTitle:f[0] action:@selector(appItemClicked:) keyEquivalent:f[2]];
+                m.keyEquivalentModifierMask = [f[3] unsignedIntegerValue];
+                m.target = target;
+                m.representedObject = f[1];
+                [edit insertItem:m atIndex:at++];
+            }
+        }
     });
 }

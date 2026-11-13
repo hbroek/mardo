@@ -82,8 +82,13 @@ func (a *App) appMenu() *menu.Menu {
 	} else {
 		// Cut, copy and paste work in the page's own fields; Select All depends on where you are.
 		edit := bar.AddSubmenu("Edit")
-		item(edit, "Select All", "select-all", cmd("a"))
 		item(edit, "Copy All", "copy-markdown", cmdShift("c"))
+		item(edit, "Select All", "select-all", cmd("a"))
+		edit.AddSeparator()
+		item(edit, "Find\u2026", "find", cmd("f"))
+		item(edit, "Replace\u2026", "replace", cmd("h"))
+		item(edit, "Find Next", "find-next", cmd("g"))
+		item(edit, "Find Previous", "find-prev", cmdShift("g"))
 	}
 
 	view := bar.AddSubmenu("View")

@@ -20,6 +20,7 @@ import {initCompare, openCompare} from './compare.js';
 import './phone.js';
 import './wide.js';
 import './imagealign.js';
+import * as finder from './find.js';
 import './linkstatus.js';
 import {initCredentials, openCredentials, credentialOrigins} from './creds.js';
 
@@ -760,6 +761,7 @@ const menuItems = {
     setMarkdownVersions: (on) => SetMarkdownVersions(on),
     history: () => goActive(FullHistory),
     about: () => goActive(About),
+    find: () => finder.open(),
     clearHistory: () => ClearHistory(),
 };
 
@@ -768,6 +770,14 @@ async function bookmarkTool(button) {
     await togglePanel(true);
     $(button).click();
 }
+
+/** Find and replace: on a page that can be edited, starts editing first (replacing happens in the text box). */
+function openReplace() {
+    if (active?.draft == null && currentPage()?.editUrl) startEdit();
+    finder.open({replace: true});
+}
+// A replace is one undo step of the edit, like a change the AI makes.
+finder.hooks.checkpoint = () => { if (active?.draft != null) { remember(active); active.lastEdit = Date.now(); } };
 
 // What the macOS menu bar does: its items have the shortcuts, and send their id here.
 const menuActions = {
@@ -807,6 +817,10 @@ const menuActions = {
     credentials: menuItems.credentials,
     history: menuItems.history,
     about: menuItems.about,
+    find: () => finder.open(),
+    replace: () => openReplace(),
+    'find-next': () => finder.step(1),
+    'find-prev': () => finder.step(-1),
     'clear-history': menuItems.clearHistory,
 };
 // Select All depends on where you are: a field selects its text, the bookmarks panel its
@@ -851,16 +865,20 @@ syncViewMenu();
 const isMac = navigator.platform.startsWith('Mac');
 /** True for the keys the macOS menu bar has as shortcuts. */
 function menuOwnsKey(e, mod, key) {
+    if (mod && e.altKey && e.code === 'KeyF') return true; // Find and Replace
     if (!mod || e.altKey) return false;
-    if (e.shiftKey) return key === 'a' || key === 'c';
-    return 'lrujbdtwseon[]'.includes(key) && key.length === 1;
+    if (e.shiftKey) return key === 'a' || key === 'c' || key === 'g';
+    return 'lrujbdtwseonfg[]'.includes(key) && key.length === 1;
 }
 document.addEventListener('keydown', (e) => {
     const mod = isMac ? e.metaKey : e.ctrlKey;
     const key = e.key.toLowerCase();
     if (isMac && menuOwnsKey(e, mod, key)) return; // the menu bar runs it and sends a "menu" event
     let handled = true;
-    if (mod && key === 'l') address.focus();
+    if ((mod || (!isMac && e.metaKey)) && !e.altKey && key === 'f' && !e.shiftKey) finder.open();
+    else if ((mod || (!isMac && e.metaKey)) && !e.altKey && key === 'g') finder.step(e.shiftKey ? -1 : 1);
+    else if (!isMac && mod && !e.shiftKey && key === 'h') openReplace();
+    else if (mod && key === 'l') address.focus();
     else if (mod && key === 'r') { if (currentPage()?.url) goActive(Reload); }
     else if (mod && key === 'u') toggleSource();
     else if (mod && !e.shiftKey && key === 'e') toggleEdit();

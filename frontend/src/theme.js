@@ -97,6 +97,7 @@ export function initMenu(actions) {
         const openEntry = item('menuitem', 'Open page\u2026', null, () => { close(); actions.openFile(); }, icon('folder'));
         const saveEntry = item('menuitem', 'Save page\u2026', null, () => { close(); actions.savePage(); }, icon('save'));
         const historyEntry = item('menuitem', 'History', null, () => { close(); actions.history(); }, icon('clock'));
+        const findEntry = item('menuitem', 'Find in page', null, () => { close(); actions.find(); }, icon('search'));
         const aboutEntry = item('menuitem', 'About Mardo', null, () => { close(); actions.about(); }, icon('info'));
         const clearEntry = item('menuitem', 'Clear history', null, async () => { close(); await actions.clearHistory(); }, icon('trash'));
         // On a phone the toolbar leaves out what is rarely needed there; it is here instead.
@@ -118,8 +119,8 @@ export function initMenu(actions) {
             }),
         ];
         menu.replaceChildren(...(phone
-            ? [...phoneRows, historyEntry, creds, aiEntry, markdownEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), aboutEntry]
-            : [creds, aiEntry, ...writing, historyEntry, clearEntry, markdownEntry, ...themeRows, aboutEntry]));
+            ? [...phoneRows, findEntry, historyEntry, creds, aiEntry, markdownEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), aboutEntry]
+            : [findEntry, creds, aiEntry, ...writing, historyEntry, clearEntry, markdownEntry, ...themeRows, aboutEntry]));
     }
 
     let markdownVersions = true; // whether .md versions of web pages are looked for; the menu bar can change it too
