@@ -203,7 +203,12 @@ func (b *Browser) loadPage(ctx context.Context, rawURL string, versions bool) pa
 	if isSearchURL(rawURL) {
 		return b.loadSearch(ctx, rawURL)
 	}
-	res, err := b.fetcher.Get(ctx, rawURL)
+	// Seeing a page as it is means the web page, also from an address that would answer with markdown.
+	get := b.fetcher.Get
+	if !versions {
+		get = b.fetcher.GetHTML
+	}
+	res, err := get(ctx, rawURL)
 	if err != nil {
 		p := page.Page{URL: rawURL, Kind: page.KindError, Error: err.Error()}
 		if u, nerr := fetch.Normalize(rawURL); nerr == nil {
@@ -243,7 +248,9 @@ func (b *Browser) loadPage(ctx context.Context, rawURL string, versions bool) pa
 		}
 	}
 	if fetch.IsMarkdown(res.ContentType) {
-		return b.markdownPage(p, res, base)
+		p = b.markdownPage(p, res, base)
+		p.Negotiated = versions && fetch.Negotiated(res)
+		return p
 	} else if alt, ok := b.markdownVersion(ctx, res, versions); ok {
 		return alt
 	} else {

@@ -51,6 +51,8 @@ directories</a></li>
 <li><a href="#8-how-to-search-for-more">How to search for more</a></li>
 <li><a href="#9-checkers-and-test-commands">Checkers and test
 commands</a></li>
+<li><a href="#10-if-you-publish-markdown-yourself">If you publish
+Markdown yourself</a></li>
 </ol>
 <hr />
 <h2 id="1-the-four-ways-the-web-serves-markdown">1. The four ways the
@@ -517,6 +519,39 @@ curl -sI https://docs.stripe.com/stripe-apps/pkce-oauth-flow.md | grep -i conten
 
 # Does a feed include source:markdown?
 curl -s https://www.manton.org/feed.xml | grep -c &quot;&lt;source:markdown&gt;&quot;</code></pre>
+<hr />
+<h2 id="10-if-you-publish-markdown-yourself">10. If you publish Markdown
+yourself</h2>
+<p>Make the Markdown easy to find, and Mardo (and other tools) will pick
+it up. Mardo looks in this order: what the server answers to
+<code>Accept: text/markdown</code>, the <code>Link</code> header, the
+page's <code>&lt;link&gt;</code> tags, the usual <code>.md</code>
+addresses, then (on a front page) the feed.</p>
+<ul>
+<li><strong>A fixed address for each page.</strong>
+<code>/posts/my-post.md</code> always returns Markdown, with
+<code>Content-Type: text/markdown; charset=utf-8</code>.</li>
+<li><strong>Name it in the page.</strong> Each page links to its own
+twin:
+<code>&lt;link rel="alternate" type="text/markdown" href="/posts/my-post.md"&gt;</code>.</li>
+<li><strong>Name it in a header too</strong>, so tools need not read the
+HTML:
+<code>Link: &lt;/posts/my-post.md&gt;; rel="alternate"; type="text/markdown"</code>.</li>
+<li><strong>Let the same address answer both ways.</strong>
+<code>/posts/my-post</code> sends Markdown to a client that asks for
+<code>text/markdown</code> and the web page to everyone else:
+<ul>
+<li>Send Markdown only when it is named. A wildcard (<code>*/*</code>)
+alone is the web page, so browsers never get raw Markdown. Respect the
+q-values, and when both tie, send Markdown.</li>
+<li>Send <code>Vary: Accept</code> on both answers, so caches keep them
+apart. Without it a cache may hand Markdown to the next browser.</li>
+<li>Add <code>Content-Location: /posts/my-post.md</code> to the Markdown
+answer, to say which file it is.</li>
+</ul></li>
+</ul>
+<p>A static host such as GitHub Pages cannot do the last part by itself.
+A small Cloudflare Worker in front of it can, in about fifty lines.</p>
 <hr />
 <h2 id="sources">Sources</h2>
 <ul>

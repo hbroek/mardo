@@ -239,3 +239,53 @@ func TestMeaningQuery(t *testing.T) {
 		}
 	}
 }
+
+func TestAlternatesFromTheLinkHeader(t *testing.T) {
+	res := &Result{URL: "https://x.test/a/post", Header: http.Header{"Link": {
+		`</a/post.md>; rel="alternate"; type="text/markdown", <https://x.test/feed>; rel="alternate"; type="application/atom+xml"`,
+		`<next>; rel="next"`,
+		`<../b.md>; type="text/markdown; charset=utf-8"; rel="alternate stylesheet"; title="a; b"`,
+		`<javascript:x>; rel="alternate"; type="text/markdown"`,
+	}}}
+	got := Alternates(res)
+	want := []Alternate{
+		{"text/markdown", "https://x.test/a/post.md"},
+		{"application/atom+xml", "https://x.test/feed"},
+		{"text/markdown", "https://x.test/b.md"},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("Alternates = %v; want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("Alternates[%d] = %v; want %v", i, got[i], want[i])
+		}
+	}
+}
+
+func TestNegotiated(t *testing.T) {
+	md := func(url, vary, location string) *Result {
+		h := http.Header{}
+		if vary != "" {
+			h.Set("Vary", vary)
+		}
+		if location != "" {
+			h.Set("Content-Location", location)
+		}
+		return &Result{URL: url, ContentType: "text/markdown; charset=utf-8", Header: h}
+	}
+	for name, c := range map[string]struct {
+		res  *Result
+		want bool
+	}{
+		"varies by accept":       {md("https://x.test/post", "Accept-Encoding, Accept", ""), true},
+		"names the file":         {md("https://x.test/post", "", "/post.md"), true},
+		"a markdown file":        {md("https://x.test/post.md", "Accept", ""), false},
+		"no sign of negotiation": {md("https://x.test/post", "", ""), false},
+		"plain text":             {&Result{URL: "https://x.test/robots.txt", ContentType: "text/plain", Header: http.Header{"Vary": {"Accept"}}}, false},
+	} {
+		if got := Negotiated(c.res); got != c.want {
+			t.Errorf("%s: Negotiated = %v; want %v", name, got, c.want)
+		}
+	}
+}

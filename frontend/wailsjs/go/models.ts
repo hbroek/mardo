@@ -636,6 +636,7 @@ export namespace page {
 	    source: string;
 	    links: Link[];
 	    markdownOf: string;
+	    negotiated: boolean;
 	    editUrl: string;
 	    etag: string;
 	    error: string;
@@ -661,6 +662,7 @@ export namespace page {
 	        this.source = source["source"];
 	        this.links = this.convertValues(source["links"], Link);
 	        this.markdownOf = source["markdownOf"];
+	        this.negotiated = source["negotiated"];
 	        this.editUrl = source["editUrl"];
 	        this.etag = source["etag"];
 	        this.error = source["error"];

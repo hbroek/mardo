@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"net/url"
 	"strings"
@@ -61,9 +62,9 @@ func allows(h http.Header, method string) bool {
 	return false
 }
 
-type link struct{ href, rel string }
+type link struct{ href, rel, typ string }
 
-// parseLinks reads a Link header value: <href>; rel="edit", <href2>; rel=next.
+// parseLinks reads a Link header value: <href>; rel="edit", <href2>; rel=next; type="text/markdown".
 func parseLinks(v string) []link {
 	var out []link
 	for _, part := range splitLinks(v) {
@@ -76,15 +77,95 @@ func parseLinks(v string) []link {
 			continue
 		}
 		l := link{href: part[1:end]}
-		for _, param := range strings.Split(part[end+1:], ";") {
+		for _, param := range splitParams(part[end+1:]) {
 			k, val, ok := strings.Cut(strings.TrimSpace(param), "=")
-			if ok && strings.EqualFold(strings.TrimSpace(k), "rel") {
-				l.rel = strings.Trim(strings.TrimSpace(val), `"`)
+			if !ok {
+				continue
+			}
+			val = strings.Trim(strings.TrimSpace(val), `"`)
+			switch strings.ToLower(strings.TrimSpace(k)) {
+			case "rel":
+				l.rel = val
+			case "type":
+				l.typ = val
 			}
 		}
 		out = append(out, l)
 	}
 	return out
+}
+
+// splitParams splits on the semicolons between parameters, not those inside quotes (type="text/markdown; charset=utf-8").
+func splitParams(v string) []string {
+	var parts []string
+	quoted, start := false, 0
+	for i, r := range v {
+		switch {
+		case r == '"':
+			quoted = !quoted
+		case r == ';' && !quoted:
+			parts = append(parts, v[start:i])
+			start = i + 1
+		}
+	}
+	return append(parts, v[start:])
+}
+
+// Alternate is another version of a page that its Link header points to: Link: </a.md>; rel="alternate"; type="text/markdown".
+type Alternate struct {
+	Type string // media type, lower case, without parameters
+	Href string // absolute http or https address
+}
+
+// Alternates lists what the Link headers of a response offer as rel="alternate", in the order given.
+func Alternates(res *Result) []Alternate {
+	if res == nil || res.Header == nil {
+		return nil
+	}
+	base, err := url.Parse(res.URL)
+	if err != nil {
+		return nil
+	}
+	var out []Alternate
+	for _, v := range res.Header.Values("Link") {
+		for _, l := range parseLinks(v) {
+			mt, _, err := mime.ParseMediaType(l.typ)
+			if err != nil || !hasRel(l.rel, "alternate") {
+				continue
+			}
+			if u, err := base.Parse(strings.TrimSpace(l.href)); err == nil && (u.Scheme == "http" || u.Scheme == "https") {
+				out = append(out, Alternate{Type: mt, Href: u.String()})
+			}
+		}
+	}
+	return out
+}
+
+// Negotiated reports whether a markdown response is one address answering with markdown because it was asked
+// to (and would answer a browser with the web page): the server says it varies by Accept or names the file it
+// sent, and the address is not itself a markdown file.
+func Negotiated(res *Result) bool {
+	if res == nil || res.Header == nil {
+		return false
+	}
+	mt, _, err := mime.ParseMediaType(res.ContentType)
+	if err != nil || (mt != "text/markdown" && mt != "text/x-markdown") {
+		return false
+	}
+	if u, err := url.Parse(res.URL); err != nil || isMarkdownExt(u.Path) {
+		return false
+	}
+	if res.Header.Get("Content-Location") != "" {
+		return true
+	}
+	for _, v := range res.Header.Values("Vary") {
+		for _, f := range strings.Split(v, ",") {
+			if strings.EqualFold(strings.TrimSpace(f), "accept") || strings.TrimSpace(f) == "*" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // splitLinks splits on the commas between links, not those inside <...> or quotes.

@@ -1,12 +1,14 @@
 package browser
 
 import (
+	"bytes"
 	"context"
 	"mime"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+	"unicode/utf8"
 
 	"mardo/internal/fetch"
 	"mardo/internal/page"
@@ -79,7 +81,12 @@ func (b *Browser) markdownVersion(ctx context.Context, res *fetch.Result, on boo
 	var feeds []string
 	var tries []string
 	if base, err := url.Parse(res.URL); err == nil {
+		// What the response headers offer comes before what the page's head does.
+		alts := fetch.Alternates(res)
 		for _, a := range render.Alternates(res.Body, res.ContentType, base) {
+			alts = append(alts, fetch.Alternate(a))
+		}
+		for _, a := range alts {
 			switch {
 			case a.Type == "text/markdown" || a.Type == "text/x-markdown":
 				tries = append(tries, a.Href)
@@ -141,6 +148,15 @@ func looksMarkdown(r *fetch.Result) bool {
 	case "text/plain":
 		head := strings.TrimSpace(string(r.Body[:min(len(r.Body), 512)]))
 		return head != "" && !strings.HasPrefix(head, "<")
+	case "application/octet-stream", "binary/octet-stream":
+		// Some static hosts send every file they do not know as a download, a .md file among them. The address
+		// says it is markdown; the bytes must look like text.
+		if u, err := url.Parse(r.URL); err != nil || (path.Ext(strings.ToLower(u.Path)) != ".md" && path.Ext(strings.ToLower(u.Path)) != ".markdown") {
+			return false
+		}
+		head := r.Body[:min(len(r.Body), 512)]
+		return len(bytes.TrimSpace(head)) > 0 && utf8.Valid(head[:max(0, len(head)-3)]) && // the cut may end inside a character
+			!bytes.Contains(head, []byte{0}) && !bytes.HasPrefix(bytes.TrimSpace(head), []byte("<"))
 	}
 	return false
 }

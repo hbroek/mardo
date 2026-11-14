@@ -11,3 +11,6 @@ ios/Mardo/Info.plist
 ios/build-device
 bookmarks.db
 ios/build-archive
+
+# The Cloudflare Worker for the site: kept on this machine only
+/cloudflare/

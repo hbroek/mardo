@@ -17,6 +17,7 @@ A guide to feeds, sites and directories that serve **Markdown directly**, plus s
 7. [`llms.txt` directories](#7-llmstxt-directories)
 8. [How to search for more](#8-how-to-search-for-more)
 9. [Checkers and test commands](#9-checkers-and-test-commands)
+10. [If you publish Markdown yourself](#10-if-you-publish-markdown-yourself)
 
 ---
 
@@ -202,6 +203,22 @@ curl -sI https://docs.stripe.com/stripe-apps/pkce-oauth-flow.md | grep -i conten
 # Does a feed include source:markdown?
 curl -s https://www.manton.org/feed.xml | grep -c "<source:markdown>"
 ```
+
+---
+
+## 10. If you publish Markdown yourself
+
+Make the Markdown easy to find, and Mardo (and other tools) will pick it up. Mardo looks in this order: what the server answers to `Accept: text/markdown`, the `Link` header, the page's `<link>` tags, the usual `.md` addresses, then (on a front page) the feed.
+
+- **A fixed address for each page.** `/posts/my-post.md` always returns Markdown, with `Content-Type: text/markdown; charset=utf-8`.
+- **Name it in the page.** Each page links to its own twin: `<link rel="alternate" type="text/markdown" href="/posts/my-post.md">`.
+- **Name it in a header too**, so tools need not read the HTML: `Link: </posts/my-post.md>; rel="alternate"; type="text/markdown"`.
+- **Let the same address answer both ways.** `/posts/my-post` sends Markdown to a client that asks for `text/markdown` and the web page to everyone else:
+  - Send Markdown only when it is named. A wildcard (`*/*`) alone is the web page, so browsers never get raw Markdown. Respect the q-values, and when both tie, send Markdown.
+  - Send `Vary: Accept` on both answers, so caches keep them apart. Without it a cache may hand Markdown to the next browser.
+  - Add `Content-Location: /posts/my-post.md` to the Markdown answer, to say which file it is.
+
+A static host such as GitHub Pages cannot do the last part by itself. A small Cloudflare Worker in front of it can, in about fifty lines.
 
 ---
 

@@ -22,6 +22,9 @@ const (
 	// Accept asks servers for markdown first.
 	Accept = "text/markdown, text/x-markdown;q=0.9, application/rss+xml;q=0.5, application/atom+xml;q=0.5, text/plain;q=0.3, */*;q=0.1"
 
+	// AcceptHTML asks for the web page, for a site that has the same address answer with markdown or with HTML.
+	AcceptHTML = "text/html, application/xhtml+xml;q=0.9, */*;q=0.1"
+
 	MaxBody = 10 << 20
 	Timeout = 15 * time.Second
 
@@ -159,6 +162,19 @@ func (f *Fetcher) Get(ctx context.Context, rawURL string) (*Result, error) {
 		return f.getFile(u)
 	}
 	return f.getHTTP(ctx, u, Accept)
+}
+
+// GetHTML is Get for the web page itself: a server that answers one address with markdown or with HTML, by
+// what is asked for, sends the HTML.
+func (f *Fetcher) GetHTML(ctx context.Context, rawURL string) (*Result, error) {
+	u, err := Normalize(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	if u.Scheme == "file" {
+		return f.getFile(u)
+	}
+	return f.getHTTP(ctx, u, AcceptHTML)
 }
 
 // GetImage fetches an image the way a page would, with the saved credentials

@@ -428,6 +428,16 @@ async function convertPage(how) {
 /** On the markdown version of a web page: say so, and offer the page as it is. */
 function variantBar(p) {
     if (p?.converted) return convertedBar(p);
+    if (p?.negotiated) { // one address, asked for markdown: the web page is at the same address
+        const bar = document.createElement('p');
+        bar.className = 'variant-bar note';
+        const view = document.createElement('a');
+        view.href = '#';
+        view.textContent = 'View the web page';
+        view.addEventListener('click', (e) => { e.preventDefault(); goActive((id) => NavigateAsIs(id, p.url)); });
+        bar.append('This site sent markdown for this address. ', view);
+        return bar;
+    }
     if (!p?.markdownOf) return null;
     const bar = document.createElement('p');
     bar.className = 'variant-bar note';
