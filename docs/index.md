@@ -33,8 +33,8 @@ Plain text pages load fast, read well and are easy to keep, copy and hand to an 
 
 Mardo asks first, falls back politely, and always tells you which one you got.
 
-1. Ask the server for markdown with a normal request.
-2. No luck? Look for the page's `.md` twin, or the site's `llms.txt`.
+1. Ask the server for markdown with a normal request. A site that answers one address with markdown or the web page, by what is asked for, sends markdown, and Mardo offers **View the web page**.
+2. Got the web page? Follow what it points to: a `Link` header or `<link rel="alternate">` naming a markdown version, its `.md` twin, the site's `llms.txt`, or its feed.
 3. Still none? Show the title and links, with a **Convert to markdown** button.
 
 Not sure where to start? [Where can I find markdown on the web?](find-markdown.md)

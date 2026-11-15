@@ -205,8 +205,8 @@ footer a { color: var(--muted); }
             <h2>How a page gets here</h2>
             <p class="sub">Mardo asks first, falls back politely, and always tells you which one you got.</p>
             <ol class="steps">
-                <li>Ask the server for markdown with a normal request.</li>
-                <li>No luck? Look for the page's <code>.md</code> twin, or the site's <code>llms.txt</code>.</li>
+                <li>Ask the server for markdown with a normal request. A site that answers one address with markdown or the web page, by what is asked for, sends markdown, and Mardo offers <b>View the web page</b>.</li>
+                <li>Got the web page? Follow what it points to: a <code>Link</code> header or <code>&lt;link rel="alternate"&gt;</code> naming a markdown version, its <code>.md</code> twin, the site's <code>llms.txt</code>, or its feed.</li>
                 <li>Still none? Show the title and links, with a <b>Convert to markdown</b> button.</li>
             </ol>
             <p>Not sure where to start? <a href="find-markdown.html">Where can I find markdown on the web?</a></p>
