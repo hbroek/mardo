@@ -880,13 +880,13 @@ html.phone #bookmarks-panel, html.phone #ask-panel { width: auto !important; }
 #find-bar.none #find-input { border-color: #dc2626; }
 #find-bar button { width: 26px; height: 26px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; }
 #find-bar button:hover, #find-bar button:focus-visible { background: var(--hover); color: var(--fg); }
-mark.find-hit { background: #fde68a; color: #1f2937; border-radius: 2px; }
-mark.find-hit.find-current { background: #fb923c; outline: 2px solid #ea580c; }
+mark.find-hit { background: rgba(250, 204, 21, 0.28); color: inherit; border-radius: 2px; }
+mark.find-hit.find-current { background: rgba(251, 146, 60, 0.38); outline: 1px solid rgba(234, 88, 12, 0.55); }
 html.phone #find-input { font-size: 16px; } /* no zoom on focus on iOS */
 .source-wrap.editing { position: relative; }
 .find-mirror { position: absolute; z-index: 1; box-sizing: border-box; padding: 16px; border: 1px solid transparent; font: 0.9rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: break-word; overflow: hidden; color: transparent; pointer-events: none; }
-.find-mirror mark.find-hit { background: rgba(253, 224, 71, 0.55); color: transparent; outline: 0; }
-.find-mirror mark.find-hit.find-current { background: rgba(251, 146, 60, 0.7); }
+.find-mirror mark.find-hit { background: rgba(250, 204, 21, 0.28); color: transparent; outline: 0; }
+.find-mirror mark.find-hit.find-current { background: rgba(251, 146, 60, 0.38); }
 .find-row { display: flex; align-items: center; gap: 4px; }
 .find-row[hidden] { display: none; }
 #replace-input { width: 14rem; min-width: 0; flex: 1; font: inherit; font-size: 0.9rem; padding: 3px 6px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg); color: var(--fg); }
@@ -895,3 +895,13 @@ html.phone #find-input { font-size: 16px; } /* no zoom on focus on iOS */
 #find-toggle svg { transition: transform 0.1s; }
 #find-toggle.on svg { transform: rotate(90deg); }
 html.phone #replace-input { font-size: 16px; }
+.menu-sep { height: 1px; margin: 4px 6px; background: var(--border); }
+
+/* Printing and saving as PDF: just the page, over as many sheets as it needs. */
+@media print {
+    .tabbar, .toolbar, #bookmarks-panel, #ask-panel, #console, #find-bar, #toast, #wide-toggle, #image-align, #folder-menu, .copy-bar, .splitter { display: none !important; }
+    html, body { height: auto; background: #fff; color: #000; }
+    body { display: block; }
+    #content { overflow: visible; padding: 0; }
+    html .markdown { max-width: none; }
+}

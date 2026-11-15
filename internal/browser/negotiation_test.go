@@ -163,3 +163,16 @@ func TestMarkdownFileSentAsADownload(t *testing.T) {
 		t.Errorf("/blob = kind %v; want the fallback page", p.Kind)
 	}
 }
+
+func TestKeepTextFragment(t *testing.T) {
+	asked := "https://a.test/post#:~:text=hello%20there"
+	if got := keepTextFragment(asked, page.Page{Kind: page.KindMarkdown, URL: "https://a.test/post.md"}); got.URL != asked[:20]+".md#:~:text=hello%20there" && got.URL != "https://a.test/post.md#:~:text=hello%20there" {
+		t.Errorf("fragment not kept: %q", got.URL)
+	}
+	if got := keepTextFragment(asked, page.Page{Kind: page.KindMarkdown, URL: asked}); got.URL != asked {
+		t.Errorf("fragment doubled: %q", got.URL)
+	}
+	if got := keepTextFragment("https://a.test/post#top", page.Page{Kind: page.KindMarkdown, URL: "https://a.test/post"}); got.URL != "https://a.test/post" {
+		t.Errorf("an ordinary fragment was added: %q", got.URL)
+	}
+}

@@ -88,3 +88,9 @@ func (h wailsHost) SetChecked(id string, on bool) {
 		h.app.checkMenu(h.app.markdownItem, on)
 	}
 }
+
+// ShareItem shows the system share menu for an address or text (macOS only).
+func (a *App) ShareItem(text string) { shareNative(text) }
+
+// PrintNative opens the system print panel for the page (macOS only; elsewhere the page prints itself).
+func (a *App) PrintNative() { printNative() }

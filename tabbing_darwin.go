@@ -1,11 +1,15 @@
 package main
 
 /*
-#cgo darwin LDFLAGS: -framework Cocoa
+#cgo darwin LDFLAGS: -framework Cocoa -framework WebKit
+#include <stdlib.h>
 void disableWindowTabbing(void);
 void routeSelectAll(void);
+void shareItem(const char *text);
+void printPage(void);
 */
 import "C"
+import "unsafe"
 
 // onMenu runs a menu item that is only in the macOS system menus; main sets it.
 var onMenu func(id string)
@@ -43,3 +47,13 @@ func goSelectAll() {
 
 // routeSelectAll sends Edit > Select All to onSelectAll instead of the web view, and puts Copy All below Copy.
 func routeSelectAll() { C.routeSelectAll() }
+
+// shareNative shows the system share menu for an address or some text.
+func shareNative(text string) {
+	c := C.CString(text)
+	defer C.free(unsafe.Pointer(c))
+	C.shareItem(c)
+}
+
+// printNative opens the system print panel for the page.
+func printNative() { C.printPage() }

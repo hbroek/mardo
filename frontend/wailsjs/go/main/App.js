@@ -86,6 +86,10 @@ export function DeleteCredential(arg1) {
   return window['go']['main']['App']['DeleteCredential'](arg1);
 }
 
+export function DownloadAs(arg1) {
+  return window['go']['main']['App']['DownloadAs'](arg1);
+}
+
 export function EditPage(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['EditPage'](arg1, arg2, arg3, arg4);
 }
@@ -108,6 +112,10 @@ export function FullHistory(arg1) {
 
 export function History() {
   return window['go']['main']['App']['History']();
+}
+
+export function ImageData(arg1) {
+  return window['go']['main']['App']['ImageData'](arg1);
 }
 
 export function ImportBookmarks() {
@@ -144,6 +152,10 @@ export function NewTab() {
 
 export function PickFile() {
   return window['go']['main']['App']['PickFile']();
+}
+
+export function PrintNative() {
+  return window['go']['main']['App']['PrintNative']();
 }
 
 export function ReadPage(arg1, arg2, arg3, arg4) {
@@ -200,6 +212,10 @@ export function SetMarkdownVersions(arg1) {
 
 export function SetViewShown(arg1, arg2) {
   return window['go']['main']['App']['SetViewShown'](arg1, arg2);
+}
+
+export function ShareItem(arg1) {
+  return window['go']['main']['App']['ShareItem'](arg1);
 }
 
 export function SuggestBookmark(arg1, arg2) {

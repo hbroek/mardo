@@ -27,6 +27,9 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 - **History** in the ☰ menu generates a markdown page of everything you visited
 - **Save page** (☰ menu, Cmd/Ctrl+S) writes a markdown page as it is, a feed as a document of its entries, and any other page as its title, address and links. The **Copy markdown** button at a page's top right (Cmd/Ctrl+Shift+C) puts the markdown on the clipboard.
 - Tabs, each with its own back/forward history; open tabs are restored on the next start (only the selected one is loaded right away). Cmd/Ctrl+click or middle-click a link to open it in a background tab; click a bookmark with Cmd/Ctrl, or right-click it, to open it in a new tab.
+- **Find and replace.** Cmd/Ctrl+F (Edit menu) finds in the page, the source and the editor, with a count and arrows; Option+Cmd+F or Ctrl+H adds Replace and Replace All while editing.
+- **Right-click menu** (desktop). On a link: open (in a tab, as the web page, in your browser), download the file, bookmark, copy (also as a markdown link) or share. On selected text: copy, copy as a quote, copy a link that highlights it (`#:~:text=`, which Mardo also follows), explain, simplify, translate, find, search bookmarks or the web, share. On an image: open, save, copy. Elsewhere: back, reload, copy markdown, save, print, find, source, edit, summarize.
+- **Images** can be floated left or right or centered with the button beside the full-width one. Back and Forward return to the scroll position you left.
 - A network console (hidden by default; `>_` button or Cmd/Ctrl+J) lists every request with its status code;
   click the bar to see request and response headers, timing and size. Cookie and token values are hidden
 - Bookmarks with folders, descriptions and keywords: see below

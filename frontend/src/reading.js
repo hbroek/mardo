@@ -33,7 +33,7 @@ let language = LANGUAGES.includes(read('translate.lang')) ? read('translate.lang
 /** Looks like an RSS or Atom document, going by the start of the source. */
 const isFeed = (p) => /<(rss|feed|rdf:RDF)[\s>]/i.test((p?.source ?? '').slice(0, 2000));
 
-function selectedText() {
+export function selectedText() {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed) return '';
     const inPage = $('content').contains(sel.anchorNode);
@@ -67,6 +67,7 @@ export function initReading(host) {
         compare: () => host.compare(),
         digest: () => (isFeed(host.page()) ? host.run('digest') : host.toast('This page is not a feed.', true)),
         explain: needSelection((s) => askNow(`Explain this passage from the page, in plain language and with the context of the page:\n\n"${s}"`)),
+        translateSelection: needSelection((s) => askNow(`Translate this passage from the page into ${language}:\n\n"${s}"`)),
         simplify: needSelection((s) => askNow(`Rewrite this passage from the page in simpler words, keeping its meaning:\n\n"${s}"`)),
     };
 

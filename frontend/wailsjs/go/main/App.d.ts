@@ -50,6 +50,8 @@ export function DeleteBookmarkFolder(arg1:string):Promise<void>;
 
 export function DeleteCredential(arg1:string):Promise<void>;
 
+export function DownloadAs(arg1:string):Promise<string>;
+
 export function EditPage(arg1:string,arg2:string,arg3:string,arg4:string):Promise<core.AIEdit>;
 
 export function ExportBookmarks(arg1:string):Promise<string>;
@@ -61,6 +63,8 @@ export function Forward(arg1:number):Promise<page.Page>;
 export function FullHistory(arg1:number):Promise<page.Page>;
 
 export function History():Promise<Array<history.Entry>>;
+
+export function ImageData(arg1:string):Promise<string>;
 
 export function ImportBookmarks():Promise<bookmarks.ImportResult>;
 
@@ -79,6 +83,8 @@ export function NetworkLog():Promise<Array<fetch.Entry>>;
 export function NewTab():Promise<number>;
 
 export function PickFile():Promise<string>;
+
+export function PrintNative():Promise<void>;
 
 export function ReadPage(arg1:string,arg2:string,arg3:string,arg4:string):Promise<core.AISummary>;
 
@@ -107,6 +113,8 @@ export function SearchBookmarks(arg1:string):Promise<Array<bookmarks.Bookmark>>;
 export function SetMarkdownVersions(arg1:boolean):Promise<void>;
 
 export function SetViewShown(arg1:string,arg2:boolean):Promise<void>;
+
+export function ShareItem(arg1:string):Promise<void>;
 
 export function SuggestBookmark(arg1:string,arg2:string):Promise<ai.Suggestion>;
 

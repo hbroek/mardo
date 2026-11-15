@@ -131,9 +131,20 @@ func (b *Browser) Navigate(ctx context.Context, tabID int, rawURL string) page.P
 	} else if q, ok := fetch.SearchQuery(rawURL); ok {
 		rawURL = SearchURL(q)
 	}
-	p := b.load(ctx, rawURL)
+	p := keepTextFragment(rawURL, b.load(ctx, rawURL))
 	t.stack.Visit(p.URL)
 	return t.withState(b.record(p))
+}
+
+// keepTextFragment keeps the "#:~:text=" part of the address asked for, which points at a passage,
+// when the page that came back (a .md twin, say) is at an address without it.
+func keepTextFragment(asked string, p page.Page) page.Page {
+	i := strings.Index(asked, "#:~:text=")
+	if i < 0 || p.URL == "" || strings.Contains(p.URL, "#") || p.Kind == page.KindError {
+		return p
+	}
+	p.URL += asked[i:]
+	return p
 }
 
 // Reload fetches the current entry again.
@@ -189,7 +200,7 @@ func (b *Browser) NavigateAsIs(ctx context.Context, tabID int, rawURL string) pa
 	t := b.tab(tabID)
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	p := b.loadPage(ctx, rawURL, false)
+	p := keepTextFragment(rawURL, b.loadPage(ctx, rawURL, false))
 	t.stack.Visit(p.URL)
 	return t.withState(b.record(p))
 }

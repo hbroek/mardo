@@ -191,7 +191,27 @@ func (f *Fetcher) GetImage(ctx context.Context, rawURL string) (*Result, error) 
 }
 
 func (f *Fetcher) getHTTP(ctx context.Context, u *url.URL, accept string) (*Result, error) {
-	ctx, cancel := context.WithTimeout(ctx, Timeout)
+	return f.getHTTPLimit(ctx, u, accept, MaxBody, Timeout)
+}
+
+// MaxDownload is the largest file Download keeps.
+const MaxDownload = 200 << 20
+
+// Download fetches a file the reader asked to save, with the saved credentials and cookies of its server.
+// It takes any type of file, up to MaxDownload, and waits longer than a page does.
+func (f *Fetcher) Download(ctx context.Context, rawURL string) (*Result, error) {
+	u, err := Normalize(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return nil, fmt.Errorf("unsupported scheme %q", u.Scheme)
+	}
+	return f.getHTTPLimit(ctx, u, "*/*", MaxDownload, 5*time.Minute)
+}
+
+func (f *Fetcher) getHTTPLimit(ctx context.Context, u *url.URL, accept string, limit int, timeout time.Duration) (*Result, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
@@ -207,7 +227,7 @@ func (f *Fetcher) getHTTP(ctx context.Context, u *url.URL, accept string) (*Resu
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := readCapped(resp.Body)
+	body, err := readCapped(resp.Body, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +252,7 @@ func (f *Fetcher) getFile(u *url.URL) (res *Result, err error) {
 		return nil, err
 	}
 	defer file.Close()
-	body, err := readCapped(file)
+	body, err := readCapped(file, MaxBody)
 	if err != nil {
 		return nil, err
 	}
@@ -248,13 +268,13 @@ func (f *Fetcher) getFile(u *url.URL) (res *Result, err error) {
 	return &Result{URL: u.String(), Status: http.StatusOK, ContentType: ct, Body: body, Header: h}, nil
 }
 
-func readCapped(r io.Reader) ([]byte, error) {
-	body, err := io.ReadAll(io.LimitReader(r, MaxBody+1))
+func readCapped(r io.Reader, limit int) ([]byte, error) {
+	body, err := io.ReadAll(io.LimitReader(r, int64(limit)+1))
 	if err != nil {
 		return nil, err
 	}
-	if len(body) > MaxBody {
-		return nil, fmt.Errorf("page larger than %d MB", MaxBody>>20)
+	if len(body) > limit {
+		return nil, fmt.Errorf("page larger than %d MB", limit>>20)
 	}
 	return body, nil
 }

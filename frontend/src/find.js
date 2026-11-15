@@ -225,6 +225,15 @@ export function open({replace = false} = {}) {
     if (input.value) search();
 }
 
+/** Shows where an address points: finds `text` in the page and scrolls to it, without taking the keyboard. */
+export function reveal(text) {
+    input.value = text;
+    bar.hidden = false;
+    place();
+    layout();
+    search();
+}
+
 export function close() {
     if (bar.hidden) return;
     clearTimeout(timer);

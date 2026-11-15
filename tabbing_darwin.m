@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import <WebKit/WebKit.h>
 
 extern void goSelectAll(void);
 extern void goCopyAll(void);
@@ -86,5 +87,43 @@ void routeSelectAll(void) {
                 [edit insertItem:m atIndex:at++];
             }
         }
+    });
+}
+
+static WKWebView *findWebView(NSView *v) {
+    if ([v isKindOfClass:[WKWebView class]]) return (WKWebView *)v;
+    for (NSView *s in v.subviews) {
+        WKWebView *w = findWebView(s);
+        if (w) return w;
+    }
+    return nil;
+}
+
+static NSSharingServicePicker *sharePicker; // kept while its menu is up
+
+// Shows the system share menu at the pointer for a web address or some text.
+void shareItem(const char *text) {
+    NSString *str = [NSString stringWithUTF8String:text];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSWindow *win = NSApp.keyWindow ?: NSApp.mainWindow;
+        if (!win) return;
+        NSURL *url = [NSURL URLWithString:str];
+        id item = (url.scheme.length && url.host.length) ? (id)url : (id)str;
+        sharePicker = [[NSSharingServicePicker alloc] initWithItems:@[item]];
+        NSView *view = win.contentView;
+        NSPoint at = [view convertPoint:[win mouseLocationOutsideOfEventStream] fromView:nil];
+        [sharePicker showRelativeToRect:NSMakeRect(at.x, at.y, 1, 1) ofView:view preferredEdge:NSMinYEdge];
+    });
+}
+
+// Opens the print panel for the page; its PDF menu saves a PDF.
+void printPage(void) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSWindow *win = NSApp.keyWindow ?: NSApp.mainWindow;
+        WKWebView *web = win ? findWebView(win.contentView) : nil;
+        if (!web) return;
+        NSPrintOperation *op = [web printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]];
+        op.view.frame = web.bounds; // without a frame the operation prints nothing
+        [op runOperationModalForWindow:win delegate:nil didRunSelector:nil contextInfo:nil];
     });
 }

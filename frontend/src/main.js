@@ -1,6 +1,6 @@
 import './style.css';
 import './schemes.css';
-import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, MarkdownVersions, SetMarkdownVersions, ConvertPage} from '../wailsjs/go/main/App';
+import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, ConvertPage} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -13,8 +13,10 @@ import {initTagging} from './tagging.js';
 import {initOrganize} from './organize.js';
 import {initMenu, showCredentialState} from './theme.js';
 import {initAI, openAI, aiReady, newRequestId, cancelRequest} from './ai.js';
-import {initAsk, refreshAsk, toggleAsk} from './ask.js';
-import {initReading} from './reading.js';
+import {initAsk, refreshAsk, toggleAsk, askNow} from './ask.js';
+import {initReading, selectedText} from './reading.js';
+import {initContextMenu} from './contextmenu.js';
+import {fragmentText} from './textlink.js';
 import {initSplitters} from './splitter.js';
 import {initCompare, openCompare} from './compare.js';
 import './phone.js';
@@ -253,6 +255,11 @@ function render() {
         active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
     content.replaceChildren(...extras, body);
     content.scrollTop = 0;
+    const passage = p?.kind === 'markdown' && active?.draft == null ? fragmentText(p.url) : '';
+    if (passage && active.passageOf !== p) { // an address that points at some text: show where
+        active.passageOf = p;
+        setTimeout(() => { if (currentPage() === p) finder.reveal(passage); }, 0);
+    }
 }
 
 // A message from another part of the page (the AI settings), shown the way a toast is.
@@ -498,14 +505,19 @@ function show(tab, p) {
 }
 
 /** Runs a navigation for `tab`; a response that was superseded in the meantime is dropped. */
-async function go(tab, action) {
+async function go(tab, action, restoreScroll = false) {
     const mine = ++tab.seq;
+    // Where the reader was on this page, for coming back to it with Back or Forward.
+    if (tab.page?.url) (tab.scrolls ??= new Map()).set(tab.page.url, tab === active ? content.scrollTop : (tab.scroll ?? 0));
     tab.loading = true;
     if (tab === active) document.body.classList.add('loading');
     renderTabs();
     try {
         const p = await action();
-        if (mine === tab.seq && tabs.includes(tab)) show(tab, p);
+        if (mine === tab.seq && tabs.includes(tab)) {
+            show(tab, p);
+            if (restoreScroll) restoreScrollOf(tab, p);
+        }
     } catch (e) {
         if (mine === tab.seq && tabs.includes(tab)) show(tab, {kind: 'error', error: String(e), url: tab.page?.url ?? ''});
     } finally {
@@ -518,9 +530,17 @@ async function go(tab, action) {
 }
 
 /** Runs `fn(tabId)` in the tab that is active now. */
-function goActive(fn) {
+function goActive(fn, restoreScroll = false) {
     const tab = active;
-    return go(tab, () => fn(tab.id));
+    return go(tab, () => fn(tab.id), restoreScroll);
+}
+
+/** After Back or Forward: the page is scrolled to where it was when the reader left it. */
+function restoreScrollOf(tab, p) {
+    tab.scroll = tab.scrolls?.get(p.url) ?? 0;
+    if (tab !== active) return;
+    content.scrollTop = tab.scroll;
+    requestAnimationFrame(() => { if (tab === active && tab.page === p) content.scrollTop = tab.scroll; }); // once images have their size
 }
 
 // --- tabs ---
@@ -722,8 +742,8 @@ address.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { const url = real(address.value); goActive((id) => Navigate(id, url)); }
 });
 address.addEventListener('focus', () => address.select());
-$('back').addEventListener('click', () => goActive(Back));
-$('forward').addEventListener('click', () => goActive(Forward));
+$('back').addEventListener('click', () => goActive(Back, true));
+$('forward').addEventListener('click', () => goActive(Forward, true));
 $('reload').addEventListener('click', () => goActive(Reload));
 sourceBtn.addEventListener('click', () => (sourceBtn.classList.contains('pencil') ? toggleEdit() : toggleSource()));
 
@@ -800,8 +820,8 @@ const menuActions = {
     'copy-markdown': copyMarkdown,
     'bookmark-page': () => { if (currentPage()?.url && !isSearch(currentPage().url)) openBookmarkDialog(); },
     reload: () => { if (currentPage()?.url) goActive(Reload); },
-    back: () => { if (!$('back').disabled) goActive(Back); },
-    forward: () => { if (!$('forward').disabled) goActive(Forward); },
+    back: () => { if (!$('back').disabled) goActive(Back, true); },
+    forward: () => { if (!$('forward').disabled) goActive(Forward, true); },
     address: () => address.focus(),
     // The menu item says Show or Hide, so it does just that (the Ctrl+B key moves into the panel first).
     bookmarks: () => ($('bookmarks-panel').hidden ? panelShortcut() : togglePanel(false)),
@@ -832,6 +852,7 @@ const menuActions = {
     'find-next': () => finder.step(1),
     'find-prev': () => finder.step(-1),
     'clear-history': menuItems.clearHistory,
+    print: () => (isMac ? PrintNative() : window.print()),
 };
 // Select All depends on where you are: a field selects its text, the bookmarks panel its
 // folders and bookmarks, the chat its whole conversation, otherwise the page.
@@ -907,8 +928,8 @@ document.addEventListener('keydown', (e) => {
     else if (mod && key === 'j') toggleConsole();
     else if (mod && key === 'b') panelShortcut();
     else if (mod && key === 'd') { if (currentPage()?.url && !isSearch(currentPage().url)) openBookmarkDialog(); }
-    else if (e.altKey && e.key === 'ArrowLeft' || mod && e.key === '[') { if (!$('back').disabled) goActive(Back); }
-    else if (e.altKey && e.key === 'ArrowRight' || mod && e.key === ']') { if (!$('forward').disabled) goActive(Forward); }
+    else if (e.altKey && e.key === 'ArrowLeft' || mod && e.key === '[') { if (!$('back').disabled) goActive(Back, true); }
+    else if (e.altKey && e.key === 'ArrowRight' || mod && e.key === ']') { if (!$('forward').disabled) goActive(Forward, true); }
     else handled = false;
     if (handled) e.preventDefault();
 });
@@ -987,6 +1008,23 @@ initAsk({
         tab.discardArmed = false;
         if (tab === active) { render(); refreshAsk(); }
     },
+});
+initContextMenu({
+    page: currentPage,
+    selected: selectedText,
+    run: (id) => menuActions[id]?.(),
+    open: (url, newTab) => (newTab ? openTab(url, {background: true}) : goActive((id) => Navigate(id, url))),
+    bookmark: (url, title) => openBookmark({url, title: title || friendly(url)}),
+    copy: (text) => writeClipboard(text).catch(console.error),
+    ask: askNow,
+    translate: () => aiTools.translateSelection(),
+    openAsWeb: (url) => goActive((id) => NavigateAsIs(id, url)),
+    share: (text) => ShareItem(text),
+    toast,
+    searchBookmarks: (text) => goActive((id) => Navigate(id, `?${text}`)),
+    canGo: (way) => !$(way).disabled,
+    canEdit: () => Boolean(currentPage()?.editUrl),
+    hasMarkdown: () => Boolean(markdownSource(currentPage())),
 });
 const aiTools = initReading({page: currentPage, run: readPage, compare: openCompare, toast});
 initSplitters();
