@@ -4,6 +4,8 @@ Mardo is a small browser and author for markdown. It asks servers for markdown, 
 
 Free and open source (MIT). macOS, Windows, Linux, iPhone and iPad.
 
+![Mardo on a Mac, showing a markdown page with its toolbar, tabs and address bar](https://mardo.henryvandenbroek.com/mardo-desktop.jpg)
+
 - [Download Mardo](https://github.com/hbroek/mardo/releases/latest)
 - [Mardo on the App Store](https://apps.apple.com/app/id6830193468)
 - [View on GitHub](https://github.com/hbroek/mardo)
