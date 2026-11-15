@@ -1,5 +1,7 @@
 # Mardo: read the web as markdown, write it back
 
+<img src="https://mardo.henryvandenbroek.com/mardo-marten-hero.svg" width="110" alt="Mardo the Marten, waving and holding a page with the M-down mark">
+
 Mardo is a small browser and author for markdown. It asks servers for markdown, shows it cleanly, and saves your changes back where the server allows.
 
 Free and open source (MIT). macOS, Windows, Linux, iPhone and iPad.
