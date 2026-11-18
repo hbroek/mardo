@@ -49,3 +49,6 @@ export function EventsEmit(event, ...data) {
 /** There is no dropping files on a phone. */
 export function OnFileDrop() {}
 export function OnFileDropOff() {}
+
+/** The right-click menu is not used on a phone; this keeps its import of Wails' runtime resolvable. */
+export function BrowserOpenURL(url) { window.open(url, '_blank'); }
