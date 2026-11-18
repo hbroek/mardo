@@ -744,7 +744,7 @@ address.addEventListener('keydown', (e) => {
 address.addEventListener('focus', () => address.select());
 $('back').addEventListener('click', () => goActive(Back, true));
 $('forward').addEventListener('click', () => goActive(Forward, true));
-$('reload').addEventListener('click', () => goActive(Reload));
+$('reload').addEventListener('click', () => goActive(Reload, true));
 sourceBtn.addEventListener('click', () => (sourceBtn.classList.contains('pencil') ? toggleEdit() : toggleSource()));
 
 // The iOS share sheet (the app answers the message itself, not the Go core): the page's address, the file it
@@ -819,7 +819,7 @@ const menuActions = {
     'save-page': savePage,
     'copy-markdown': copyMarkdown,
     'bookmark-page': () => { if (currentPage()?.url && !isSearch(currentPage().url)) openBookmarkDialog(); },
-    reload: () => { if (currentPage()?.url) goActive(Reload); },
+    reload: () => { if (currentPage()?.url) goActive(Reload, true); },
     back: () => { if (!$('back').disabled) goActive(Back, true); },
     forward: () => { if (!$('forward').disabled) goActive(Forward, true); },
     address: () => address.focus(),
@@ -910,7 +910,7 @@ document.addEventListener('keydown', (e) => {
     else if ((mod || (!isMac && e.metaKey)) && !e.altKey && key === 'g') finder.step(e.shiftKey ? -1 : 1);
     else if (!isMac && mod && !e.shiftKey && key === 'h') openReplace();
     else if (mod && key === 'l') address.focus();
-    else if (mod && key === 'r') { if (currentPage()?.url) goActive(Reload); }
+    else if (mod && key === 'r') { if (currentPage()?.url) goActive(Reload, true); }
     else if (mod && key === 'u') toggleSource();
     else if (mod && !e.shiftKey && key === 'e') toggleEdit();
     else if (mod && e.shiftKey && key === 'a') toggleAsk();
@@ -961,7 +961,7 @@ async function updateCredentialIndicator() {
 
 initCredentials((origin) => {
     updateCredentialIndicator();
-    if (currentPage()?.url && originOf(currentPage().url) === originOf(origin)) goActive(Reload);
+    if (currentPage()?.url && originOf(currentPage().url) === originOf(origin)) goActive(Reload, true);
 });
 
 // The ribbon is an outline until the current page is bookmarked, then filled.
