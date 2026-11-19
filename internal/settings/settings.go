@@ -21,6 +21,8 @@ type Settings struct {
 type Browsing struct {
 	// NoMarkdownVersion turns off looking for a .md version of web pages that are not markdown.
 	NoMarkdownVersion bool `json:"noMarkdownVersion,omitempty"`
+	// Bonbon is Bonbon mode: pages are markdown only, as the Bonbon charter has it (see browser.SetBonbon).
+	Bonbon bool `json:"bonbon,omitempty"`
 }
 
 // AI is the language model provider (see package ai). The API key is not here:

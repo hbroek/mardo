@@ -32,7 +32,7 @@ function apply() {
 /** Next to the full-width button (or in the corner when that one is hidden). */
 function place() {
     const r = content.getBoundingClientRect();
-    button.hidden = root.classList.contains('phone');
+    button.hidden = root.classList.contains('phone') || root.classList.contains('bonbon-mode');
     button.style.left = `${r.left + (wide && !wide.hidden ? 44 : 8)}px`;
     button.style.top = `${r.top + 8}px`;
 }
@@ -45,5 +45,6 @@ button.addEventListener('click', () => {
 
 apply();
 new ResizeObserver(place).observe(content);
+new MutationObserver(place).observe(root, {attributes: true, attributeFilter: ['class']}); // Bonbon mode hides the button
 if (wide) new MutationObserver(place).observe(wide, {attributes: true, attributeFilter: ['hidden']});
 place();

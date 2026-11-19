@@ -146,6 +146,9 @@ func (a *App) appMenu() *menu.Menu {
 	a.markdownItem = tools.AddCheckbox("Look for Markdown Versions", a.MarkdownVersions(), nil, func(*menu.CallbackData) {
 		go a.SetMarkdownVersions(!a.MarkdownVersions())
 	})
+	a.bonbonItem = tools.AddCheckbox("Bonbon Mode", a.Bonbon(), nil, func(*menu.CallbackData) {
+		go a.SetBonbon(!a.Bonbon())
+	})
 	tools.AddSeparator()
 	// The same tools as the sparkle button. They tell you when the page or a selection does not suit them.
 	tools.AddText("AI Tools", nil, nil).Disabled = true

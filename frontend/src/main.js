@@ -1,7 +1,7 @@
 import './style.css';
 import './schemes.css';
-import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, ConvertPage} from '../wailsjs/go/main/App';
-import {OnFileDrop, EventsOn} from '../wailsjs/runtime/runtime';
+import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, ConvertPage} from '../wailsjs/go/main/App';
+import {OnFileDrop, EventsOn, BrowserOpenURL} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
 import {svgIcon} from './icons.js';
@@ -517,7 +517,7 @@ async function go(tab, action, restoreScroll = false) {
     renderTabs();
     try {
         const p = await action();
-        if (mine === tab.seq && tabs.includes(tab)) {
+        if (p && mine === tab.seq && tabs.includes(tab)) { // null: nothing to show, the tab stays as it is
             show(tab, p);
             if (restoreScroll) restoreScrollOf(tab, p);
         }
@@ -783,7 +783,8 @@ content.addEventListener('click', (e) => {
         openTab(a.href, {background: true}); // Cmd/Ctrl+click: a tab in the background
     } else {
         const url = a.href;
-        goActive((id) => Navigate(id, url));
+        // In Bonbon mode a link to a web page opens in the default browser and this tab stays as it is.
+        goActive(async (id) => { const p = await FollowLink(id, url); if (p.kind !== 'external') return p; BrowserOpenURL(p.url); return null; });
     }
 });
 content.addEventListener('auxclick', (e) => { // middle click
@@ -801,6 +802,8 @@ const menuItems = {
     newDocument,
     markdownVersions: () => MarkdownVersions(),
     setMarkdownVersions: (on) => SetMarkdownVersions(on),
+    bonbon: () => Bonbon(),
+    setBonbon: (on) => SetBonbon(on),
     history: () => goActive(FullHistory),
     about: () => goActive(About),
     find: () => finder.open(),
@@ -885,6 +888,11 @@ function selectAll() {
 }
 menuActions['select-all'] = selectAll;
 EventsOn('menu', (id) => menuActions[id]?.());
+
+// Bonbon mode: markdown only. The page is loaded again so it shows in the new mode.
+const showBonbon = (on) => document.documentElement.classList.toggle('bonbon-mode', !!on);
+Bonbon().then(showBonbon).catch(() => {});
+EventsOn('bonbon', (on) => { showBonbon(on); if (currentPage()?.url) goActive(Reload, true); });
 
 // The macOS View menu says Show or Hide for these four. Watch them rather than every place that changes them.
 const viewShown = {};

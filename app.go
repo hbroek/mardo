@@ -19,6 +19,7 @@ type App struct {
 	*core.Core
 	ctx          context.Context
 	markdownItem *menu.MenuItem            // Tools > Look for Markdown Versions
+	bonbonItem   *menu.MenuItem            // Tools > Bonbon Mode
 	viewItems    map[string]*menu.MenuItem // the View menu's show/hide items (macOS)
 }
 
@@ -84,8 +85,11 @@ func (h wailsHost) Emit(event string, data any) {
 }
 
 func (h wailsHost) SetChecked(id string, on bool) {
-	if id == core.MarkdownVersionsMenu {
+	switch id {
+	case core.MarkdownVersionsMenu:
 		h.app.checkMenu(h.app.markdownItem, on)
+	case core.BonbonMenu:
+		h.app.checkMenu(h.app.bonbonItem, on)
 	}
 }
 

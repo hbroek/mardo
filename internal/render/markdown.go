@@ -5,9 +5,10 @@ import (
 	"bytes"
 	"html"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
-	"time"
+	"sync/atomic"
 
 	"mardo/internal/fetch"
 	"mardo/internal/imgproxy"
@@ -29,6 +30,17 @@ var md = goldmark.New(
 	goldmark.WithRendererOptions(ghtml.WithUnsafe()),
 )
 
+// mdStrict is md for Bonbon mode: raw HTML in the text is left out instead of passed on.
+var mdStrict = goldmark.New(
+	goldmark.WithExtensions(extension.GFM, extension.Footnote),
+	goldmark.WithParserOptions(parser.WithAutoHeadingID()),
+)
+
+// Bonbon is Bonbon mode: a page is markdown only. HTML in the text is dropped, SVG pictures are links, a
+// picture alone in a paragraph is centered with its alt text as a caption, and one at the head of a paragraph
+// floats right. See the charter at bonbonweb.org.
+var Bonbon atomic.Bool
+
 var policy = newPolicy()
 
 func newPolicy() *bluemonday.Policy {
@@ -49,34 +61,49 @@ func newPolicy() *bluemonday.Policy {
 func Markdown(src []byte, base *url.URL) (string, string, error) {
 	src = bytes.TrimPrefix(src, []byte("\xef\xbb\xbf"))
 	meta, body := frontMatter(src)
+	strict := Bonbon.Load()
+	conv := md
+	if strict {
+		conv = mdStrict
+	}
 	var buf bytes.Buffer
-	if err := md.Convert(expandMacros(body, meta), &buf); err != nil {
+	if err := conv.Convert(expandMacros(body, meta), &buf); err != nil {
 		return "", "", err
 	}
 	text := buf.Bytes()
-	if head := bonbonHeader(meta, bytes.Contains(text, []byte("<h1"))); head != "" {
+	if head := bonbonHeader(meta); head != "" {
 		text = append([]byte(head), text...)
 	}
-	out, title, err := finish(policy.SanitizeBytes(text), base)
+	out, title, err := finish(policy.SanitizeBytes(text), base, strict)
 	if t := meta["title"]; t != "" {
 		title = t
 	}
 	return out, title, err
 }
 
+// webAddress is s when it is a relative address or an http(s) one, else "": a front matter value must not
+// become a javascript: link.
+func webAddress(s string) string {
+	u, err := url.Parse(s)
+	if err != nil || (u.Scheme != "" && u.Scheme != "http" && u.Scheme != "https") {
+		return ""
+	}
+	return s
+}
+
 // bonbonHeader is the HTML above the text for a page with Bonbon front matter: arrows to the previous and
-// next page, a right margin picture below them, the title (a link when link is set) and a line with the author and publication date. It is "" for a page without any
-// of those keys, so ordinary front matter (a title and a description) shows nothing extra. The
-// title is not repeated when the text has its own h1. Everything is escaped, and the result goes
-// through the same cleaning as the page.
-func bonbonHeader(meta map[string]string, hasH1 bool) string {
-	if meta["link"] == "" && meta["author"] == "" && meta["pubdate"] == "" && meta["urlprev"] == "" && meta["urlnext"] == "" && meta["rightmarginimage"] == "" {
+// next page, and a right margin picture below them. It is "" for a page without those keys. The title,
+// author and date are not drawn: a page puts them where it wants with {{page.title}} and the like. Everything
+// is escaped, and the result goes through the same cleaning as the page.
+func bonbonHeader(meta map[string]string) string {
+	prev, next, img := webAddress(meta["urlprev"]), webAddress(meta["urlnext"]), webAddress(meta["rightmarginimage"])
+	if prev == "" && next == "" && img == "" {
 		return ""
 	}
 	e := html.EscapeString
 	var b strings.Builder
 	b.WriteString(`<div class="bonbon-head">`)
-	if prev, next := meta["urlprev"], meta["urlnext"]; prev != "" || next != "" {
+	if prev != "" || next != "" {
 		b.WriteString(`<div class="bonbon-arrows">`)
 		if prev != "" {
 			b.WriteString(`<a class="bonbon-prev" href="` + e(prev) + `" title="Previous" aria-label="Previous">←</a>`)
@@ -87,55 +114,32 @@ func bonbonHeader(meta map[string]string, hasH1 bool) string {
 		b.WriteString(`</div>`)
 	}
 	// after the arrows, so the picture starts below them
-	if img := meta["rightmarginimage"]; img != "" {
+	if img != "" {
 		b.WriteString(`<img class="bonbon-margin" src="` + e(img) + `" alt="">`)
-	}
-	if t := meta["title"]; t != "" && !hasH1 {
-		if l := meta["link"]; l != "" {
-			t = `<a href="` + e(l) + `">` + e(t) + `</a>`
-		} else {
-			t = e(t)
-		}
-		b.WriteString(`<h1 class="bonbon-title">` + t + `</h1>`)
-	}
-	var by []string
-	if a := meta["author"]; a != "" {
-		by = append(by, e(a))
-	}
-	if d := meta["pubdate"]; d != "" {
-		by = append(by, e(pubDate(d)))
-	}
-	if len(by) > 0 {
-		b.WriteString(`<p class="bonbon-byline">` + strings.Join(by, " · ") + `</p>`)
 	}
 	b.WriteString(`</div>`)
 	return b.String()
 }
 
-// pubDate shows an RSS 2.0 date (Fri, 23 Oct 2026 15:19:45 GMT) as "23 Oct 2026". A date that
-// does not read that way is shown as written.
-func pubDate(s string) string {
-	for _, layout := range []string{time.RFC1123Z, time.RFC1123, "Mon, 2 Jan 2006 15:04:05 MST", "Mon, 2 Jan 2006 15:04:05 -0700", time.RFC3339} {
-		if t, err := time.Parse(layout, s); err == nil {
-			return t.Format("2 Jan 2006")
-		}
-	}
-	return s
-}
-
 var macro = regexp.MustCompile(`\{\{\s*page\.([A-Za-z0-9_-]+)\s*\}\}`)
 
 // expandMacros replaces {{page.title}} and the like in the text with the page's own front matter
-// values. A macro that names a key the page does not have is left as written.
+// values. A macro that names a key the page does not have is left as written. When the page has a link,
+// its title is a link to it: that is what link means.
 func expandMacros(body []byte, meta map[string]string) []byte {
 	if len(meta) == 0 || !bytes.Contains(body, []byte("{{")) {
 		return body
 	}
 	return macro.ReplaceAllFunc(body, func(m []byte) []byte {
-		if v, ok := meta[strings.ToLower(string(macro.FindSubmatch(m)[1]))]; ok && v != "" {
-			return []byte(v)
+		key := strings.ToLower(string(macro.FindSubmatch(m)[1]))
+		v, ok := meta[key]
+		if !ok || v == "" {
+			return m
 		}
-		return m
+		if l := webAddress(meta["link"]); key == "title" && l != "" {
+			v = "[" + strings.NewReplacer("[", `\[`, "]", `\]`).Replace(v) + "](<" + strings.ReplaceAll(l, " ", "%20") + ">)"
+		}
+		return []byte(v)
 	})
 }
 
@@ -186,12 +190,12 @@ func frontMatter(src []byte) (map[string]string, []byte) {
 // SanitizeHTML cleans untrusted HTML (such as a feed item body) and resolves
 // its links against base.
 func SanitizeHTML(src string, base *url.URL) (string, error) {
-	out, _, err := finish(policy.SanitizeBytes([]byte(src)), base)
+	out, _, err := finish(policy.SanitizeBytes([]byte(src)), base, false)
 	return out, err
 }
 
 // finish resolves links in already sanitized HTML and finds the first h1.
-func finish(clean []byte, base *url.URL) (string, string, error) {
+func finish(clean []byte, base *url.URL, strict bool) (string, string, error) {
 	body := &xhtml.Node{Type: xhtml.ElementNode, DataAtom: atom.Body, Data: "body"}
 	nodes, err := xhtml.ParseFragment(bytes.NewReader(clean), body)
 	if err != nil {
@@ -200,7 +204,7 @@ func finish(clean []byte, base *url.URL) (string, string, error) {
 	title := ""
 	var out bytes.Buffer
 	for _, n := range nodes {
-		rewrite(n, base, &title)
+		rewrite(n, base, &title, strict)
 		if err := xhtml.Render(&out, n); err != nil {
 			return "", "", err
 		}
@@ -208,13 +212,20 @@ func finish(clean []byte, base *url.URL) (string, string, error) {
 	return out.String(), title, nil
 }
 
-func rewrite(n *xhtml.Node, base *url.URL, title *string) {
+func rewrite(n *xhtml.Node, base *url.URL, title *string, strict bool) {
 	if n.Type == xhtml.ElementNode {
 		switch n.DataAtom {
+		case atom.P:
+			if strict {
+				bonbonPicture(n)
+			}
 		case atom.A:
 			resolveAttr(n, "href", base, false)
 		case atom.Img:
 			resolveAttr(n, "src", base, true)
+			if strict {
+				noSVG(n)
+			}
 		case atom.H1:
 			if *title == "" {
 				*title = collapse(text(n))
@@ -222,7 +233,7 @@ func rewrite(n *xhtml.Node, base *url.URL, title *string) {
 		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		rewrite(c, base, title)
+		rewrite(c, base, title, strict)
 	}
 }
 
@@ -276,4 +287,66 @@ func text(n *xhtml.Node) string {
 
 func collapse(s string) string {
 	return strings.Join(strings.Fields(s), " ")
+}
+
+// noSVG turns a picture that is an SVG into a link to it, with its alt text (or its name) for the text: Bonbon
+// shows PNG, JPEG, GIF and WebP only.
+func noSVG(n *xhtml.Node) {
+	src, alt := attr(n, "src"), attr(n, "alt")
+	u, err := url.Parse(src)
+	if err != nil || (strings.ToLower(path.Ext(u.Path)) != ".svg" && !strings.Contains(strings.ToLower(u.RawQuery), "format=svg")) {
+		return
+	}
+	if alt == "" {
+		alt = path.Base(u.Path)
+	}
+	n.Type, n.Data, n.DataAtom = xhtml.ElementNode, "a", atom.A
+	n.Attr = []xhtml.Attribute{{Key: "href", Val: src}}
+	n.AppendChild(&xhtml.Node{Type: xhtml.TextNode, Data: alt})
+}
+
+func attrOf(n *xhtml.Node, key string) string {
+	for _, a := range n.Attr {
+		if a.Key == key {
+			return a.Val
+		}
+	}
+	return ""
+}
+
+// bonbonPicture applies Bonbon's two rules for pictures to a paragraph: one that is only a picture becomes a
+// figure, centered, with its alt text drawn under it; one that begins with a picture and goes on with text
+// floats the picture at the right.
+func bonbonPicture(p *xhtml.Node) {
+	for c := p.FirstChild; c != nil; c = c.NextSibling {
+		if c.DataAtom == atom.Img {
+			noSVG(c) // a picture that is not one stays out of the rules below
+		}
+	}
+	var first *xhtml.Node
+	others := 0
+	for c := p.FirstChild; c != nil; c = c.NextSibling {
+		switch {
+		case c.Type == xhtml.TextNode && strings.TrimSpace(c.Data) == "":
+		case first == nil && c.Type == xhtml.ElementNode && c.DataAtom == atom.Img:
+			first = c
+		default:
+			others++
+		}
+	}
+	if first == nil {
+		return
+	}
+	if others > 0 {
+		first.Attr = append(first.Attr, xhtml.Attribute{Key: "class", Val: "bonbon-right"})
+		return
+	}
+	alt := strings.TrimSpace(attrOf(first, "alt"))
+	p.Data, p.DataAtom = "figure", atom.Figure
+	p.Attr = []xhtml.Attribute{{Key: "class", Val: "bonbon-figure"}}
+	if alt != "" {
+		cap := &xhtml.Node{Type: xhtml.ElementNode, Data: "figcaption", DataAtom: atom.Figcaption}
+		cap.AppendChild(&xhtml.Node{Type: xhtml.TextNode, Data: alt})
+		p.AppendChild(cap)
+	}
 }

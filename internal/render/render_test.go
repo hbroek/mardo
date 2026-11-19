@@ -195,26 +195,68 @@ func TestRawHTMLInMarkdownIsKeptButCleaned(t *testing.T) {
 	}
 }
 
-func TestBonbonFrontMatterAddsAHeader(t *testing.T) {
+func TestBonbonFrontMatterAddsArrowsAndAMarginPicture(t *testing.T) {
 	src := "---\ntitle: Hello <b>\ndescription: A short one.\nauthor: Ann\npubDate: Fri, 23 Oct 2026 15:19:45 GMT\nlink: /posts/hello\nurlPrev: /posts/before\nurlNext: /posts/after\nrightMarginImage: /me.png\n---\nText.\n"
 	html, title, err := Markdown([]byte(src), mustURL("https://x.test/blog/"))
 	if err != nil || title != "Hello <b>" {
 		t.Fatalf("title = %q, err = %v", title, err)
 	}
 	for _, want := range []string{
-		`href="https://x.test/posts/hello" rel="nofollow">Hello &lt;b&gt;</a>`,
 		`class="bonbon-prev" href="https://x.test/posts/before"`,
 		`class="bonbon-next" href="https://x.test/posts/after"`,
-		`class="bonbon-margin" src="https://x.test/me.png"`,
-		"Ann · 23 Oct 2026", "Text.",
+		`class="bonbon-margin" src="https://x.test/me.png"`, "Text.",
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("missing %q in %s", want, html)
 		}
 	}
-	// The title is not repeated when the text has its own h1, and unsafe addresses are dropped.
+	// The page draws its own title and byline, with macros: nothing is added for it, and unsafe addresses are dropped.
+	for _, not := range []string{"bonbon-title", "bonbon-byline", "Ann", "Hello", "A short one"} {
+		if strings.Contains(html, not) {
+			t.Errorf("%q should not be drawn: %s", not, html)
+		}
+	}
 	html, _, _ = Markdown([]byte("---\ntitle: T\nurlNext: javascript:alert(1)\nauthor: A\n---\n# Own\n"), mustURL("https://x.test/"))
-	if strings.Contains(html, "bonbon-title") || strings.Contains(html, "javascript") {
+	if strings.Contains(html, "bonbon") || strings.Contains(html, "javascript") {
+		t.Errorf("html = %s", html)
+	}
+}
+
+func TestTitleMacroIsALinkWhenThePageHasALink(t *testing.T) {
+	src := "---\ntitle: \"A [post]\"\nlink: https://x.test/posts/a b\n---\n# {{page.title}}\n"
+	html, _, err := Markdown([]byte(src), mustURL("https://x.test/"))
+	if err != nil || !strings.Contains(html, `<a href="https://x.test/posts/a%20b" rel="nofollow">A [post]</a>`) {
+		t.Fatalf("html = %q, err = %v", html, err)
+	}
+}
+
+func TestBonbonModeIsMarkdownOnly(t *testing.T) {
+	Bonbon.Store(true)
+	defer Bonbon.Store(false)
+	base := mustURL("https://x.test/")
+	src := "Text <b>bold</b> and <script>x</script>.\n\n<div>layout</div>\n\n![A logo](/logo.svg)\n\n![Emily](/e.png)\n\n![Emily at her desk](/emily.png) The paragraph goes on.\n"
+	html, _, err := Markdown([]byte(src), base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, not := range []string{"<b>", "<div", "<script", "<img src=\"https://x.test/logo.svg"} {
+		if strings.Contains(html, not) {
+			t.Errorf("%q should be gone: %s", not, html)
+		}
+	}
+	if !strings.Contains(html, `<figure class="bonbon-figure"><img src="https://x.test/e.png" alt="Emily"/><figcaption>Emily</figcaption></figure>`) {
+		t.Errorf("a picture alone is a figure with a caption: %s", html)
+	}
+	if !strings.Contains(html, `class="bonbon-right"`) || !strings.Contains(html, "The paragraph goes on.") {
+		t.Errorf("a picture at the head of a paragraph floats right: %s", html)
+	}
+	if !strings.Contains(html, `<p><a href="https://x.test/logo.svg">A logo</a></p>`) {
+		t.Errorf("an SVG is a link: %s", html)
+	}
+	// Outside Bonbon mode the same text keeps its HTML and its pictures.
+	Bonbon.Store(false)
+	html, _, _ = Markdown([]byte(src), base)
+	if !strings.Contains(html, "<b>bold</b>") || strings.Contains(html, "figure") {
 		t.Errorf("html = %s", html)
 	}
 }

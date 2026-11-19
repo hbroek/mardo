@@ -8,6 +8,9 @@ const (
 	KindMarkdown Kind = "markdown"
 	KindFallback Kind = "fallback"
 	KindError    Kind = "error"
+	// KindExternal is the answer to a clicked link in Bonbon mode that turned out to be a web page: it belongs
+	// in the reader's own browser, and the tab stays where it was.
+	KindExternal Kind = "external"
 )
 
 // Link is a hyperlink found on a page.

@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"mardo/internal/auth"
@@ -21,6 +22,9 @@ import (
 const (
 	// Accept asks servers for markdown first.
 	Accept = "text/markdown, text/x-markdown;q=0.9, application/rss+xml;q=0.5, application/atom+xml;q=0.5, text/plain;q=0.3, */*;q=0.1"
+
+	// AcceptBonbon is what a Bonbon browser sends with every request for a page (see Fetcher.SetBonbon).
+	AcceptBonbon = "text/markdown, text/x-opml"
 
 	// AcceptHTML asks for the web page, for a site that has the same address answer with markdown or with HTML.
 	AcceptHTML = "text/html, application/xhtml+xml;q=0.9, */*;q=0.1"
@@ -54,7 +58,12 @@ type Fetcher struct {
 
 	client *http.Client
 	auth   Authorizer
+	bonbon atomic.Bool
 }
+
+// SetBonbon makes Get ask the way Bonbon does, for markdown and OPML only, so a server that answers one address
+// with markdown or with HTML sends markdown.
+func (f *Fetcher) SetBonbon(on bool) { f.bonbon.Store(on) }
 
 // NewFetcher returns a Fetcher. auth and jar may be nil.
 func NewFetcher(auth Authorizer, jar http.CookieJar) *Fetcher {
@@ -160,6 +169,9 @@ func (f *Fetcher) Get(ctx context.Context, rawURL string) (*Result, error) {
 	}
 	if u.Scheme == "file" {
 		return f.getFile(u)
+	}
+	if f.bonbon.Load() {
+		return f.getHTTP(ctx, u, AcceptBonbon)
 	}
 	return f.getHTTP(ctx, u, Accept)
 }
@@ -289,6 +301,22 @@ func IsMarkdown(contentType string) bool {
 	switch mt {
 	case "text/markdown", "text/x-markdown", "text/plain":
 		return true
+	}
+	return false
+}
+
+// IsBonbonMarkdown is the stricter rule of Bonbon mode: a page is text/markdown, or a text/plain or generic
+// binary answer for an address that ends in .md or .markdown. Nothing else is a page.
+func IsBonbonMarkdown(contentType, urlPath string) bool {
+	mt, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return false
+	}
+	switch mt {
+	case "text/markdown", "text/x-markdown":
+		return true
+	case "text/plain", "application/octet-stream", "binary/octet-stream":
+		return isMarkdownExt(urlPath)
 	}
 	return false
 }

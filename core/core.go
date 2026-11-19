@@ -97,6 +97,7 @@ func New(cfg Config) *Core {
 	a.settingsPath = file("settings.json")
 	a.settings = settings.Load(a.settingsPath, dir)
 	a.browser.SetMarkdownVersions(!a.settings.Browsing.NoMarkdownVersion)
+	a.browser.SetBonbon(a.settings.Browsing.Bonbon)
 	a.bookmarks, a.bookmarksErr = bookmarks.Open(a.settings.Bookmarks.Backend, a.settings.Bookmarks.Config, bookmarks.Deps{Authorize: a.auth.Apply})
 	a.browser.SetSearcher(a.searchPage)
 	a.browser.SetMeaningSearcher(a.meaningPage)
@@ -108,6 +109,10 @@ func New(cfg Config) *Core {
 func SetContext(a *Core, ctx context.Context) { a.ctx = ctx }
 
 // Each page-level call names the tab it acts on; NewTab hands out the ids.
+// FollowLink is Navigate for a click on a link: in Bonbon mode a web page is for the reader's default browser,
+// and the answer says so (page.KindExternal; see browser.Follow).
+func (a *Core) FollowLink(tab int, url string) page.Page { return a.browser.Follow(a.ctx, tab, url) }
+
 // NavigateAsIs opens a page without looking for its .md version.
 func (a *Core) NavigateAsIs(tab int, url string) page.Page {
 	return a.browser.NavigateAsIs(a.ctx, tab, url)
@@ -128,6 +133,26 @@ func (a *Core) SetMarkdownVersions(on bool) error {
 	}
 	raw := settings.LoadRaw(a.settingsPath) // not the resolved copy, which would pin defaults
 	raw.Browsing.NoMarkdownVersion = !on
+	return settings.Save(a.settingsPath, raw)
+}
+
+// Bonbon says whether Bonbon mode is on: markdown only, as the Bonbon charter has it.
+func (a *Core) Bonbon() bool { return a.browser.Bonbon() }
+
+// SetBonbon turns Bonbon mode on or off and remembers the choice. Pages already open keep their look until
+// they are loaded again.
+func (a *Core) SetBonbon(on bool) error {
+	a.browser.SetBonbon(on)
+	a.bmMu.Lock()
+	a.settings.Browsing.Bonbon = on
+	a.bmMu.Unlock()
+	a.host.SetChecked(BonbonMenu, on)
+	a.host.Emit("bonbon", on) // the page loads again, in the new mode
+	if a.settingsPath == "" {
+		return nil
+	}
+	raw := settings.LoadRaw(a.settingsPath)
+	raw.Browsing.Bonbon = on
 	return settings.Save(a.settingsPath, raw)
 }
 

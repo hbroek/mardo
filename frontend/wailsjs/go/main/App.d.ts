@@ -18,6 +18,8 @@ export function AskPage(arg1:string,arg2:string,arg3:Array<ai.Message>,arg4:stri
 
 export function Back(arg1:number):Promise<page.Page>;
 
+export function Bonbon():Promise<boolean>;
+
 export function BookmarkFolders():Promise<Array<bookmarks.Folder>>;
 
 export function BookmarkFor(arg1:string):Promise<bookmarks.Bookmark>;
@@ -55,6 +57,8 @@ export function DownloadAs(arg1:string):Promise<string>;
 export function EditPage(arg1:string,arg2:string,arg3:string,arg4:string):Promise<core.AIEdit>;
 
 export function ExportBookmarks(arg1:string):Promise<string>;
+
+export function FollowLink(arg1:number,arg2:string):Promise<page.Page>;
 
 export function ForgetConversations():Promise<number>;
 
@@ -115,6 +119,8 @@ export function SaveSource(arg1:number,arg2:string,arg3:string,arg4:string,arg5:
 export function SavedConversation(arg1:string):Promise<Array<core.ChatTurn>>;
 
 export function SearchBookmarks(arg1:string):Promise<Array<bookmarks.Bookmark>>;
+
+export function SetBonbon(arg1:boolean):Promise<void>;
 
 export function SetMarkdownVersions(arg1:boolean):Promise<void>;
 

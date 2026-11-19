@@ -21,6 +21,9 @@ type Host interface {
 // MarkdownVersionsMenu is the id of the menu item that turns the .md lookup on or off.
 const MarkdownVersionsMenu = "markdown-versions"
 
+// BonbonMenu is the id of the menu item that turns Bonbon mode on or off.
+const BonbonMenu = "bonbon"
+
 // noHost is the Host of a core without a window: there is no dialog to answer.
 type noHost struct{}
 

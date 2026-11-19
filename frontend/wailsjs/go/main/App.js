@@ -22,6 +22,10 @@ export function Back(arg1) {
   return window['go']['main']['App']['Back'](arg1);
 }
 
+export function Bonbon() {
+  return window['go']['main']['App']['Bonbon']();
+}
+
 export function BookmarkFolders() {
   return window['go']['main']['App']['BookmarkFolders']();
 }
@@ -96,6 +100,10 @@ export function EditPage(arg1, arg2, arg3, arg4) {
 
 export function ExportBookmarks(arg1) {
   return window['go']['main']['App']['ExportBookmarks'](arg1);
+}
+
+export function FollowLink(arg1, arg2) {
+  return window['go']['main']['App']['FollowLink'](arg1, arg2);
 }
 
 export function ForgetConversations() {
@@ -216,6 +224,10 @@ export function SavedConversation(arg1) {
 
 export function SearchBookmarks(arg1) {
   return window['go']['main']['App']['SearchBookmarks'](arg1);
+}
+
+export function SetBonbon(arg1) {
+  return window['go']['main']['App']['SetBonbon'](arg1);
 }
 
 export function SetMarkdownVersions(arg1) {

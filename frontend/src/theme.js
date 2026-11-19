@@ -92,6 +92,7 @@ export function initMenu(actions) {
         const creds = item('menuitem', credentials.saved ? 'Site credentials (saved for this site)' : 'Site credentials\u2026', null,
             () => { close(); actions.credentials(); }, icon('key'));
         const markdownEntry = item('menuitemcheckbox', 'Look for markdown versions of pages', markdownVersions, async () => { markdownVersions = !markdownVersions; try { await actions.setMarkdownVersions(markdownVersions); } catch { markdownVersions = !markdownVersions; } build(); });
+        const bonbonEntry = item('menuitemcheckbox', 'Bonbon mode: markdown only', bonbon, async () => { bonbon = !bonbon; try { await actions.setBonbon(bonbon); } catch { bonbon = !bonbon; } build(); });
         const aiEntry = item('menuitem', 'AI assistant\u2026', null, () => { close(); actions.ai(); }, icon('sparkle'));
         const newEntry = item('menuitem', 'New page', null, () => { close(); actions.newDocument(); }, icon('page'));
         const openEntry = item('menuitem', 'Open page\u2026', null, () => { close(); actions.openFile(); }, icon('folder'));
@@ -119,14 +120,16 @@ export function initMenu(actions) {
             }),
         ];
         menu.replaceChildren(...(phone
-            ? [...phoneRows, findEntry, historyEntry, creds, aiEntry, markdownEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), aboutEntry]
-            : [findEntry, creds, aiEntry, ...writing, historyEntry, clearEntry, markdownEntry, ...themeRows, aboutEntry]));
+            ? [...phoneRows, findEntry, historyEntry, creds, aiEntry, markdownEntry, bonbonEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), aboutEntry]
+            : [findEntry, creds, aiEntry, ...writing, historyEntry, clearEntry, markdownEntry, bonbonEntry, ...themeRows, aboutEntry]));
     }
 
+    let bonbon = false; // Bonbon mode, which the menu bar can also change
     let markdownVersions = true; // whether .md versions of web pages are looked for; the menu bar can change it too
 
     function open() {
         build();
+        actions.bonbon().then((on) => { if (on !== bonbon) { bonbon = on; if (!menu.hidden) build(); } }).catch(() => {});
         actions.markdownVersions().then((on) => { if (on !== markdownVersions) { markdownVersions = on; if (!menu.hidden) build(); } }).catch(() => {});
         menu.hidden = false;
         btn.setAttribute('aria-expanded', 'true');

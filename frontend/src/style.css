@@ -964,8 +964,8 @@ html.phone #replace-input { font-size: 16px; }
 
 /* Bonbon front matter: a header above the text */
 .bonbon-head { margin-bottom: 1em; } /* not clipped: the text below flows around the picture */
-.markdown .bonbon-head ~ :is(h1, h2, h3, h4, hr, pre, table), .markdown .bonbon-head .bonbon-title { clear: none !important; } /* the image float settings clear floats before these */
-.markdown .bonbon-head ~ :is(h1, h2, h3, h4, hr), .markdown .bonbon-head .bonbon-title { display: flow-root; } /* a heading's line stops at the picture instead of running behind it */
+.markdown .bonbon-head ~ :is(h1, h2, h3, h4, hr, pre, table) { clear: none !important; } /* the image float settings clear floats before these */
+.markdown .bonbon-head ~ :is(h1, h2, h3, h4, hr) { display: flow-root; } /* a heading's line stops at the picture instead of running behind it */
 .markdown .bonbon-head img.bonbon-margin { /* beats the image float setting */
     float: right; max-width: 30%; max-height: 14em; margin: 0 0 .5em 1em; border-radius: 8px; cursor: default; vertical-align: top; }
 .markdown .bonbon-head > :first-child, .markdown .bonbon-head > :first-child + :not(img) { margin-top: 0; } /* the picture and the text start at the same height */
@@ -974,8 +974,14 @@ html.phone #replace-input { font-size: 16px; }
 .bonbon-head .bonbon-arrows a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9em; min-height: 1.9em; position: relative; z-index: 6; margin-block: -.3em; border-radius: 8px; text-decoration: none; } /* a target big enough for a finger or a mouse; above the Copy markdown bar (z-index 5), which can float over it in a narrow window */
 .bonbon-head .bonbon-arrows a:hover { background: var(--hover); }
 .bonbon-head .bonbon-next { margin-left: auto; }
-.bonbon-head .bonbon-title { margin: 0 0 .2em; }
-.bonbon-head .bonbon-title a { color: inherit; text-decoration: none; }
-.bonbon-head .bonbon-title a:hover { text-decoration: underline; }
-.bonbon-head .bonbon-byline { margin: .2em 0; opacity: .7; font-size: .9em; }
 .copy-bar:has(~ .markdown .bonbon-next) .copy-md, #content:has(.bonbon-next) .copy-md { margin-right: 4em; } /* left of the → arrow, whose click box is about 42px wide */
+
+/* Bonbon mode: pictures as the charter has them. A picture alone in a paragraph is centered with its alt text
+   under it; one at the head of a paragraph floats right. The image float button is hidden then. */
+.markdown figure.bonbon-figure { margin: 1.2em auto; text-align: center; }
+.markdown figure.bonbon-figure img { display: block; margin: 0 auto; }
+.markdown figure.bonbon-figure figcaption { margin-top: .4em; font-size: .85em; opacity: .7; }
+html.bonbon-mode .markdown img.bonbon-right { float: right; max-width: 40%; margin: .3rem 0 .75rem 1.25rem; }
+html.bonbon-mode.img-left .markdown img:not(.bonbon-right):not(.bonbon-margin), html.bonbon-mode.img-right .markdown img:not(.bonbon-right):not(.bonbon-margin), html.bonbon-mode.img-center .markdown img:not(.bonbon-right):not(.bonbon-margin) { float: none; max-width: 100%; margin: 0; }
+html.bonbon-mode.img-left .markdown figure.bonbon-figure img, html.bonbon-mode.img-right .markdown figure.bonbon-figure img, html.bonbon-mode.img-center .markdown figure.bonbon-figure img { margin: 0 auto; }
+html.bonbon-mode.img-left .markdown :is(h1, h2, h3, h4, hr, pre, table), html.bonbon-mode.img-right .markdown :is(h1, h2, h3, h4, hr, pre, table) { clear: none; }

@@ -4,6 +4,8 @@ package browser
 import (
 	"context"
 	"fmt"
+	"html"
+	"mime"
 	"net/http"
 	"net/url"
 	"strings"
@@ -52,6 +54,7 @@ type Browser struct {
 	history *history.Log
 
 	noVariants atomic.Bool // do not look for .md versions of pages (see variant.go)
+	bonbon     atomic.Bool // Bonbon mode: markdown only, no looking further (see SetBonbon)
 
 	tabMu   sync.Mutex
 	tabs    map[int]*tab
@@ -136,6 +139,24 @@ func (b *Browser) Navigate(ctx context.Context, tabID int, rawURL string) page.P
 	return t.withState(b.record(p))
 }
 
+// Follow opens rawURL for a click on a link. Outside Bonbon mode it is Navigate. In it a link to a web page
+// (HTML) is not shown here: the answer is KindExternal, for the reader's default browser, and the tab and its
+// history stay as they are. Anything else loads as usual.
+func (b *Browser) Follow(ctx context.Context, tabID int, rawURL string) page.Page {
+	if !b.Bonbon() {
+		return b.Navigate(ctx, tabID, rawURL)
+	}
+	t := b.tab(tabID)
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	p := keepTextFragment(rawURL, b.load(ctx, rawURL))
+	if isHTML(p.ContentType) {
+		return page.Page{URL: p.URL, Kind: page.KindExternal}
+	}
+	t.stack.Visit(p.URL)
+	return t.withState(b.record(p))
+}
+
 // keepTextFragment keeps the "#:~:text=" part of the address asked for, which points at a passage,
 // when the page that came back (a .md twin, say) is at an address without it.
 func keepTextFragment(asked string, p page.Page) page.Page {
@@ -192,6 +213,18 @@ func (t *tab) withState(p page.Page) page.Page {
 // SetMarkdownVersions turns on or off looking for a .md version of web pages that are not markdown.
 func (b *Browser) SetMarkdownVersions(on bool) { b.noVariants.Store(!on) }
 
+// SetBonbon turns Bonbon mode on or off. In it a page is markdown or it is shown as text: requests ask the way
+// Bonbon does, a web page, feed or other file is not converted or looked past for a markdown version, and the
+// markdown is rendered without HTML, SVG pictures and the extra page layout (see render.Bonbon).
+func (b *Browser) SetBonbon(on bool) {
+	b.bonbon.Store(on)
+	b.fetcher.SetBonbon(on)
+	render.Bonbon.Store(on)
+}
+
+// Bonbon says whether Bonbon mode is on.
+func (b *Browser) Bonbon() bool { return b.bonbon.Load() }
+
 // MarkdownVersions says whether .md versions are looked for.
 func (b *Browser) MarkdownVersions() bool { return !b.noVariants.Load() }
 
@@ -207,7 +240,7 @@ func (b *Browser) NavigateAsIs(ctx context.Context, tabID int, rawURL string) pa
 
 // load fetches rawURL and builds the Page to display. Failures become error pages.
 func (b *Browser) load(ctx context.Context, rawURL string) page.Page {
-	return b.loadPage(ctx, rawURL, b.MarkdownVersions())
+	return b.loadPage(ctx, rawURL, b.MarkdownVersions() && !b.Bonbon())
 }
 
 func (b *Browser) loadPage(ctx context.Context, rawURL string, versions bool) page.Page {
@@ -216,7 +249,7 @@ func (b *Browser) loadPage(ctx context.Context, rawURL string, versions bool) pa
 	}
 	// Seeing a page as it is means the web page, also from an address that would answer with markdown.
 	get := b.fetcher.Get
-	if !versions {
+	if !versions && !b.Bonbon() {
 		get = b.fetcher.GetHTML
 	}
 	res, err := get(ctx, rawURL)
@@ -245,6 +278,9 @@ func (b *Browser) loadPage(ctx context.Context, rawURL string, versions bool) pa
 	if err != nil {
 		p.Kind, p.Error = page.KindError, err.Error()
 		return p
+	}
+	if b.Bonbon() {
+		return b.bonbonPage(p, res, base)
 	}
 	if render.IsFeed(res.Body) {
 		if html, title, ok, err := render.Feed(res.Body, base); err != nil {
@@ -319,4 +355,41 @@ func (b *Browser) loadSearch(ctx context.Context, rawURL string) page.Page {
 	}
 	p.Kind, p.HTML, p.Source, p.Title = page.KindMarkdown, html, md, title
 	return p
+}
+
+// bonbonPage builds the page for a response in Bonbon mode: markdown is a page, text of any other kind (HTML,
+// XML, OPML, JSON, code) is shown as it is, in color, and the rest (a picture, a download) is left to the
+// fallback page.
+func (b *Browser) bonbonPage(p page.Page, res *fetch.Result, base *url.URL) page.Page {
+	if fetch.IsBonbonMarkdown(res.ContentType, base.Path) {
+		return b.markdownPage(p, res, base)
+	}
+	if looksText(res) {
+		p.Kind, p.Title = page.KindMarkdown, res.URL
+		p.Source = string(res.Body)
+		p.HTML = "<pre><code>" + html.EscapeString(p.Source) + "</code></pre>"
+		return p
+	}
+	p.Kind = page.KindFallback
+	p.Title, p.Links = render.Fallback(res.Body, res.ContentType, base)
+	if p.Title == "" {
+		p.Title = res.URL
+	}
+	return p
+}
+
+// looksText reports whether a response is text to show as it is: a text type, XML, JSON or JavaScript.
+func looksText(r *fetch.Result) bool {
+	mt, _, err := mime.ParseMediaType(r.ContentType)
+	if err != nil {
+		return false
+	}
+	if strings.HasPrefix(mt, "text/") || strings.HasSuffix(mt, "+xml") || strings.HasSuffix(mt, "+json") {
+		return true
+	}
+	switch mt {
+	case "application/xml", "application/json", "application/javascript", "application/x-javascript", "application/x-opml":
+		return true
+	}
+	return false
 }

@@ -176,3 +176,71 @@ func TestKeepTextFragment(t *testing.T) {
 		t.Errorf("an ordinary fragment was added: %q", got.URL)
 	}
 }
+
+// In Bonbon mode a request asks the Bonbon way, a web page is shown as its source and not looked past, and
+// only an address ending in .md makes a text/plain answer a page.
+func TestBonbonMode(t *testing.T) {
+	var accept string
+	mux := http.NewServeMux()
+	mux.HandleFunc("/page", func(w http.ResponseWriter, r *http.Request) {
+		accept = r.Header.Get("Accept")
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head><title>T</title><link rel="alternate" type="text/markdown" href="/page.md"></head><body><b>hi</b></body></html>`))
+	})
+	mux.HandleFunc("/page.md", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("# From a .md file <b>x</b>\n"))
+	})
+	mux.HandleFunc("/notes", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("# Not a page\n"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	b := New(history.Open(t.TempDir()+"/h.json"), fetch.NewFetcher(nil, nil))
+	b.SetBonbon(true)
+	defer b.SetBonbon(false)
+
+	p := b.load(context.Background(), srv.URL+"/page")
+	if accept != fetch.AcceptBonbon {
+		t.Errorf("Accept = %q; want %q", accept, fetch.AcceptBonbon)
+	}
+	if p.Kind != page.KindMarkdown || p.MarkdownOf != "" || !strings.Contains(p.HTML, "&lt;b&gt;hi&lt;/b&gt;") || strings.Contains(p.HTML, "<b>") {
+		t.Errorf("a web page is shown as text: kind %q, markdownOf %q, html %q", p.Kind, p.MarkdownOf, p.HTML)
+	}
+	if p := b.load(context.Background(), srv.URL+"/page.md"); p.Kind != page.KindMarkdown || strings.Contains(p.HTML, "<b>") || !strings.Contains(p.HTML, "From a .md file") {
+		t.Errorf("a .md file is a page, without its HTML: %q", p.HTML)
+	}
+	if p := b.load(context.Background(), srv.URL+"/notes"); !strings.Contains(p.HTML, "<pre>") {
+		t.Errorf("text/plain without .md is shown as text: %q", p.HTML)
+	}
+}
+
+// A clicked link to a web page is for the default browser in Bonbon mode: the answer says so and the tab does not move.
+func TestBonbonFollowLeavesWebPagesToTheBrowser(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/web", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("<html><body>hi</body></html>"))
+	})
+	mux.HandleFunc("/doc.md", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/markdown")
+		w.Write([]byte("# Doc\n"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
+	id := b.NewTab()
+	b.SetBonbon(true)
+	defer b.SetBonbon(false)
+	first := b.Follow(context.Background(), id, srv.URL+"/doc.md")
+	if first.Kind != page.KindMarkdown {
+		t.Fatalf("a markdown link loads here: %+v", first)
+	}
+	if p := b.Follow(context.Background(), id, srv.URL+"/web"); p.Kind != page.KindExternal || p.URL != srv.URL+"/web" {
+		t.Errorf("a web page is for the browser: %+v", p)
+	}
+	if p := b.Reload(context.Background(), id); p.URL != first.URL {
+		t.Errorf("the tab stayed on %q, but is on %q", first.URL, p.URL)
+	}
+}
