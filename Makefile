@@ -7,7 +7,7 @@ BUILT := $(shell date -u +%Y-%m-%d)
 export CGO_CFLAGS  += -mmacosx-version-min=13.0
 export CGO_LDFLAGS += -mmacosx-version-min=13.0
 
-.PHONY: site dev build test windows linux sign notarize ios-framework ios-web ios-app ios-device ios-archive
+.PHONY: site dev build test windows linux sign notarize ios-framework ios-web ios-app ios-device ios-archive android-aar android-apk android-bundle
 
 # The website page written in markdown (docs/find-markdown.md) becomes its HTML twin. Run it after editing the .md.
 site:
@@ -78,3 +78,20 @@ ios-device:
 ios-archive: ios-framework ios-web
 	cd ios && xcodegen generate && xcodebuild -project Mardo.xcodeproj -scheme Mardo -destination 'generic/platform=iOS' -archivePath build-archive/Mardo.xcarchive -allowProvisioningUpdates DEVELOPMENT_TEAM=$(TEAM) CODE_SIGN_STYLE=Automatic CURRENT_PROJECT_VERSION=$(BUILD) archive
 	open ios/build-archive/Mardo.xcarchive
+
+# Android: the Go core as an AAR, the page, then the app. Needs the Android SDK and NDK (see android/README.md).
+ANDROID_HOME ?= $(HOME)/Library/Android/sdk
+ANDROID_NDK_HOME ?= $(lastword $(sort $(wildcard $(ANDROID_HOME)/ndk/*)))
+export ANDROID_HOME ANDROID_NDK_HOME
+STUDIO_JBR ?= /Applications/Android\ Studio.app/Contents/jbr/Contents/Home
+
+android-aar:
+	env -u CGO_CFLAGS -u CGO_LDFLAGS gomobile bind -androidapi 24 -target android/arm64,android/amd64 -ldflags "-X mardo/internal/about.Date=$(BUILT)" -o build/mardo.aar ./mobile
+
+# A debug build to try on an emulator or a phone: adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+android-apk: android-aar ios-web
+	cd android && JAVA_HOME=$(STUDIO_JBR) ./gradlew assembleDebug
+
+# The signed bundle for Google Play (needs android/keystore.properties): make android-bundle CODE=2
+android-bundle: android-aar ios-web
+	cd android && JAVA_HOME=$(STUDIO_JBR) ./gradlew bundleRelease -PversionCode=$(or $(CODE),1)

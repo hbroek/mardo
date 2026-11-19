@@ -42,3 +42,13 @@ test('events from Swift reach their listeners until they stop listening', () => 
     EventsEmit('menu', 'save');
     assert.deepEqual(got.at(-1), ['save']);
 });
+
+test('on Android the answer comes back through mardoReply', async () => {
+    delete globalThis.webkit;
+    const seen = [];
+    globalThis.MardoAndroid = {call: (id, method, args) => { seen.push([method, args]); queueMicrotask(() => globalThis.mardoReply(id, '{"ok":7}')); }};
+    try {
+        assert.equal(await call('Reload', [1]), 7);
+        assert.deepEqual(seen, [['Reload', '[1]']]);
+    } finally { delete globalThis.MardoAndroid; }
+});

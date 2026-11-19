@@ -1,4 +1,4 @@
-// The iPhone build talks to the Go core through the app instead of Wails. Swift answers each message
+// The iPhone and Android builds talk to the Go core through the app instead of Wails. Swift answers each message
 // from the web view by calling Engine.Call(method, argsJSON) of the mobile package (see mobile/mobile.go)
 // and replies with its JSON text: {"ok": result} or {"error": "message"}.
 
@@ -7,10 +7,30 @@ const local = {
     SetViewShown: () => null,
 };
 
+// Android: the app's JavaScript interface answers later, through window.mardoReply(id, json).
+const pending = new Map();
+let nextId = 1;
+globalThis.mardoReply = (id, json) => {
+    const done = pending.get(id);
+    if (!done) return;
+    pending.delete(id);
+    done(json);
+};
+
 function transport() {
     const t = globalThis.webkit?.messageHandlers?.mardo;
-    if (!t) throw new Error('the app is not connected to its Go core');
-    return t;
+    if (t) return t;
+    const android = globalThis.MardoAndroid;
+    if (android) {
+        return {
+            postMessage: ({method, args}) => new Promise((resolve) => {
+                const id = nextId++;
+                pending.set(id, resolve);
+                android.call(id, method, args);
+            }),
+        };
+    }
+    throw new Error('the app is not connected to its Go core');
 }
 
 /** Runs the core's method `method` with the list `args`; the promise gives its result or fails with its error. */

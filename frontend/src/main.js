@@ -765,7 +765,7 @@ const shareBtn = $('share');
 shareBtn.hidden = !hasDocuments();
 shareBtn.addEventListener('click', () => {
     const item = active?.draft ?? currentPage()?.url;
-    if (item && item !== NEW_DOC) globalThis.webkit?.messageHandlers?.mardo?.postMessage({method: 'Share', args: JSON.stringify([item])});
+    if (item && item !== NEW_DOC) (globalThis.webkit?.messageHandlers?.mardo ?? {postMessage: (m) => globalThis.MardoAndroid?.call(0, m.method, m.args)}).postMessage({method: 'Share', args: JSON.stringify([item])});
 });
 
 // Links in rendered content navigate inside the browser; fragments scroll in place.
