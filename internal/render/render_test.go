@@ -206,7 +206,7 @@ func TestBonbonFrontMatterAddsAHeader(t *testing.T) {
 		`class="bonbon-prev" href="https://x.test/posts/before"`,
 		`class="bonbon-next" href="https://x.test/posts/after"`,
 		`class="bonbon-margin" src="https://x.test/me.png"`,
-		"Ann · 23 Oct 2026", "A short one.", "Text.",
+		"Ann · 23 Oct 2026", "Text.",
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("missing %q in %s", want, html)
@@ -216,5 +216,13 @@ func TestBonbonFrontMatterAddsAHeader(t *testing.T) {
 	html, _, _ = Markdown([]byte("---\ntitle: T\nurlNext: javascript:alert(1)\nauthor: A\n---\n# Own\n"), mustURL("https://x.test/"))
 	if strings.Contains(html, "bonbon-title") || strings.Contains(html, "javascript") {
 		t.Errorf("html = %s", html)
+	}
+}
+
+func TestPageMacrosTakeFrontMatterValues(t *testing.T) {
+	src := "---\ntitle: \"Scripting News\"\nauthor: Dave\n---\n\n# {{page.title}}\n\nBy {{ page.author }}. {{page.missing}}\n"
+	html, title, err := Markdown([]byte(src), mustURL("https://x.test/"))
+	if err != nil || title != "Scripting News" || !strings.Contains(html, ">Scripting News</h1>") || !strings.Contains(html, "By Dave.") || !strings.Contains(html, "{{page.missing}}") {
+		t.Fatalf("html = %q, title = %q, err = %v", html, title, err)
 	}
 }

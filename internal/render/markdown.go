@@ -50,7 +50,7 @@ func Markdown(src []byte, base *url.URL) (string, string, error) {
 	src = bytes.TrimPrefix(src, []byte("\xef\xbb\xbf"))
 	meta, body := frontMatter(src)
 	var buf bytes.Buffer
-	if err := md.Convert(body, &buf); err != nil {
+	if err := md.Convert(expandMacros(body, meta), &buf); err != nil {
 		return "", "", err
 	}
 	text := buf.Bytes()
@@ -64,9 +64,8 @@ func Markdown(src []byte, base *url.URL) (string, string, error) {
 	return out, title, err
 }
 
-// bonbonHeader is the HTML above the text for a page with Bonbon front matter: a right margin
-// picture, arrows to the previous and next page, the title (a link when link is set), a short
-// description and a line with the author and publication date. It is "" for a page without any
+// bonbonHeader is the HTML above the text for a page with Bonbon front matter: arrows to the previous and
+// next page, a right margin picture below them, the title (a link when link is set) and a line with the author and publication date. It is "" for a page without any
 // of those keys, so ordinary front matter (a title and a description) shows nothing extra. The
 // title is not repeated when the text has its own h1. Everything is escaped, and the result goes
 // through the same cleaning as the page.
@@ -77,9 +76,6 @@ func bonbonHeader(meta map[string]string, hasH1 bool) string {
 	e := html.EscapeString
 	var b strings.Builder
 	b.WriteString(`<div class="bonbon-head">`)
-	if img := meta["rightmarginimage"]; img != "" {
-		b.WriteString(`<img class="bonbon-margin" src="` + e(img) + `" alt="">`)
-	}
 	if prev, next := meta["urlprev"], meta["urlnext"]; prev != "" || next != "" {
 		b.WriteString(`<div class="bonbon-arrows">`)
 		if prev != "" {
@@ -90,6 +86,10 @@ func bonbonHeader(meta map[string]string, hasH1 bool) string {
 		}
 		b.WriteString(`</div>`)
 	}
+	// after the arrows, so the picture starts below them
+	if img := meta["rightmarginimage"]; img != "" {
+		b.WriteString(`<img class="bonbon-margin" src="` + e(img) + `" alt="">`)
+	}
 	if t := meta["title"]; t != "" && !hasH1 {
 		if l := meta["link"]; l != "" {
 			t = `<a href="` + e(l) + `">` + e(t) + `</a>`
@@ -97,9 +97,6 @@ func bonbonHeader(meta map[string]string, hasH1 bool) string {
 			t = e(t)
 		}
 		b.WriteString(`<h1 class="bonbon-title">` + t + `</h1>`)
-	}
-	if d := meta["description"]; d != "" {
-		b.WriteString(`<p class="bonbon-description">` + e(d) + `</p>`)
 	}
 	var by []string
 	if a := meta["author"]; a != "" {
@@ -124,6 +121,22 @@ func pubDate(s string) string {
 		}
 	}
 	return s
+}
+
+var macro = regexp.MustCompile(`\{\{\s*page\.([A-Za-z0-9_-]+)\s*\}\}`)
+
+// expandMacros replaces {{page.title}} and the like in the text with the page's own front matter
+// values. A macro that names a key the page does not have is left as written.
+func expandMacros(body []byte, meta map[string]string) []byte {
+	if len(meta) == 0 || !bytes.Contains(body, []byte("{{")) {
+		return body
+	}
+	return macro.ReplaceAllFunc(body, func(m []byte) []byte {
+		if v, ok := meta[strings.ToLower(string(macro.FindSubmatch(m)[1]))]; ok && v != "" {
+			return []byte(v)
+		}
+		return m
+	})
 }
 
 var frontKey = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_-]*:(\s|$)`)
