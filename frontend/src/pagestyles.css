@@ -1,0 +1,76 @@
+/* Page styles: how the text of a page is set, next to the color scheme (see theme.js). No data-pagestyle is
+   Mardo's own look. Basic, Book, Classic, Mono and Newsprint are the five that Bonbon offers, drawn here from
+   scratch. A style sets the type, the width of the column and the headings; the paper of Book and
+   Newsprint is warm in light and dark in the dark theme. Colors for links, code and rules come from the scheme. */
+
+:root[data-pagestyle] #content { background: var(--page-bg, var(--bg)); }
+:root[data-pagestyle] .markdown, :root[data-pagestyle] .fallback { color: var(--page-fg, var(--fg)); font-family: var(--page-font); font-size: var(--page-size, 1rem); line-height: var(--page-leading, 1.6); max-width: var(--page-measure, 46rem); }
+:root[data-pagestyle] .markdown h1, :root[data-pagestyle] .markdown h2, :root[data-pagestyle] .markdown h3, :root[data-pagestyle] .markdown h4 { font-family: var(--head-font, var(--page-font)); color: var(--page-fg, var(--fg)); border: 0; border-image: none; padding-bottom: 0; }
+:root[data-pagestyle] .markdown hr { height: 0; background: none; opacity: 1; border-top: 1px solid var(--rule, var(--border)); }
+:root[data-pagestyle] .markdown code, :root[data-pagestyle] .markdown pre { font-family: var(--mono); }
+:root[data-pagestyle] .markdown code { color: inherit; }
+:root[data-pagestyle] .markdown blockquote { border-left-color: var(--rule, var(--border)); }
+
+/* Basic: the plain web page. */
+:root[data-pagestyle="basic"] {
+    --page-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --page-measure: 44rem; --page-leading: 1.5;
+}
+:root[data-pagestyle="basic"] .markdown h1 { font-size: 2em; }
+:root[data-pagestyle="basic"] .markdown h2 { font-size: 1.5em; }
+:root[data-pagestyle="basic"] .markdown h3 { font-size: 1.2em; }
+
+/* Book: a serif page with a narrow column, indented paragraphs and centered chapter titles. */
+:root[data-pagestyle="book"] {
+    --page-font: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --page-bg: #fbf6ea; --page-fg: #2d2820; --rule: #d8cdb2;
+    --page-size: 1.2rem; --page-leading: 1.7; --page-measure: 36rem;
+}
+:root[data-pagestyle="book"] .markdown h1 { text-align: center; font-size: 2em; font-weight: 600; margin: 1.2em 0 .9em; letter-spacing: .01em; }
+:root[data-pagestyle="book"] .markdown h2 { font-size: 1.4em; font-weight: 600; font-style: italic; }
+:root[data-pagestyle="book"] .markdown h3 { font-size: 1.15em; font-variant: small-caps; letter-spacing: .05em; }
+:root[data-pagestyle="book"] .markdown p { margin: 0; text-align: justify; hyphens: auto; }
+:root[data-pagestyle="book"] .markdown p + p { text-indent: 1.5em; }
+:root[data-pagestyle="book"] .markdown :is(ul, ol, blockquote, pre, table, figure) { margin-top: 1em; margin-bottom: 1em; }
+
+/* Classic: the web of the 1990s, in Times, with blue links. */
+:root[data-pagestyle="classic"] {
+    --page-font: "Times New Roman", Times, "Liberation Serif", serif;
+    --page-size: 1.15rem; --page-leading: 1.45; --page-measure: 48rem; --link: #0000ee;
+}
+:root[data-pagestyle="classic"] .markdown h1 { font-size: 2.1em; font-weight: 700; border-bottom: 1px solid var(--rule, var(--border)); padding-bottom: .15em; }
+:root[data-pagestyle="classic"] .markdown h2 { font-size: 1.6em; }
+:root[data-pagestyle="classic"] .markdown a { text-decoration: underline; }
+
+/* Mono: everything in a typewriter face, headings marked with #. */
+:root[data-pagestyle="mono"] {
+    --page-font: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --page-size: .95rem; --page-leading: 1.65; --page-measure: 50rem;
+}
+:root[data-pagestyle="mono"] .markdown :is(h1, h2, h3, h4) { font-size: 1em; font-weight: 700; margin: 1.8em 0 .6em; }
+:root[data-pagestyle="mono"] .markdown h1::before { content: "# "; opacity: .45; }
+:root[data-pagestyle="mono"] .markdown h2::before { content: "## "; opacity: .45; }
+:root[data-pagestyle="mono"] .markdown h3::before { content: "### "; opacity: .45; }
+:root[data-pagestyle="mono"] .markdown h4::before { content: "#### "; opacity: .45; }
+
+/* Newsprint: heavy tight headlines over a serif text on newsprint paper. */
+:root[data-pagestyle="newsprint"] {
+    --page-font: "Charter", "Bitstream Charter", "Sitka Text", Georgia, "Times New Roman", serif;
+    --head-font: "Helvetica Neue", "Arial Nova", Inter, Arial, sans-serif;
+    --page-bg: #f8f4ec; --page-fg: #1c1a16; --rule: #d9d3b0;
+    --page-size: 1.2rem; --page-leading: 1.6; --page-measure: 38rem;
+}
+:root[data-pagestyle="newsprint"] .markdown :is(h1, h2, h3, h4) { font-weight: 800; letter-spacing: -.03em; line-height: 1.05; }
+:root[data-pagestyle="newsprint"] .markdown h1 { font-size: 2.9em; margin: .6em 0 .5em; padding-bottom: .25em; border-bottom: 1px solid var(--rule); }
+:root[data-pagestyle="newsprint"] .markdown h2 { font-size: 1.9em; }
+:root[data-pagestyle="newsprint"] .markdown h3 { font-size: 1.4em; }
+
+/* The paper in the dark theme (the dark palette appears twice: a media query cannot be shared with a selector). */
+@media (prefers-color-scheme: dark) {
+    :root[data-pagestyle="book"]:not([data-theme="light"]) { --page-bg: #1d1a15; --page-fg: #e6dfd0; --rule: #4a4333; }
+    :root[data-pagestyle="newsprint"]:not([data-theme="light"]) { --page-bg: #1b1a17; --page-fg: #ebe5d6; --rule: #4a4636; }
+    :root[data-pagestyle="classic"]:not([data-theme="light"]) { --link: #8ab4ff; }
+}
+:root[data-pagestyle="book"][data-theme="dark"] { --page-bg: #1d1a15; --page-fg: #e6dfd0; --rule: #4a4333; }
+:root[data-pagestyle="newsprint"][data-theme="dark"] { --page-bg: #1b1a17; --page-fg: #ebe5d6; --rule: #4a4636; }
+:root[data-pagestyle="classic"][data-theme="dark"] { --link: #8ab4ff; }

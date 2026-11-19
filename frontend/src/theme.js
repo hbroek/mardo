@@ -20,6 +20,16 @@ const schemes = [
     {id: 'graphite', name: 'Graphite', swatch: ['#475569', '#64748b', '#0ea5e9']},
 ];
 
+// How the text of a page is set: Mardo's own look, or one of the five styles Bonbon offers (pagestyles.css).
+const pageStyles = [
+    {id: '', name: 'Mardo'},
+    {id: 'basic', name: 'Basic'},
+    {id: 'book', name: 'Book'},
+    {id: 'classic', name: 'Classic'},
+    {id: 'mono', name: 'Mono'},
+    {id: 'newsprint', name: 'Newsprint'},
+];
+
 function read(key) {
     try { return localStorage.getItem(key); } catch { return null; }
 }
@@ -33,6 +43,7 @@ function write(key, value) {
 
 let theme = themes.some((t) => t.id === read('theme')) ? read('theme') : 'system';
 let scheme = schemes.some((s) => s.id === read('scheme')) ? read('scheme') : '';
+let pageStyle = pageStyles.some((s) => s.id === read('pagestyle')) ? read('pagestyle') : '';
 let credentials = {saved: false, origin: ''};
 
 function applyTheme(id) {
@@ -47,6 +58,13 @@ function applyScheme(id) {
     if (id) root.dataset.scheme = id;
     else delete root.dataset.scheme;
     write('scheme', id);
+}
+
+function applyPageStyle(id) {
+    pageStyle = id;
+    if (id) root.dataset.pagestyle = id;
+    else delete root.dataset.pagestyle;
+    write('pagestyle', id);
 }
 
 /** The key lights up the menu button when the current site has a saved credential. */
@@ -118,6 +136,8 @@ export function initMenu(actions) {
                 sw.style.background = `linear-gradient(90deg, ${s.swatch.join(', ')})`;
                 return item('menuitemradio', s.name, s.id === scheme, () => { applyScheme(s.id); build(); }, sw);
             }),
+            heading('Page style'),
+            ...pageStyles.map((p) => item('menuitemradio', p.name, p.id === pageStyle, () => { applyPageStyle(p.id); build(); })),
         ];
         menu.replaceChildren(...(phone
             ? [...phoneRows, findEntry, historyEntry, creds, aiEntry, markdownEntry, bonbonEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), aboutEntry]
@@ -138,6 +158,7 @@ export function initMenu(actions) {
 
     applyTheme(theme);
     applyScheme(scheme);
+    applyPageStyle(pageStyle);
     btn.addEventListener('click', () => (menu.hidden ? open() : close()));
     document.addEventListener('mousedown', (e) => {
         if (!menu.hidden && !e.target.closest('#settings-menu') && !e.target.closest('#menu')) close();
