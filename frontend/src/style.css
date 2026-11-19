@@ -963,13 +963,19 @@ html.phone #replace-input { font-size: 16px; }
 #back .icon, #forward .icon { stroke-width: 2.2; width: 1.6em; height: 1.6em; }
 
 /* Bonbon front matter: a header above the text */
-.bonbon-head { margin-bottom: 1em; overflow: hidden; }
-.bonbon-head .bonbon-margin { float: right; max-width: 30%; max-height: 14em; margin: 0 0 .5em 1em; border-radius: 8px; }
-.bonbon-head .bonbon-arrows { display: flex; justify-content: space-between; gap: 1em; font-size: 1.4em; line-height: 1; }
-.bonbon-head .bonbon-arrows a { text-decoration: none; padding: 0 .25em; }
+.bonbon-head { margin-bottom: 1em; } /* not clipped: the text below flows around the picture */
+.markdown .bonbon-head ~ :is(h1, h2, h3, h4, hr, pre, table), .markdown .bonbon-head .bonbon-title { clear: none !important; } /* the image float settings clear floats before these */
+.markdown .bonbon-head ~ :is(h1, h2, h3, h4, hr), .markdown .bonbon-head .bonbon-title { display: flow-root; } /* a heading's line stops at the picture instead of running behind it */
+.markdown .bonbon-head img.bonbon-margin { /* beats the image float setting */
+    float: right; max-width: 30%; max-height: 14em; margin: 0 0 .5em 1em; border-radius: 8px; cursor: default; vertical-align: top; }
+.markdown .bonbon-head > :first-child, .markdown .bonbon-head > :first-child + :not(img) { margin-top: 0; } /* the picture and the text start at the same height */
+.markdown .bonbon-head > .bonbon-margin + * { margin-top: 0; }
+.bonbon-head .bonbon-arrows { display: flex; justify-content: space-between; gap: 1em; font-size: 1.4em; line-height: 1; margin-bottom: .3em; }
+.bonbon-head .bonbon-arrows a { display: inline-flex; align-items: center; justify-content: center; min-width: 1.9em; min-height: 1.9em; position: relative; z-index: 6; margin-block: -.3em; border-radius: 8px; text-decoration: none; } /* a target big enough for a finger or a mouse; above the Copy markdown bar (z-index 5), which can float over it in a narrow window */
+.bonbon-head .bonbon-arrows a:hover { background: var(--hover); }
 .bonbon-head .bonbon-next { margin-left: auto; }
-.bonbon-head .bonbon-title { margin: .2em 0; }
+.bonbon-head .bonbon-title { margin: 0 0 .2em; }
 .bonbon-head .bonbon-title a { color: inherit; text-decoration: none; }
 .bonbon-head .bonbon-title a:hover { text-decoration: underline; }
-.bonbon-head .bonbon-description { margin: .2em 0; font-style: italic; }
 .bonbon-head .bonbon-byline { margin: .2em 0; opacity: .7; font-size: .9em; }
+.copy-bar:has(~ .markdown .bonbon-next) .copy-md, #content:has(.bonbon-next) .copy-md { margin-right: 4em; } /* left of the → arrow, whose click box is about 42px wide */

@@ -68,6 +68,8 @@ function editor() {
             tab.lastEdit = now;
             tab.draft = text;
             tab.discardArmed = false;
+            const label = tabLabel(tab);
+            if (label !== tab.shownLabel) { tab.shownLabel = label; renderTabs(); } // a front matter title names the tab as it is typed
         },
         onSave: () => saveEdit(),
         onCancel: cancelEdit,
@@ -596,8 +598,17 @@ async function restoreTabs() {
 const tabStrip = $('tabs');
 const newTabButton = $('tab-new'); // the last item of the strip, right after the last tab
 
+/** The title in the front matter at the top of the text, or ''. */
+export function frontTitle(text) {
+    const m = /^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)[ \t]*(?:\r?\n|$)/.exec(text ?? '');
+    const t = m && /^title:[ \t]*(.*?)[ \t]*$/mi.exec(m[1]);
+    return t ? t[1].replace(/^(["'])(.*)\1$/, '$2') : '';
+}
+
 function tabLabel(t) {
     const p = t.page;
+    const typed = t.draft != null ? frontTitle(t.draft) : '';
+    if (typed) return typed;
     if (!p) return t.pending ? (t.pendingTitle || displayAddress(t.pending)) : 'New tab';
     if (p.title && p.kind !== 'error') return p.title;
     return p.url ? displayAddress(p.url) : 'New tab';
