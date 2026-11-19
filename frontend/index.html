@@ -38,15 +38,22 @@
 <div class="workspace">
     <aside id="bookmarks-panel" aria-label="Bookmarks" hidden>
         <div class="panel-head">
-            <strong>Bookmarks</strong>
+            <strong id="panel-title">Bookmarks</strong>
+            <div class="seg" id="panel-modes" role="tablist" aria-label="Show" hidden>
+                <button type="button" id="mode-bookmarks" role="tab" aria-selected="true" title="Bookmarks">Bookmarks</button>
+                <button type="button" id="mode-files" role="tab" aria-selected="false" title="Markdown and text files in your home folder">Files</button>
+            </div>
             <span class="spacer"></span>
-            <button type="button" id="storage-open" title="Where bookmarks are stored" aria-haspopup="dialog" aria-label="Where bookmarks are stored"><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3h4l.6 2.4 1.7.7 2.1-1.3 2.8 2.8-1.3 2.1.7 1.7 2.4.6v4l-2.4.6-.7 1.7 1.3 2.1-2.8 2.8-2.1-1.3-1.7.7L14 21h-4l-.6-2.4-1.7-.7-2.1 1.3-2.8-2.8 1.3-2.1-.7-1.7L2.6 14v-4l2.4-.6.7-1.7-1.3-2.1 2.8-2.8 2.1 1.3 1.7-.7z"/><circle cx="12" cy="12" r="3"/></svg></button>
-            <button type="button" id="folder-new" title="New folder" aria-label="New folder"><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/><path d="M12 10.5v6M9 13.5h6"/></svg></button>
+            <button type="button" id="files-refresh" class="files-only" title="Reload the file list" aria-label="Reload the file list"><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg></button>
+            <button type="button" id="storage-open" class="bm-only" title="Where bookmarks are stored" aria-haspopup="dialog" aria-label="Where bookmarks are stored"><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3h4l.6 2.4 1.7.7 2.1-1.3 2.8 2.8-1.3 2.1.7 1.7 2.4.6v4l-2.4.6-.7 1.7 1.3 2.1-2.8 2.8-2.1-1.3-1.7.7L14 21h-4l-.6-2.4-1.7-.7-2.1 1.3-2.8-2.8 1.3-2.1-.7-1.7L2.6 14v-4l2.4-.6.7-1.7-1.3-2.1 2.8-2.8 2.1 1.3 1.7-.7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            <button type="button" id="folder-new" class="bm-only" title="New folder" aria-label="New folder"><svg class="inline-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18z"/><path d="M12 10.5v6M9 13.5h6"/></svg></button>
             <button type="button" id="bookmarks-close" title="Hide bookmarks (Ctrl/Cmd+B)">&times;</button>
         </div>
         <div id="bookmarks-tree" role="tree" aria-label="Bookmarks"></div>
+        <div id="files-root" hidden></div>
+        <div id="files-tree" role="tree" aria-label="Files in your home folder" hidden></div>
         <!-- The bookmark tools live in the Bookmarks menu, which presses these buttons; only the gear stays in the panel. -->
-        <div class="panel-foot">
+        <div class="panel-foot bm-only">
             <button type="button" id="bookmarks-import" hidden title="Add bookmarks from an HTML export or a markdown list">Import&hellip;</button>
             <button type="button" id="bookmarks-export" hidden title="Save all bookmarks as a browser-compatible HTML file">Export HTML&hellip;</button>
             <button type="button" id="bookmarks-tag" hidden title="Let the AI suggest titles, descriptions and keywords for bookmarks, which you review before anything is saved">Tag with AI&hellip;</button>

@@ -72,6 +72,8 @@ export function ImportCookiesTxt(arg1:string,arg2:string):Promise<number>;
 
 export function LinkaGoGoFolders(arg1:string):Promise<Array<bookmarks.Folder>>;
 
+export function ListFolder(arg1:string):Promise<core.FolderList>;
+
 export function MarkdownVersions():Promise<boolean>;
 
 export function Navigate(arg1:number,arg2:string):Promise<page.Page>;
@@ -89,6 +91,8 @@ export function PrintNative():Promise<void>;
 export function ReadPage(arg1:string,arg2:string,arg3:string,arg4:string):Promise<core.AISummary>;
 
 export function Reload(arg1:number):Promise<page.Page>;
+
+export function RenamePath(arg1:string,arg2:string):Promise<string>;
 
 export function SaveAI(arg1:core.AIInput,arg2:string):Promise<void>;
 

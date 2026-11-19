@@ -130,6 +130,10 @@ export function LinkaGoGoFolders(arg1) {
   return window['go']['main']['App']['LinkaGoGoFolders'](arg1);
 }
 
+export function ListFolder(arg1) {
+  return window['go']['main']['App']['ListFolder'](arg1);
+}
+
 export function MarkdownVersions() {
   return window['go']['main']['App']['MarkdownVersions']();
 }
@@ -164,6 +168,10 @@ export function ReadPage(arg1, arg2, arg3, arg4) {
 
 export function Reload(arg1) {
   return window['go']['main']['App']['Reload'](arg1);
+}
+
+export function RenamePath(arg1, arg2) {
+  return window['go']['main']['App']['RenamePath'](arg1, arg2);
 }
 
 export function SaveAI(arg1, arg2) {

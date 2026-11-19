@@ -905,3 +905,24 @@ html.phone #replace-input { font-size: 16px; }
     #content { overflow: visible; padding: 0; }
     html .markdown { max-width: none; }
 }
+
+/* the side panel's switch between bookmarks and the files of the home folder */
+.seg { display: inline-flex; }
+.panel-head .seg button { border-radius: 0; padding: 2px 10px; }
+.panel-head .seg button:first-child { border-radius: 6px 0 0 6px; }
+.panel-head .seg button:last-child { border-radius: 0 6px 6px 0; margin-left: -1px; }
+.panel-head .seg button.on { background: var(--hover); color: var(--link); font-weight: 600; }
+#files-tree { flex: 1; overflow: auto; padding: 4px 0; font-size: 0.9em; }
+#files-tree[hidden], #bookmarks-tree[hidden] { display: none; }
+#bookmarks-panel .files-only { display: none; }
+#bookmarks-panel[data-mode="files"] .files-only { display: inline-block; }
+#bookmarks-panel[data-mode="files"] .bm-only { display: none; }
+#files-root { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 0.85em; }
+#files-root[hidden] { display: none; }
+#files-root .root-name { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--link); font-weight: 600; }
+#bookmarks-panel:not([data-mode="files"]) #files-root { display: none; }
+#files-root .unpin { flex: none; border: 0; background: none; color: var(--fg); opacity: .6; cursor: pointer; font-size: 1.2em; line-height: 1; padding: 0 4px; border-radius: 4px; }
+#files-root .unpin:hover, #files-root .unpin:focus-visible { opacity: 1; background: var(--hover); }
+#files-tree .rename { flex: 1; min-width: 0; font: inherit; padding: 1px 4px; border: 1px solid var(--accent); border-radius: 4px; background: var(--bg); color: var(--fg); }
+#files-tree .rename-error { flex-basis: 100%; padding: 2px 0 2px 4px; font-size: .85em; }
+#files-tree .tree-row:has(.rename-error) { flex-wrap: wrap; }

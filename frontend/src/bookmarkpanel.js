@@ -4,17 +4,21 @@
 import {svgIcon} from './icons.js';
 import {BookmarkFolders, BookmarksIn, SaveBookmark, SaveBookmarkFolder, ImportBookmarks, ExportBookmarks} from '../wailsjs/go/main/App';
 import {openBookmark, openFolder, setFolderHint} from './bookmarks.js';
-import {friendly} from './address.js';
+import {friendly, hasDocuments} from './address.js';
 import {openStorage} from './storage.js';
 import {openTagging} from './tagging.js';
 import {openOrganize} from './organize.js';
 import {popupMenu} from './contextmenu.js';
+import {initFiles, refreshFiles, focusFiles} from './filepanel.js';
 
 const $ = (id) => document.getElementById(id);
 const panel = $('bookmarks-panel');
 const tree = $('bookmarks-tree');
 const toggle = $('bookmarks-toggle');
 const message = $('bookmarks-msg');
+const filesTree = $('files-tree');
+
+let mode = 'bookmarks'; // what the panel shows: 'bookmarks' or 'files' (the latter only on a computer)
 
 let visible = false;
 let open = new Set();     // ids of expanded folders
@@ -178,6 +182,7 @@ tree.addEventListener('keydown', onTreeKey);
 /** Rebuilds the tree from the backend. A no-op while the panel is hidden. */
 export async function refreshPanel() {
     if (!visible) return;
+    if (mode === 'files') return refreshFiles();
     try {
         const folders = (await BookmarkFolders()) ?? [];
         const children = new Map();
@@ -230,6 +235,21 @@ export async function refreshPanel() {
     }
 }
 
+/** Switches the panel between the bookmarks and the files of the home folder. */
+function setMode(next) {
+    mode = next;
+    panel.dataset.mode = mode;
+    tree.hidden = mode === 'files';
+    filesTree.hidden = mode !== 'files';
+    for (const id of ['bookmarks', 'files']) {
+        const tab = $(`mode-${id}`);
+        tab.setAttribute('aria-selected', String(id === mode));
+        tab.classList.toggle('on', id === mode);
+    }
+    stored('panel.mode', mode);
+    return refreshPanel();
+}
+
 export function togglePanel(show = !visible) {
     visible = show;
     panel.hidden = !visible;
@@ -250,6 +270,7 @@ export async function panelShortcut() {
         return;
     }
     if (!visible) await togglePanel(true);
+    if (mode === 'files') return focusFiles();
     const rows = rowsOf();
     focusRow(rows.find((r) => r.dataset.key === currentKey) ?? rows[0]);
 }
@@ -418,5 +439,14 @@ export function initPanel(openUrl, changed = () => {}) {
     $('bookmarks-export').addEventListener('click', exportAs('html'));
     $('bookmarks-export-md').addEventListener('click', exportAs('markdown'));
 
+    // Files are listed from the computer's home folder, which a phone's app does not have.
+    if (!hasDocuments()) {
+        initFiles(openUrl);
+        $('panel-modes').hidden = false;
+        $('panel-title').hidden = true;
+        $('mode-bookmarks').addEventListener('click', () => setMode('bookmarks'));
+        $('mode-files').addEventListener('click', () => setMode('files'));
+        if (stored('panel.mode') === 'files') setMode('files'); // visible is still false here, so nothing is listed yet
+    }
     if (stored('bookmarks.visible') === '1') togglePanel(true);
 }

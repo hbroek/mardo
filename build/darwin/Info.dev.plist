@@ -21,6 +21,12 @@
         <string>13.0.0</string>
         <key>NSHighResolutionCapable</key>
         <string>true</string>
+        <key>NSDocumentsFolderUsageDescription</key>
+        <string>Mardo lists the markdown and text files in this folder when you open it in the Files panel.</string>
+        <key>NSDesktopFolderUsageDescription</key>
+        <string>Mardo lists the markdown and text files in this folder when you open it in the Files panel.</string>
+        <key>NSDownloadsFolderUsageDescription</key>
+        <string>Mardo lists the markdown and text files in this folder when you open it in the Files panel.</string>
         <key>NSHumanReadableCopyright</key>
         <string>{{.Info.Copyright}}</string>
         {{if .Info.FileAssociations}}
