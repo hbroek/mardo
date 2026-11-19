@@ -37,6 +37,8 @@ Mardo is a reader for the web that asks servers for markdown, so pages show up c
 
 READ
 - Pages are requested as markdown and rendered cleanly. Pages that only come as HTML are converted with one tap, by fixed rules or with an AI model.
+- Find in page with a match count and arrows. Footnotes, tables and task lists render properly.
+- Back, Forward and Reload bring you back to where you were scrolling.
 - Tabs, history, light and dark themes.
 
 BOOKMARKS
@@ -48,11 +50,22 @@ AI READING TOOLS
 
 WRITE
 - Write a page of your own, open and save markdown files in Files, and save changes back to servers that allow it.
+- A live preview follows what you type, and a cheatsheet puts markdown syntax in your text with one tap.
+- Find and replace while you edit.
 
 PRIVATE
 - No account, no ads, no tracking. Your bookmarks and settings stay on your device. Mardo is free and open source.
 
-**What's new (0.13.0):** First release on iPhone and iPad.
+**What's new (0.16.0)** (4000 max):
+```
+- Find in page, with a match count and arrows (Menu > Find in page). Find and replace while editing.
+- Live preview while you write, stacked under the editor, plus a markdown cheatsheet that inserts syntax with one tap.
+- Footnotes now render.
+- Back, Forward and Reload keep your place on the page. New Back and Forward buttons.
+- Fixes and polish.
+```
+
+Earlier: 0.13.0 was the first release on iPhone and iPad.
 
 Status: approved and live. App Store id 6830193468, https://apps.apple.com/app/id6830193468
 
@@ -116,6 +129,9 @@ None. The app shows web pages the user chooses to visit. It includes open source
 - iPad 13": 2064x2752 (iPad Pro 13-inch M4/M5 simulator), since the app runs on iPad.
 - 3 to 10 each. Suggested: reading a page, bookmarks sheet, AI tools sheet, Ask sheet, converting an HTML page, dark theme.
   Use public pages only (not your own bookmarks).
+- `ios/screenshots.sh [phone|pad]` makes the set automatically from the simulators (8 per device, Go README page,
+  into `~/Desktop/mardo-appstore-new`; takes about 12 minutes). Run `make ios-web ios-app` first so the app is current.
+  The 6.3" iPhone size is a resize of the 6.9" shots: `sips -z 2622 1206`.
 
 ## Review risk notes
 
