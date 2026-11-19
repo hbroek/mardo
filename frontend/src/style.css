@@ -953,3 +953,10 @@ html.phone #replace-input { font-size: 16px; }
 .cheatsheet .cheat-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; width: 100%; padding: 3px 6px; border: 0; border-radius: 4px; background: none; color: var(--fg); font: inherit; text-align: left; cursor: pointer; }
 .cheatsheet .cheat-row:hover, .cheatsheet .cheat-row:focus-visible { background: var(--hover); }
 .cheat-row code { white-space: pre; font-size: .9em; opacity: .85; text-align: right; overflow: hidden; text-overflow: ellipsis; }
+
+/* Back and Forward: drawn chevrons that react to the pointer */
+#back, #forward { transition: background-color .12s, border-color .12s, transform .06s; }
+#back:not(:disabled):hover, #forward:not(:disabled):hover { background: var(--hover); border-color: var(--accent); color: var(--link); }
+#back:not(:disabled):active, #forward:not(:disabled):active { transform: scale(.94); }
+#back:focus-visible, #forward:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#back .icon, #forward .icon { stroke-width: 2.2; width: 1.6em; height: 1.6em; }
