@@ -11,6 +11,13 @@
 :root[data-pagestyle] .markdown code { color: inherit; }
 :root[data-pagestyle] .markdown blockquote { border-left-color: var(--rule, var(--border)); }
 
+/* A page style has its own column and its own pictures, so the width and image buttons are not shown and their
+   settings do not apply; nor is the Copy markdown button over the text (Copy All and the shortcut still work). */
+:root[data-pagestyle] #wide-toggle, :root[data-pagestyle] #image-align, :root[data-pagestyle] .copy-bar { display: none; }
+:root[data-pagestyle].img-left .markdown img:not(.bonbon-right):not(.bonbon-margin), :root[data-pagestyle].img-right .markdown img:not(.bonbon-right):not(.bonbon-margin), :root[data-pagestyle].img-center .markdown img:not(.bonbon-right):not(.bonbon-margin) { float: none; max-width: 100%; margin: 0; }
+:root[data-pagestyle].img-left .markdown figure.bonbon-figure img, :root[data-pagestyle].img-right .markdown figure.bonbon-figure img, :root[data-pagestyle].img-center .markdown figure.bonbon-figure img { margin: 0 auto; }
+:root[data-pagestyle].img-left .markdown :is(h1, h2, h3, h4, hr, pre, table), :root[data-pagestyle].img-right .markdown :is(h1, h2, h3, h4, hr, pre, table) { clear: none; }
+
 /* Basic: the plain web page. */
 :root[data-pagestyle="basic"] {
     --page-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
