@@ -961,3 +961,15 @@ html.phone #replace-input { font-size: 16px; }
 #back:not(:disabled):active, #forward:not(:disabled):active { transform: scale(.94); }
 #back:focus-visible, #forward:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 #back .icon, #forward .icon { stroke-width: 2.2; width: 1.6em; height: 1.6em; }
+
+/* Bonbon front matter: a header above the text */
+.bonbon-head { margin-bottom: 1em; overflow: hidden; }
+.bonbon-head .bonbon-margin { float: right; max-width: 30%; max-height: 14em; margin: 0 0 .5em 1em; border-radius: 8px; }
+.bonbon-head .bonbon-arrows { display: flex; justify-content: space-between; gap: 1em; font-size: 1.4em; line-height: 1; }
+.bonbon-head .bonbon-arrows a { text-decoration: none; padding: 0 .25em; }
+.bonbon-head .bonbon-next { margin-left: auto; }
+.bonbon-head .bonbon-title { margin: .2em 0; }
+.bonbon-head .bonbon-title a { color: inherit; text-decoration: none; }
+.bonbon-head .bonbon-title a:hover { text-decoration: underline; }
+.bonbon-head .bonbon-description { margin: .2em 0; font-style: italic; }
+.bonbon-head .bonbon-byline { margin: .2em 0; opacity: .7; font-size: .9em; }

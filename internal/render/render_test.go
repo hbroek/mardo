@@ -175,9 +175,10 @@ func TestFrontMatterIsLeftOutAndTitlesThePage(t *testing.T) {
 	if err != nil || title != "Cloudflare Docs" || strings.Contains(html, "description") || strings.Contains(html, "<hr") || !strings.Contains(html, "Some text.") {
 		t.Fatalf("html = %q, title = %q, err = %v", html, title, err)
 	}
-	// A heading wins over the front matter's title.
-	if _, title, _ := Markdown([]byte("---\ntitle: Meta\n---\n# Heading\n"), mustURL("https://x.test/")); title != "Heading" {
-		t.Errorf("title = %q", title)
+	// The front matter's title names the page, ahead of a heading, and a plain title adds no header.
+	html, title, _ = Markdown([]byte("---\ntitle: Meta\n---\n# Heading\n"), mustURL("https://x.test/"))
+	if title != "Meta" || strings.Contains(html, "bonbon") {
+		t.Errorf("title = %q, html = %q", title, html)
 	}
 	// Two horizontal rules around text are not front matter.
 	html, _, _ = Markdown([]byte("---\nJust a line\n---\n"), mustURL("https://x.test/"))
@@ -191,5 +192,29 @@ func TestRawHTMLInMarkdownIsKeptButCleaned(t *testing.T) {
 	html, _, err := Markdown([]byte(src), mustURL("https://x.test/"))
 	if err != nil || !strings.Contains(html, "Local flags</a></h3>") /* the heading keeps its link */ || strings.Contains(html, "script") || strings.Contains(html, "onerror") {
 		t.Fatalf("html = %q, err = %v", html, err)
+	}
+}
+
+func TestBonbonFrontMatterAddsAHeader(t *testing.T) {
+	src := "---\ntitle: Hello <b>\ndescription: A short one.\nauthor: Ann\npubDate: Fri, 23 Oct 2026 15:19:45 GMT\nlink: /posts/hello\nurlPrev: /posts/before\nurlNext: /posts/after\nrightMarginImage: /me.png\n---\nText.\n"
+	html, title, err := Markdown([]byte(src), mustURL("https://x.test/blog/"))
+	if err != nil || title != "Hello <b>" {
+		t.Fatalf("title = %q, err = %v", title, err)
+	}
+	for _, want := range []string{
+		`href="https://x.test/posts/hello" rel="nofollow">Hello &lt;b&gt;</a>`,
+		`class="bonbon-prev" href="https://x.test/posts/before"`,
+		`class="bonbon-next" href="https://x.test/posts/after"`,
+		`class="bonbon-margin" src="https://x.test/me.png"`,
+		"Ann · 23 Oct 2026", "A short one.", "Text.",
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("missing %q in %s", want, html)
+		}
+	}
+	// The title is not repeated when the text has its own h1, and unsafe addresses are dropped.
+	html, _, _ = Markdown([]byte("---\ntitle: T\nurlNext: javascript:alert(1)\nauthor: A\n---\n# Own\n"), mustURL("https://x.test/"))
+	if strings.Contains(html, "bonbon-title") || strings.Contains(html, "javascript") {
+		t.Errorf("html = %s", html)
 	}
 }

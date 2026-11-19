@@ -3,9 +3,11 @@ package render
 
 import (
 	"bytes"
+	"html"
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"mardo/internal/fetch"
 	"mardo/internal/imgproxy"
@@ -34,6 +36,7 @@ func newPolicy() *bluemonday.Policy {
 	p.AllowAttrs("id").Matching(regexp.MustCompile(`^[\w\-.:%]+$`)).OnElements("h1", "h2", "h3", "h4", "h5", "h6", "li", "sup")
 	p.AllowAttrs("type").Matching(regexp.MustCompile(`^checkbox$`)).OnElements("input")
 	p.AllowAttrs("checked", "disabled").OnElements("input")
+	p.AllowAttrs("class").Matching(regexp.MustCompile(`^bonbon[\w-]*$`)).OnElements("div", "a", "img", "p", "h1", "span")
 	return p
 }
 
@@ -41,7 +44,8 @@ func newPolicy() *bluemonday.Policy {
 // resolved against base. It returns the HTML and the text of the first h1.
 //
 // A block of front matter at the start (--- key: value ---) is not part of the page: it is
-// left out, and its title is used when the page has no h1.
+// left out. Its title names the page (and the tab), ahead of the first h1. Bonbon keys (link,
+// author, pubDate, urlPrev, urlNext, rightMarginImage) add a header above the text, see bonbonHeader.
 func Markdown(src []byte, base *url.URL) (string, string, error) {
 	src = bytes.TrimPrefix(src, []byte("\xef\xbb\xbf"))
 	meta, body := frontMatter(src)
@@ -49,11 +53,77 @@ func Markdown(src []byte, base *url.URL) (string, string, error) {
 	if err := md.Convert(body, &buf); err != nil {
 		return "", "", err
 	}
-	out, title, err := finish(policy.SanitizeBytes(buf.Bytes()), base)
-	if title == "" {
-		title = meta["title"]
+	text := buf.Bytes()
+	if head := bonbonHeader(meta, bytes.Contains(text, []byte("<h1"))); head != "" {
+		text = append([]byte(head), text...)
+	}
+	out, title, err := finish(policy.SanitizeBytes(text), base)
+	if t := meta["title"]; t != "" {
+		title = t
 	}
 	return out, title, err
+}
+
+// bonbonHeader is the HTML above the text for a page with Bonbon front matter: a right margin
+// picture, arrows to the previous and next page, the title (a link when link is set), a short
+// description and a line with the author and publication date. It is "" for a page without any
+// of those keys, so ordinary front matter (a title and a description) shows nothing extra. The
+// title is not repeated when the text has its own h1. Everything is escaped, and the result goes
+// through the same cleaning as the page.
+func bonbonHeader(meta map[string]string, hasH1 bool) string {
+	if meta["link"] == "" && meta["author"] == "" && meta["pubdate"] == "" && meta["urlprev"] == "" && meta["urlnext"] == "" && meta["rightmarginimage"] == "" {
+		return ""
+	}
+	e := html.EscapeString
+	var b strings.Builder
+	b.WriteString(`<div class="bonbon-head">`)
+	if img := meta["rightmarginimage"]; img != "" {
+		b.WriteString(`<img class="bonbon-margin" src="` + e(img) + `" alt="">`)
+	}
+	if prev, next := meta["urlprev"], meta["urlnext"]; prev != "" || next != "" {
+		b.WriteString(`<div class="bonbon-arrows">`)
+		if prev != "" {
+			b.WriteString(`<a class="bonbon-prev" href="` + e(prev) + `" title="Previous" aria-label="Previous">←</a>`)
+		}
+		if next != "" {
+			b.WriteString(`<a class="bonbon-next" href="` + e(next) + `" title="Next" aria-label="Next">→</a>`)
+		}
+		b.WriteString(`</div>`)
+	}
+	if t := meta["title"]; t != "" && !hasH1 {
+		if l := meta["link"]; l != "" {
+			t = `<a href="` + e(l) + `">` + e(t) + `</a>`
+		} else {
+			t = e(t)
+		}
+		b.WriteString(`<h1 class="bonbon-title">` + t + `</h1>`)
+	}
+	if d := meta["description"]; d != "" {
+		b.WriteString(`<p class="bonbon-description">` + e(d) + `</p>`)
+	}
+	var by []string
+	if a := meta["author"]; a != "" {
+		by = append(by, e(a))
+	}
+	if d := meta["pubdate"]; d != "" {
+		by = append(by, e(pubDate(d)))
+	}
+	if len(by) > 0 {
+		b.WriteString(`<p class="bonbon-byline">` + strings.Join(by, " · ") + `</p>`)
+	}
+	b.WriteString(`</div>`)
+	return b.String()
+}
+
+// pubDate shows an RSS 2.0 date (Fri, 23 Oct 2026 15:19:45 GMT) as "23 Oct 2026". A date that
+// does not read that way is shown as written.
+func pubDate(s string) string {
+	for _, layout := range []string{time.RFC1123Z, time.RFC1123, "Mon, 2 Jan 2006 15:04:05 MST", "Mon, 2 Jan 2006 15:04:05 -0700", time.RFC3339} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return t.Format("2 Jan 2006")
+		}
+	}
+	return s
 }
 
 var frontKey = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_-]*:(\s|$)`)
