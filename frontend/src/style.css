@@ -908,6 +908,7 @@ html.phone #replace-input { font-size: 16px; }
 
 /* the side panel's switch between bookmarks and the files of the home folder */
 .seg { display: inline-flex; }
+.seg[hidden] { display: none; } /* the Files switch is for computers; a phone's app does not show it */
 .panel-head .seg button { border-radius: 0; padding: 2px 10px; }
 .panel-head .seg button:first-child { border-radius: 6px 0 0 6px; }
 .panel-head .seg button:last-child { border-radius: 0 6px 6px 0; margin-left: -1px; }
