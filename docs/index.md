@@ -22,9 +22,11 @@ Plain text pages load fast, read well and are easy to keep, copy and hand to an 
 - **Convert any page.** No markdown version? One click maps an HTML page's headings, lists, links, images and tables to markdown, or has your AI model rewrite it.
 - **Write it back.** Where a server allows it, Mardo turns into an editor and saves with `PUT`, using your saved login and warning you if the page changed meanwhile.
 - **Bookmarks that you own.** Folders, descriptions, keywords and search by typing in the address bar. Keep them on your computer or in a LinkaGoGo folder.
-- **Tabs and history.** Tabs with their own history, restored on the next start. Back and Forward return you to where you were scrolling. History is itself a markdown page you can save.
+- **Tabs and history.** Tabs with their own history, restored on the next start. Back, Forward and Reload return you to where you were scrolling. History is itself a markdown page you can save.
 - **Private by default.** Logins for each site go in your system keychain and are sent only to that exact site. Nothing is sent to an AI service until you allow it.
 - **Open any .md file.** Double click a markdown file to read it. Save any page as a `.md` file, or copy its markdown in one click.
+- **Preview as you write.** An optional live preview sits beside the editor, or below it, and follows what you type. A cheatsheet puts markdown syntax in the text with one click.
+- **Files next to your bookmarks.** Switch the side panel to the markdown and text files in your home folder. Pin a folder as the root, rename files and folders, and open a file in a tab.
 - **Your look.** Follows light and dark, with six color schemes, a full-width mode for big screens, and a button to float images left or right or center them.
 - **Find and replace.** Cmd/Ctrl+F finds in the page with a count and arrows, in rendered pages, the source and while you edit. Replace one or all, each a single undo.
 - **A right-click menu.** On a link: open in a tab, as the web page or in your browser, download the file, bookmark or copy it. On text: copy as a quote, explain, simplify, translate, search or share. On an image: save or copy it.
