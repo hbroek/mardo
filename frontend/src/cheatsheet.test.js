@@ -52,3 +52,14 @@ test('a code block wraps the selection in fences', () => {
     assert.equal(a.value, '```\nx = 1\n```\n');
     assert.equal(sel(a), 'x = 1');
 });
+
+test('front matter starts a block at the top, or joins the one there', () => {
+    const a = box('Hello', 5);
+    insertSyntax(a, {kind: 'front', text: 'title: T'});
+    assert.equal(a.value, '---\ntitle: T\n---\n\nHello');
+    insertSyntax(a, {kind: 'front', text: 'author: A'});
+    assert.equal(a.value, '---\ntitle: T\nauthor: A\n---\n\nHello');
+    const b = box('---\n---\nText');
+    insertSyntax(b, {kind: 'front', text: 'title: T'});
+    assert.equal(b.value, '---\ntitle: T\n---\nText');
+});

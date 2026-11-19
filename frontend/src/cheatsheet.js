@@ -4,7 +4,8 @@ const pref = () => { try { return localStorage.getItem('edit.cheatsheet') === '1
 const setPref = (on) => { try { localStorage.setItem('edit.cheatsheet', on ? '1' : '0'); } catch { /* not remembered */ } };
 
 // kind 'wrap': text goes between before and after. kind 'line': before goes at the start of each selected line.
-// kind 'block': the text is put on lines of its own.
+// kind 'block': the text is put on lines of its own. kind 'front': the lines go in the front matter at the top
+// of the text, which is started if there is none.
 const ENTRIES = [
     ['Basics', [
         ['Bold', '**bold**', {kind: 'wrap', before: '**', after: '**', hint: 'bold'}],
@@ -31,6 +32,14 @@ const ENTRIES = [
         ['Table', '| a | b |\n|---|---|\n| 1 | 2 |', {kind: 'block', text: '| Column | Column |\n|--------|--------|\n|        |        |'}],
         ['Footnote', 'text[^1]\n\n[^1]: note', {kind: 'block', text: 'text[^1]\n\n[^1]: The note.'}],
     ]],
+    ['Front matter', [
+        ['Title and description', '---\ntitle: …\n---', {kind: 'front', text: 'title: Page title\ndescription: A short description of the page.'}],
+        ['Byline and date', 'author: …\npubDate: …', {kind: 'front', text: 'author: Your name\npubDate: ' + new Date().toUTCString()}],
+        ['Title as a link', 'link: https://…', {kind: 'front', text: 'link: https://'}],
+        ['Previous and next page', 'urlPrev: …\nurlNext: …', {kind: 'front', text: 'urlPrev: \nurlNext: '}],
+        ['Picture at the right', 'rightMarginImage: …', {kind: 'front', text: 'rightMarginImage: https://'}],
+        ['Value from the front matter', '{{page.title}}', {kind: 'wrap', before: '{{page.', after: '}}', hint: 'title'}],
+    ]],
 ];
 
 /** Puts a snippet into the text box the way an entry says, and tells the editor the text changed. */
@@ -55,6 +64,16 @@ export function insertSyntax(area, how) {
         to = stop === -1 ? text.length : stop;
         const lines = text.slice(from, to).split('\n');
         put = lines.map((l) => how.before + l).join('\n');
+    } else if (how.kind === 'front') {
+        // Into the block at the top when there is one (before its closing line), else a new block.
+        const m = /^---\r?\n(?:[\s\S]*?\r?\n)?(?=(?:---|\.\.\.)[ \t]*(?:\r?\n|$))/.exec(text);
+        const lines = how.text + '\n';
+        const at = m ? m[0].length : 0;
+        put = m ? lines : '---\n' + lines + '---\n\n';
+        area.focus();
+        area.setRangeText(put, at, at, 'preserve');
+        area.dispatchEvent(new Event('input', {bubbles: true}));
+        return;
     } else {
         const body = how.kind === 'fence' ? '```\n' + (chosen || 'code') + '\n```' : how.text;
         if (how.kind === 'fence' && chosen) { to = end; }
