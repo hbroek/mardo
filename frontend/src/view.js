@@ -2,6 +2,7 @@
 import {svgIcon} from './icons.js';
 import {diffLines, withContext} from './diff.js';
 import {editSplit} from './editpreview.js';
+import {cheatsheet} from './cheatsheet.js';
 
 function el(tag, props = {}, ...children) {
     const node = Object.assign(document.createElement(tag), props);
@@ -112,6 +113,7 @@ export function source(p, ed) {
             el('pre', {className: 'source'}, el('code', {textContent: p.source})));
     }
     const area = el('textarea', {className: 'source-edit', value: ed.draft, spellcheck: false, autocapitalize: 'off', autocorrect: 'off', disabled: ed.saving, ariaLabel: 'Markdown source'});
+    const sheet = cheatsheet(area);
     const split = ed.preview ? editSplit(area, ed.preview) : null;
     area.addEventListener('input', () => { ed.onInput(area.value); split?.update(); });
     area.addEventListener('keydown', (e) => {
@@ -129,9 +131,11 @@ export function source(p, ed) {
             el('button', {type: 'button', textContent: 'Redo', title: 'Redo (Shift+Ctrl/Cmd+Z)', disabled: ed.saving || !ed.canRedo, onclick: ed.onRedo}),
             el('button', {type: 'button', textContent: ed.diff ? 'Back to editing' : 'Show changes', disabled: ed.saving || (!changed && !ed.diff), onclick: ed.onDiff}),
             ...(split && !ed.diff ? split.buttons : []),
+            ...(ed.diff ? [] : [sheet.button]),
             el('span', {className: 'note', textContent: ed.aiDraft ? 'Drafted by AI. Review the changes, then Save; Cancel discards them.' : 'Ctrl/Cmd+S saves, Esc cancels.'})),
         ed.error ? el('p', {className: 'error-text', textContent: ed.error}) : '',
-        ed.diff ? changes(p.source, ed.draft) : (split?.body ?? area));
+        ed.diff ? changes(p.source, ed.draft) : (split?.body ?? area),
+        ed.diff ? '' : sheet.panel);
 }
 
 /** What a draft changes: removed lines and added lines, with a few unchanged lines around them. */
