@@ -216,7 +216,7 @@ a { color: var(--link); }
 /* while editing, the text box takes the whole body */
 .source-wrap.editing { display: flex; flex-direction: column; height: 100%; max-width: none; }
 .source-wrap.editing .source-edit { flex: 1; min-height: 12rem; resize: none; }
-.edit-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.edit-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
 .edit-bar button { padding: 4px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); cursor: pointer; }
 .edit-bar button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .edit-bar button:disabled { opacity: 0.5; cursor: default; }
@@ -926,3 +926,19 @@ html.phone #replace-input { font-size: 16px; }
 #files-tree .rename { flex: 1; min-width: 0; font: inherit; padding: 1px 4px; border: 1px solid var(--accent); border-radius: 4px; background: var(--bg); color: var(--fg); }
 #files-tree .rename-error { flex-basis: 100%; padding: 2px 0 2px 4px; font-size: .85em; }
 #files-tree .tree-row:has(.rename-error) { flex-wrap: wrap; }
+
+/* the optional preview beside the editor (see editpreview.js) */
+.edit-split { flex: 1; min-height: 0; display: flex; flex-direction: row; }
+.edit-split[data-layout="stack"] { flex-direction: column; }
+.edit-split .source-edit { flex: 1 1 100%; min-width: 0; min-height: 8rem; }
+.edit-split .edit-divider, .edit-split .edit-preview { display: none; }
+.edit-split.previewing .source-edit { flex: 0 0 var(--editor-share, 50%); }
+.edit-split.previewing .edit-divider { display: block; flex: none; background: var(--border); }
+.edit-split.previewing[data-layout="side"] .edit-divider { width: 5px; cursor: col-resize; }
+.edit-split.previewing[data-layout="stack"] .edit-divider { height: 5px; cursor: row-resize; }
+.edit-split .edit-divider:hover, .edit-split.dragging .edit-divider { background: var(--accent); }
+.edit-split.previewing .edit-preview { display: block; flex: 1 1 0; min-width: 0; min-height: 0; overflow: auto; max-width: none; margin: 0; padding: 4px 16px; box-sizing: border-box; }
+.edit-split.previewing[data-layout="stack"] .edit-preview { padding: 4px 4px; }
+.edit-split.dragging { user-select: none; }
+.edit-preview.preview-error { color: var(--error, #c0392b); }
+.edit-bar button.on { background: var(--hover); border-color: var(--accent); color: var(--link); }

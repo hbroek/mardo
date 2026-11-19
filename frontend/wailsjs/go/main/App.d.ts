@@ -94,6 +94,8 @@ export function Reload(arg1:number):Promise<page.Page>;
 
 export function RenamePath(arg1:string,arg2:string):Promise<string>;
 
+export function RenderPreview(arg1:string,arg2:string):Promise<string>;
+
 export function SaveAI(arg1:core.AIInput,arg2:string):Promise<void>;
 
 export function SaveBookmark(arg1:bookmarks.Bookmark):Promise<bookmarks.Bookmark>;

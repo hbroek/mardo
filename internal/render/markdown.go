@@ -148,6 +148,9 @@ func rewrite(n *xhtml.Node, base *url.URL, title *string) {
 // except that a page opened from disk may show images from disk, which are
 // routed through the local file handler.
 func resolveAttr(n *xhtml.Node, key string, base *url.URL, isImage bool) {
+	if base == nil {
+		base = &url.URL{} // a page with no address: relative links stay as they are
+	}
 	for i, a := range n.Attr {
 		if a.Key != key {
 			continue

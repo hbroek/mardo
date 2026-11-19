@@ -1,6 +1,7 @@
 // Builds the DOM for each kind of page. No state lives here.
 import {svgIcon} from './icons.js';
 import {diffLines, withContext} from './diff.js';
+import {editSplit} from './editpreview.js';
 
 function el(tag, props = {}, ...children) {
     const node = Object.assign(document.createElement(tag), props);
@@ -111,7 +112,8 @@ export function source(p, ed) {
             el('pre', {className: 'source'}, el('code', {textContent: p.source})));
     }
     const area = el('textarea', {className: 'source-edit', value: ed.draft, spellcheck: false, autocapitalize: 'off', autocorrect: 'off', disabled: ed.saving, ariaLabel: 'Markdown source'});
-    area.addEventListener('input', () => ed.onInput(area.value));
+    const split = ed.preview ? editSplit(area, ed.preview) : null;
+    area.addEventListener('input', () => { ed.onInput(area.value); split?.update(); });
     area.addEventListener('keydown', (e) => {
         if ((e.metaKey || e.ctrlKey) && (e.key === 'Enter' || e.key.toLowerCase() === 's')) { e.preventDefault(); ed.onSave(); }
         else if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'z') { e.preventDefault(); (e.shiftKey ? ed.onRedo : ed.onUndo)(); }
@@ -126,9 +128,10 @@ export function source(p, ed) {
             el('button', {type: 'button', textContent: 'Undo', title: 'Undo (Ctrl/Cmd+Z)', disabled: ed.saving || !ed.canUndo, onclick: ed.onUndo}),
             el('button', {type: 'button', textContent: 'Redo', title: 'Redo (Shift+Ctrl/Cmd+Z)', disabled: ed.saving || !ed.canRedo, onclick: ed.onRedo}),
             el('button', {type: 'button', textContent: ed.diff ? 'Back to editing' : 'Show changes', disabled: ed.saving || (!changed && !ed.diff), onclick: ed.onDiff}),
+            ...(split && !ed.diff ? split.buttons : []),
             el('span', {className: 'note', textContent: ed.aiDraft ? 'Drafted by AI. Review the changes, then Save; Cancel discards them.' : 'Ctrl/Cmd+S saves, Esc cancels.'})),
         ed.error ? el('p', {className: 'error-text', textContent: ed.error}) : '',
-        ed.diff ? changes(p.source, ed.draft) : area);
+        ed.diff ? changes(p.source, ed.draft) : (split?.body ?? area));
 }
 
 /** What a draft changes: removed lines and added lines, with a few unchanged lines around them. */

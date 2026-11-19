@@ -174,6 +174,10 @@ export function RenamePath(arg1, arg2) {
   return window['go']['main']['App']['RenamePath'](arg1, arg2);
 }
 
+export function RenderPreview(arg1, arg2) {
+  return window['go']['main']['App']['RenderPreview'](arg1, arg2);
+}
+
 export function SaveAI(arg1, arg2) {
   return window['go']['main']['App']['SaveAI'](arg1, arg2);
 }

@@ -10,6 +10,7 @@ import (
 
 	"mardo/internal/fetch"
 	"mardo/internal/page"
+	"mardo/internal/render"
 )
 
 // NewDocumentResult is what saving a new document did: the page now shown, or that the file dialog was canceled.
@@ -91,4 +92,16 @@ func (a *Core) SaveSource(tab int, pageURL, editURL, etag, text string) (page.Pa
 		fresh.Submitted, fresh.SubmittedNote = true, pending.Note
 	}
 	return fresh, nil
+}
+
+// RenderPreview renders markdown the way the page will look, for the preview beside the editor.
+// Relative links and images are resolved against pageURL, the address of the page being edited
+// (empty or not an address for a page that was never saved).
+func (a *Core) RenderPreview(src, pageURL string) (string, error) {
+	var base *url.URL
+	if u, err := url.Parse(pageURL); err == nil && (u.Scheme == "http" || u.Scheme == "https" || u.Scheme == "file") {
+		base = u
+	}
+	html, _, err := render.Markdown([]byte(src), base)
+	return html, err
 }

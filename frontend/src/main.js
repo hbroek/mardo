@@ -1,6 +1,6 @@
 import './style.css';
 import './schemes.css';
-import {Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, ConvertPage} from '../wailsjs/go/main/App';
+import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, ConvertPage} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -61,6 +61,7 @@ function editor() {
         onRedo: () => undoDraft(tab, false),
         onDiff: () => { tab.showDiff = !tab.showDiff; render(); },
         onEdit: startEdit,
+        preview: (text) => RenderPreview(text, tab.page?.url ?? ''),
         onInput: (text) => {
             const now = Date.now();
             if (now - (tab.lastEdit ?? 0) > UNDO_PAUSE) remember(tab); // typing in one go is one step; a pause starts the next
