@@ -7,9 +7,24 @@ import (
 	"testing"
 )
 
+// newTestCore starts a core on dir and closes its bookmark database when the test ends: Windows cannot delete the
+// temporary folder while the file is open.
+func newTestCore(t *testing.T, dir string) *Core {
+	t.Helper()
+	a := New(Config{Dir: dir})
+	t.Cleanup(func() {
+		a.bmMu.Lock()
+		defer a.bmMu.Unlock()
+		if a.bookmarks != nil {
+			a.bookmarks.Close()
+		}
+	})
+	return a
+}
+
 func TestBuiltInStylesAreCopiedOnceAndListed(t *testing.T) {
 	dir := t.TempDir()
-	a := New(Config{Dir: dir})
+	a := newTestCore(t, dir)
 	folder := a.StylesFolder()
 	var names []string
 	for _, s := range a.StyleSheets() {
@@ -23,7 +38,7 @@ func TestBuiltInStylesAreCopiedOnceAndListed(t *testing.T) {
 	os.Remove(filepath.Join(folder, "mono.css"))
 	os.WriteFile(filepath.Join(folder, "my-style.css"), []byte("body{}"), 0o644)
 	os.WriteFile(filepath.Join(folder, "notes.txt"), []byte("x"), 0o644)
-	a = New(Config{Dir: dir})
+	a = newTestCore(t, dir)
 	if css, _ := a.StyleSheet("book"); css != "/* mine */" {
 		t.Errorf("an edited style was replaced: %q", css)
 	}
@@ -51,7 +66,7 @@ func TestStyleSheetBuildsInImportsAndFontsAndNothingFromTheNetwork(t *testing.T)
 @import "../outside.css";
 body { background: url(https://tracker.example/p.png), url("/etc/passwd"), url(secret.txt); font-family: F; }`), 0o644)
 	os.WriteFile(filepath.Join(dir, "outside.css"), []byte("body{color:red}"), 0o644)
-	a := New(Config{Dir: dir})
+	a := newTestCore(t, dir)
 	css, err := a.StyleSheet("mine")
 	if err != nil {
 		t.Fatal(err)
