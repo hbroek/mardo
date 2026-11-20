@@ -54,7 +54,7 @@ export function DeleteCredential(arg1:string):Promise<void>;
 
 export function DownloadAs(arg1:string):Promise<string>;
 
-export function EditPage(arg1:string,arg2:string,arg3:string,arg4:string):Promise<core.AIEdit>;
+export function EditPage(arg1:string,arg2:string,arg3:string,arg4:Array<ai.Message>,arg5:string):Promise<core.AIEdit>;
 
 export function ExportBookmarks(arg1:string):Promise<string>;
 

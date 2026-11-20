@@ -211,6 +211,7 @@ export namespace core {
 	}
 	export class AIEdit {
 	    text: string;
+	    note: string;
 	    source: string;
 	    millis: number;
 	
@@ -221,6 +222,7 @@ export namespace core {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.text = source["text"];
+	        this.note = source["note"];
 	        this.source = source["source"];
 	        this.millis = source["millis"];
 	    }

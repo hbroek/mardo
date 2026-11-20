@@ -88,6 +88,19 @@ export function refreshAsk() {
     $('ask-clear').disabled = !chat?.turns.length || Boolean(chat?.pending);
 }
 
+/**
+ * The text the model gets to work on: the draft with the author's cursor, or the selected text, marked, so "insert
+ * here" and "make this shorter" have a place. The marks are the ones the Go side tells the model about and removes
+ * again. Only when the edit box still holds the draft; otherwise the draft goes as it is.
+ */
+function withCursor(draft) {
+    const box = document.querySelector('textarea.source-edit');
+    if (!box || box.value !== draft) return draft;
+    const {selectionStart: a, selectionEnd: b} = box;
+    if (a === b) return `${draft.slice(0, a)}⟦CURSOR⟧${draft.slice(a)}`;
+    return `${draft.slice(0, a)}⟦SELECTION⟧${draft.slice(a, b)}⟦/SELECTION⟧${draft.slice(b)}`;
+}
+
 /** Brings back the conversation saved for this page, if the tab has none yet. */
 async function loadSaved(tab, url) {
     tab.chatTried = url;
@@ -149,13 +162,14 @@ async function send(forceAsk = false) {
     try {
         if (edit) {
             const base = tab.draft ?? page.source; // a draft being worked on carries on from where it is
-            const r = await EditPage(id, page.title, base, question);
+            const r = await EditPage(id, page.title, withCursor(base), history, question);
             if (chat.requestId !== id) return; // cancelled meanwhile
-            const same = r.text.trimEnd() === base.trimEnd();
+            const same = !r.note && r.text.trimEnd() === base.trimEnd();
             const closed = tab.draft == null; // editing ended while the model worked: do not start it again
             if (!same && !closed) host.draft(tab, r.text);
             chat.turns.push({role: 'assistant', html: '', source: r.source, millis: r.millis,
-                text: same ? 'That would not change the page. Try describing the change differently.'
+                text: r.note ? `I could not do that: ${r.note}`
+                    : same ? 'That would not change the page. Try describing the change differently.'
                     : closed ? 'Editing was closed before the draft was ready, so it was dropped.'
                     : 'I drafted the change in the page. Review it, then Save; Cancel discards it.'});
         } else {

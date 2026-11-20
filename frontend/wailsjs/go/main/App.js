@@ -94,8 +94,8 @@ export function DownloadAs(arg1) {
   return window['go']['main']['App']['DownloadAs'](arg1);
 }
 
-export function EditPage(arg1, arg2, arg3, arg4) {
-  return window['go']['main']['App']['EditPage'](arg1, arg2, arg3, arg4);
+export function EditPage(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['EditPage'](arg1, arg2, arg3, arg4, arg5);
 }
 
 export function ExportBookmarks(arg1) {

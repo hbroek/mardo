@@ -826,10 +826,10 @@ func TestDeviceModelThatCannotBeUsedIsNotOffered(t *testing.T) {
 
 func TestDeviceModelCannotRewriteALongDocument(t *testing.T) {
 	app := newCore(t, Config{Host: &deviceHost{}})
-	if _, err := app.EditPage("", "T", strings.Repeat("word ", 2000), "fix it"); err == nil || !strings.Contains(err.Error(), "too small") {
+	if _, err := app.EditPage("", "T", strings.Repeat("word ", 2000), nil, "fix it"); err == nil || !strings.Contains(err.Error(), "too small") {
 		t.Errorf("edit: %v", err)
 	}
-	if got, err := app.EditPage("", "T", "# Short", "fix it"); err != nil || got.Text == "" {
+	if got, err := app.EditPage("", "T", "# Short", nil, "fix it"); err != nil || got.Text == "" {
 		t.Errorf("a short document: %+v %v", got, err)
 	}
 }
