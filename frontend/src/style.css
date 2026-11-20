@@ -141,6 +141,8 @@ body.wails-drop-target-active #content { outline: 3px dashed var(--accent); outl
 .sendbar button:disabled { opacity: 0.4; cursor: default; }
 .sendbar img { display: block; }
 .sendbar .send-icon { min-width: 1.1em; text-align: center; }
+.sendbar .send-edit { margin-left: auto; padding: 3px 8px; }
+.sendbar .send-edit + .send-folder { margin-left: 0; }
 .sendbar .send-folder { margin-left: auto; padding: 3px 8px; }
 /* the colored rule that closes the bars goes under the Send to toolbar, not between the two */
 html:not(.phone).has-sendbar .toolbar::after { display: none; }

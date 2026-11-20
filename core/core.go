@@ -124,7 +124,12 @@ func SetContext(a *Core, ctx context.Context) { a.ctx = ctx }
 // Each page-level call names the tab it acts on; NewTab hands out the ids.
 // FollowLink is Navigate for a click on a link: in Bonbon mode a web page is for the reader's default browser,
 // and the answer says so (page.KindExternal; see browser.Follow).
-func (a *Core) FollowLink(tab int, url string) page.Page { return a.browser.Follow(a.ctx, tab, url) }
+func (a *Core) FollowLink(tab int, url string) page.Page {
+	if made, ok := a.newActionLink(url); ok { // a "new action" link of the Edit actions page
+		url = made
+	}
+	return a.browser.Follow(a.ctx, tab, url)
+}
 
 // NavigateAsIs opens a page without looking for its .md version.
 func (a *Core) NavigateAsIs(tab int, url string) page.Page {
@@ -169,12 +174,17 @@ func (a *Core) SetBonbon(on bool) error {
 	return settings.Save(a.settingsPath, raw)
 }
 
-func (a *Core) NewTab() int                            { return a.browser.NewTab() }
-func (a *Core) CloseTab(tab int)                       { a.browser.CloseTab(tab) }
-func (a *Core) Navigate(tab int, url string) page.Page { return a.browser.Navigate(a.ctx, tab, url) }
-func (a *Core) Reload(tab int) page.Page               { return a.browser.Reload(a.ctx, tab) }
-func (a *Core) Back(tab int) page.Page                 { return a.browser.Back(a.ctx, tab) }
-func (a *Core) Forward(tab int) page.Page              { return a.browser.Forward(a.ctx, tab) }
+func (a *Core) NewTab() int      { return a.browser.NewTab() }
+func (a *Core) CloseTab(tab int) { a.browser.CloseTab(tab) }
+func (a *Core) Navigate(tab int, url string) page.Page {
+	if made, ok := a.newActionLink(url); ok {
+		url = made
+	}
+	return a.browser.Navigate(a.ctx, tab, url)
+}
+func (a *Core) Reload(tab int) page.Page  { return a.browser.Reload(a.ctx, tab) }
+func (a *Core) Back(tab int) page.Page    { return a.browser.Back(a.ctx, tab) }
+func (a *Core) Forward(tab int) page.Page { return a.browser.Forward(a.ctx, tab) }
 
 func (a *Core) History() []history.Entry { return a.browser.History() }
 func (a *Core) ClearHistory()            { a.browser.ClearHistory() }

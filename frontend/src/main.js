@@ -1,7 +1,7 @@
 import './style.css';
 import './schemes.css';
 import './pagestyles.css';
-import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder} from '../wailsjs/go/main/App';
+import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn, BrowserOpenURL} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -24,6 +24,7 @@ import './phone.js';
 import './wide.js';
 import './imagealign.js';
 import * as finder from './find.js';
+import {hasNoBody} from './emptybody.js';
 import './linkstatus.js';
 import {initCredentials, openCredentials, credentialOrigins} from './creds.js';
 
@@ -286,13 +287,16 @@ function renderSendBar() {
         return b;
     });
     const rest = [];
+    const edit = Object.assign(document.createElement('button'), {type: 'button', className: 'send-folder send-edit', title: 'Edit the actions: change one or make a new one', textContent: '\u270E'});
+    edit.setAttribute('aria-label', 'Edit the actions');
+    edit.addEventListener('click', () => goActive((id) => EditActions(id)));
     if (!sendList.length) rest.push(Object.assign(document.createElement('span'), {className: 'note', textContent: 'No actions yet. Put a markdown file in the actions folder.'}));
     if (!document.documentElement.classList.contains('phone')) {
         const folder = Object.assign(document.createElement('button'), {type: 'button', className: 'send-folder', title: 'Open the actions folder', textContent: '\u2026'});
         folder.setAttribute('aria-label', 'Open the actions folder');
         folder.addEventListener('click', () => OpenActionsFolder().catch((e) => toast(String(e), true)));
-        rest.push(folder);
-    }
+        rest.push(edit, folder);
+    } else rest.push(edit);
     sendbar.replaceChildren(...buttons, ...rest);
 }
 window.addEventListener('focus', refreshSendBar); // a file was added or changed in the folder meanwhile
@@ -337,6 +341,7 @@ async function saveEdit() {
         if (fresh.kind === 'error') throw new Error(fresh.error);
         tab.saving = false;
         show(tab, fresh);
+        refreshSendBar(); // the page may be an action
         if (fresh.url.startsWith('data:')) showDataAddress(fresh.url); // a data page has nowhere to be saved: its new address is the result
         else if (fresh.submitted) { // the server queued the change: the page is the old text until someone approves it
             const note = fresh.submittedNote ? ` (${fresh.submittedNote.slice(0, 160)})` : '';
@@ -352,7 +357,8 @@ async function saveEdit() {
 function render() {
     const p = currentPage();
     syncSendBar();
-    const showSource = active?.showSource ?? false;
+    const noBody = p?.kind === 'markdown' && hasNoBody(p.source); // only front matter: nothing to read, so show its source
+    const showSource = (active?.showSource ?? false) || noBody;
     sourceBtn.disabled = p?.kind !== 'markdown';
     // On a page the server lets you change, the source button becomes the pencil that starts editing.
     const editable = p?.kind === 'markdown' && !!p.editUrl;

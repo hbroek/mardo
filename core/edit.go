@@ -81,6 +81,9 @@ func (a *Core) SaveSource(tab int, pageURL, editURL, etag, text string) (page.Pa
 		a.pageMu.Lock()
 		delete(a.pageCache, pageURL)
 		a.pageMu.Unlock()
+		if renamed, ok := a.renameNewAction(fetch.FilePath(pu), text); ok { // an action made from a template, now named
+			return a.browser.Navigate(a.ctx, tab, renamed), nil
+		}
 		return a.browser.Reload(a.ctx, tab), nil
 	}
 	if err := errors.Join(err1, err2); err != nil || pu.Host == "" || pu.Scheme != eu.Scheme || pu.Host != eu.Host {

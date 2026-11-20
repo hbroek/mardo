@@ -12,6 +12,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"mardo/internal/fetch"
 )
 
 func writeAction(t *testing.T, a *Core, name, text string) {
@@ -288,5 +290,90 @@ func clearActions(t *testing.T, a *Core) {
 	}
 	if err := os.MkdirAll(a.actionsFolder(), 0o755); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestEditActionsListsThemAndMakesNewOnes(t *testing.T) {
+	a := newTestCore(t, t.TempDir())
+	p, err := a.EditActions(0)
+	if err != nil || p.Kind != "markdown" {
+		t.Fatalf("page = %+v, %v", p, err)
+	}
+	for _, want := range []string{"[Copy link as markdown](copy-markdown-link.md)", "(_new-api.md)", "(_new-browser.md)", "(_new-copy.md)", "(README.md)", "opens www.google.com in your browser"} {
+		if !strings.Contains(p.Source, want) {
+			t.Errorf("the page lacks %q:\n%s", want, p.Source)
+		}
+	}
+	if !strings.Contains(p.HTML, `href="file://`) {
+		t.Errorf("links to the files were lost: %s", p.HTML)
+	}
+	// The list page is not an action itself.
+	for _, x := range a.Actions() {
+		if strings.HasPrefix(x.ID, "_") {
+			t.Errorf("%s is listed as an action", x.ID)
+		}
+	}
+	// Following a "new action" link makes the file and opens it, each time a new one.
+	link := fetch.FileURL(filepath.Join(a.actionsFolder(), "_new-api.md"))
+	first := a.FollowLink(0, link)
+	second := a.Navigate(0, link)
+	if !strings.HasSuffix(first.URL, "/new-action.md") || !strings.HasSuffix(second.URL, "/new-action-2.md") {
+		t.Fatalf("new files: %q, %q", first.URL, second.URL)
+	}
+	var made []ActionInfo
+	for _, x := range a.Actions() {
+		if x.Name == "New action" {
+			made = append(made, x)
+		}
+	}
+	if len(made) != 2 || made[0].Mode != "api" || made[0].Method != "POST" || made[0].Host != "example.com" {
+		t.Errorf("the new actions = %+v", made)
+	}
+	if first.EditURL == "" {
+		t.Errorf("the new file cannot be edited: %+v", first)
+	}
+	// Other files, and other kinds, are left alone.
+	if _, ok := a.newActionLink(fetch.FileURL(filepath.Join(a.actionsFolder(), "_new-other.md"))); ok {
+		t.Error("an unknown kind made a file")
+	}
+	if _, ok := a.newActionLink(fetch.FileURL(filepath.Join(t.TempDir(), "_new-api.md"))); ok {
+		t.Error("a file outside the actions folder made a file")
+	}
+}
+
+func TestSavingANewActionNamesItsFile(t *testing.T) {
+	a := newTestCore(t, t.TempDir())
+	link := fetch.FileURL(filepath.Join(a.actionsFolder(), "_new-browser.md"))
+	p := a.Navigate(0, link)
+	if !strings.HasSuffix(p.URL, "/new-action.md") {
+		t.Fatalf("made %q", p.URL)
+	}
+	// Saved with the template's name: the file keeps its name.
+	same, err := a.SaveSource(0, p.URL, p.EditURL, p.ETag, p.Source)
+	if err != nil || !strings.HasSuffix(same.URL, "/new-action.md") {
+		t.Fatalf("saved unchanged: %q, %v", same.URL, err)
+	}
+	// Given a name, it is saved under it.
+	text := strings.Replace(p.Source, "name: New action", "name: Tweet it!", 1)
+	saved, err := a.SaveSource(0, same.URL, same.EditURL, same.ETag, text)
+	if err != nil || !strings.HasSuffix(saved.URL, "/tweet-it.md") {
+		t.Fatalf("saved named: %q, %v", saved.URL, err)
+	}
+	if _, err := os.Stat(filepath.Join(a.actionsFolder(), "new-action.md")); err == nil {
+		t.Error("the template's file is still there")
+	}
+	// The next new action is a fresh new-action.md, and a second "Tweet it" does not overwrite the first.
+	p2 := a.Navigate(0, link)
+	if !strings.HasSuffix(p2.URL, "/new-action.md") {
+		t.Fatalf("the second new action: %q", p2.URL)
+	}
+	saved2, err := a.SaveSource(0, p2.URL, p2.EditURL, p2.ETag, text)
+	if err != nil || !strings.HasSuffix(saved2.URL, "/tweet-it-2.md") {
+		t.Errorf("the second named: %q, %v", saved2.URL, err)
+	}
+	// Other files are not renamed.
+	other := filepath.Join(a.actionsFolder(), "weft-it.md")
+	if _, ok := a.renameNewAction(other, text); ok {
+		t.Error("an ordinary action was renamed")
 	}
 }

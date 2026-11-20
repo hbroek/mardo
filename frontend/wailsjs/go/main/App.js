@@ -102,6 +102,10 @@ export function DownloadAs(arg1) {
   return window['go']['main']['App']['DownloadAs'](arg1);
 }
 
+export function EditActions(arg1) {
+  return window['go']['main']['App']['EditActions'](arg1);
+}
+
 export function EditPage(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['EditPage'](arg1, arg2, arg3, arg4, arg5);
 }

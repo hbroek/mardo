@@ -27,6 +27,8 @@ url: https://weft.example.com/compose?page={{url}}&ptitle={{title}}&pdesc={{desc
 | `order` | A number: where the button goes in the toolbar. The lowest comes first; actions without one come after them, by name. Leave gaps (10, 20, 30) to slip another in later. |
 | `requires` | `selection`: the action only runs with text selected in the page, and says so when there is none. |
 
+The **✎** button at the end of the toolbar opens a page that lists these files, so that each can be opened and edited in Mardo, and a new one can be made from a template. That is the way to do it on a phone.
+
 A line that starts with `#` in the front matter is a comment, and is ignored. Everything after the closing `---` is the body: what is sent by `POST`, `PUT` and `PATCH`, or copied by `copy`.
 
 ## Placeholders
