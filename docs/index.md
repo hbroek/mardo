@@ -28,6 +28,8 @@ Plain text pages load fast, read well and are easy to keep, copy and hand to an 
 - **Preview as you write.** An optional live preview sits beside the editor, or below it, and follows what you type. A cheatsheet puts markdown syntax in the text with one click.
 - **Files next to your bookmarks.** Switch the side panel to the markdown and text files in your home folder. Pin a folder as the root, rename files and folders, and open a file in a tab.
 - **Your look.** Follows light and dark, with six color schemes, a full-width mode for big screens, and a button to float images left or right or center them.
+- **Page styles.** Set the text as Basic, Book, Classic, Mono or Newsprint, or with a CSS file of your own in a stylesheets folder. The format is the one Bonbon's stylesheets use, and a style only touches the page, never the toolbar.
+- **Front matter and macros.** A page can start with a title, an author, a date, arrows to the previous and next page and a picture at the side. `{{page.title}}` and the like put any of those values in the text, and the cheatsheet adds them with one click.
 - **Find and replace.** Cmd/Ctrl+F finds in the page with a count and arrows, in rendered pages, the source and while you edit. Replace one or all, each a single undo.
 - **A right-click menu.** On a link: open in a tab, as the web page or in your browser, download the file, bookmark or copy it. On text: copy as a quote, explain, simplify, translate, search or share. On an image: save or copy it.
 - **Links to a passage.** Copy a link that highlights the text you selected. Open one in Mardo and the passage is found and scrolled into view.
@@ -64,6 +66,15 @@ Use the model you like: Claude, OpenAI, Gemini, a local Ollama, or any compatibl
 - **Edit with words.** Tell the AI what to change in a markdown page, review the highlighted differences, and keep or discard them.
 - **Tidy your bookmarks.** Suggest titles, keywords and folders. You review every suggestion before anything changes.
 - **You decide what leaves.** Page text goes only to the provider you choose, and only after you allow it. A model on your own computer sends nothing out.
+
+## Bonbon mode
+
+A switch for the markdown-only web, as the [charter](https://github.com/scripting/myMarkdownBlog/blob/main/docs/charter.md) of Dave Winer's BonBon browser has it: pages are markdown, and nothing gets between the writer's words and you. It is off by default.
+
+- **Markdown only.** Requests ask for markdown and OPML, and a page is markdown. HTML in the text is dropped, SVG pictures are links, and a web page, feed or other text shows as it is. A clicked link to a web page opens in your own browser.
+- **Arrows from the table of contents.** A page with no arrows of its own gets them from the site's `/.well-known/toc.opml`. The right arrow is the newer page, and a folder can have a table of contents of its own.
+- **A site's own search.** If a site's `bonbon.json` names a search, the words you type in the address bar also show its results, ahead of your bookmarks and history, with links to each part.
+- **Mirrors and names.** A link to the web page a markdown site mirrors opens the markdown page, and a site read at a repository's address offers the name its owner would like for it.
 
 ## Download
 

@@ -195,6 +195,8 @@ footer a { color: var(--muted); }
             <div class="card"><h3>Preview as you write</h3><p>An optional live preview sits beside the editor, or below it, and follows what you type. A cheatsheet puts markdown syntax in the text with one click.</p></div>
             <div class="card"><h3>Files next to your bookmarks</h3><p>Switch the side panel to the markdown and text files in your home folder. Pin a folder as the root, rename files and folders, and open a file in a tab.</p></div>
             <div class="card"><h3>Your look</h3><p>Follows light and dark, with six color schemes, a full-width mode for big screens, and a button to float images left or right or center them.</p></div>
+            <div class="card"><h3>Page styles</h3><p>Set the text as Basic, Book, Classic, Mono or Newsprint, or with a CSS file of your own in a stylesheets folder. The format is the one Bonbon's stylesheets use, and a style only touches the page, never the toolbar.</p></div>
+            <div class="card"><h3>Front matter and macros</h3><p>A page can start with a title, an author, a date, arrows to the previous and next page and a picture at the side. <code>{{page.title}}</code> and the like put any of those values in the text, and the cheatsheet adds them with one click.</p></div>
             <div class="card"><h3>Find and replace</h3><p>Cmd/Ctrl+F finds in the page with a count and arrows, in rendered pages, the source and while you edit. Replace one or all, each a single undo.</p></div>
             <div class="card"><h3>A right-click menu</h3><p>On a link: open in a tab, as the web page or in your browser, download the file, bookmark or copy it. On text: copy as a quote, explain, simplify, translate, search or share. On an image: save or copy it.</p></div>
             <div class="card"><h3>Links to a passage</h3><p>Copy a link that highlights the text you selected. Open one in Mardo and the passage is found and scrolled into view.</p></div>
@@ -237,6 +239,19 @@ footer a { color: var(--muted); }
             <div class="card"><h3>Edit with words</h3><p>Tell the AI what to change in a markdown page, review the highlighted differences, and keep or discard them.</p></div>
             <div class="card"><h3>Tidy your bookmarks</h3><p>Suggest titles, keywords and folders. You review every suggestion before anything changes.</p></div>
             <div class="card"><h3>You decide what leaves</h3><p>Page text goes only to the provider you choose, and only after you allow it. A model on your own computer sends nothing out.</p></div>
+        </div>
+    </div>
+</section>
+
+<section id="bonbon">
+    <div class="wrap">
+        <h2>Bonbon mode</h2>
+        <p class="sub">A switch for the markdown-only web, as the <a href="https://github.com/scripting/myMarkdownBlog/blob/main/docs/charter.md">charter</a> of Dave Winer's BonBon browser has it: pages are markdown, and nothing gets between the writer's words and you. It is off by default.</p>
+        <div class="grid">
+            <div class="card"><h3>Markdown only</h3><p>Requests ask for markdown and OPML, and a page is markdown. HTML in the text is dropped, SVG pictures are links, and a web page, feed or other text shows as it is. A clicked link to a web page opens in your own browser.</p></div>
+            <div class="card"><h3>Arrows from the table of contents</h3><p>A page with no arrows of its own gets them from the site's <code>/.well-known/toc.opml</code>. The right arrow is the newer page, and a folder can have a table of contents of its own.</p></div>
+            <div class="card"><h3>A site's own search</h3><p>If a site's <code>bonbon.json</code> names a search, the words you type in the address bar also show its results, ahead of your bookmarks and history, with links to each part.</p></div>
+            <div class="card"><h3>Mirrors and names</h3><p>A link to the web page a markdown site mirrors opens the markdown page, and a site read at a repository's address offers the name its owner would like for it.</p></div>
         </div>
     </div>
 </section>

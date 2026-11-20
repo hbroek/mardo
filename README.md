@@ -35,7 +35,8 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 - A network console (hidden by default; `>_` button or Cmd/Ctrl+J) lists every request with its status code;
   click the bar to see request and response headers, timing and size. Cookie and token values are hidden
 - Bookmarks with folders, descriptions and keywords: see below
-- The ☰ menu at the far right holds Site credentials, the theme (follow the OS by default, or Light or Dark) and the color scheme: Violet (default), Ocean, Forest, Sunset, Rose or Graphite
+- The ☰ menu at the far right holds Site credentials, the theme (follow the OS by default, or Light or Dark), the color scheme (Violet by default, Ocean, Forest, Sunset, Rose or Graphite), the **Page style** (see below) and **Bonbon mode** (see below)
+- **Front matter** at the top of a page gives it a title, arrows to the previous and next page and a picture at the side, and `{{page.title}}`-style macros place its values in the text: see below
 - Sites that need a login: see below
 
 | Shortcut | Action |
@@ -169,6 +170,58 @@ Files live in the user config directory (`~/Library/Application Support/mardo` o
 `%AppData%\mardo` on Windows, `~/.config/mardo` on Linux): `history.json`, `history.md`,
 `credentials.json` (site names only, no secrets) and `cookies.bin`.
 
+## Front matter and macros
+
+A page can start with a block of front matter between two `---` lines. It is not part of the text:
+
+```
+---
+title: A Substack experiment
+author: Dave
+pubDate: Fri, 13 Nov 2026 15:47:54 GMT
+link: https://example.org/posts/a-substack-experiment
+urlPrev: 12.md
+urlNext: 14.md
+rightMarginImage: me.png
+---
+# {{page.title}}
+
+By {{page.author}} on {{page.pubDate}}.
+```
+
+- `title` names the page and its tab, ahead of the first heading. `description`, `author` and `pubDate` are yours to place in the text.
+- `urlPrev` and `urlNext` give the page a left and a right arrow in its upper corners. `rightMarginImage` is the address of a picture shown at the top right of the text, below the arrows. Addresses may be relative; only `http`, `https` and relative addresses are used.
+- `{{page.key}}` in the text is replaced with that key's value, for any key you put in the front matter (names are not case sensitive). A macro for a key the page does not have is left as written. When the page has a `link`, `{{page.title}}` becomes a link to it.
+- Mardo draws nothing of its own for the title, author or date: the page places them where it wants, with macros.
+- Values are single lines; a list or a nested block is ignored.
+- The editor's **Cheatsheet** has a *Front matter* group that adds these lines, starting the block or joining the one that is there.
+
+## Page styles
+
+**Page style** in the ☰ menu changes how the text of a page is set: Mardo's own look (the default), or one of Basic, Book, Classic, Mono and Newsprint, or a style of your own. The color scheme and theme still apply, and the paper of Book and Newsprint turns dark in the dark theme. While a style is on, the width, image and Copy markdown buttons are not shown, because the style decides the column and the pictures.
+
+A style is a CSS file in the `stylesheets` folder of Mardo's config folder (`~/Library/Application Support/mardo` on macOS, `%AppData%\mardo` on Windows, `~/.config/mardo` on Linux; **Open stylesheets folder…** in the menu shows it). The folder is read each time the menu opens, so a file you add appears at once. The five built-in styles are copied there when they are missing, so you can edit them or copy one to start your own; an edited file is left alone, and a deleted one comes back at the next start.
+
+The format is the one Bonbon's stylesheets use, so a stylesheet written for Bonbon works too:
+
+- Tokens on `:root` (`--bg`, `--fg`, `--muted`, `--rule`, `--link`, `--font-body`, …), with the dark values under `@media (prefers-color-scheme: dark)` and `:root[data-theme="dark"]`.
+- `body` for the reading area, `.page` for the text column, and plain elements (`h1`, `p`, `a`, `blockquote`, `img`, `table`, …) for the markdown. `p > img:first-child` floats a picture at the right and `p > img:only-child` is a standalone picture; the `#` link at the end of an item is `a[title="Direct link to this item."]`.
+- Each rule is limited to the page, so a style cannot restyle the toolbar or the panels. `@import` of a file in the folder and the fonts beside it are built in; anything that would fetch from the network is dropped.
+
+## Bonbon mode
+
+Bonbon mode follows the [charter](https://github.com/scripting/myMarkdownBlog/blob/main/docs/charter.md) of the BonBon browser: a web made of markdown, with nothing between the writer's words and the reader. Turn it on in **Tools > Bonbon Mode** (desktop) or **Bonbon mode: markdown only** in the ☰ menu; it is off by default and remembered (`"browsing": {"bonbon": true}` in `settings.json`). The open page loads again in the new mode. When it is on:
+
+- Requests send `Accept: text/markdown, text/x-opml`. A page is `text/markdown`, or `text/plain` (or a generic binary type) at an address ending in `.md` or `.markdown`.
+- Nothing is converted or looked for: no `.md` twin, `llms.txt`, feed or `Link` header. A web page, feed, XML, OPML, JSON or code shows as its text. A click on a link to a web page opens it in your own browser, and the tab stays where it was.
+- HTML in the markdown is dropped, and an SVG picture is a link. A picture alone in a paragraph is centered with its alt text as a caption; one at the head of a paragraph floats at the right.
+- **Table of contents.** A page with no `urlPrev` or `urlNext` gets its arrows from the site's `/.well-known/toc.opml`, an OPML outline of its pages, newest first: the right arrow is the newer page. A folder can have a table of contents of its own, the nearest one that lists the page is used, and an `include` outline is followed on the same site only. The file is kept for ten minutes and the lookup is time limited.
+- **`/.well-known/bonbon.json`** (the nearest folder's) tells Mardo about the site:
+  - `urlSearch`: words typed in the address bar also run the site's search (`?q=` and the words are added; a markdown page is expected back). Its results come first, under "From" and the search's host, ahead of your bookmarks and history, with links to each part. The search may be on another host than the site, and that host hears the words.
+  - `urlMirrorOf`: the HTML site this one is the markdown version of. A click on a link to a page there opens the page's markdown twin (`/2026/11/18.html` is `2026/11/18.md`), when it exists.
+  - `cname`: the name the site's owner would like for it. A page read at another address (a repository's) gets a note with a link to the same page under that name; it is never shown as the page's address.
+  - `urlUpdateSocket` (live updates) is read but not used yet.
+
 ## Build
 
 Requirements: Go 1.25+, Node (for the frontend build), the [Wails CLI](https://wails.io/docs/gettingstarted/installation)
@@ -259,16 +312,18 @@ internal/fetch         HTTP/file loading, content negotiation, size and redirect
 internal/chats         saved page conversations
 internal/ai            OpenAI-compatible chat client; summary and bookmark-suggestion prompts
 internal/render        markdown -> sanitized HTML, feeds, link extraction
-internal/browser       ties fetch + render + history together
+internal/browser       ties fetch + render + history together; Bonbon mode's table of contents (toc.go), bonbon.json (siteconfig.go) and site search (sitesearch.go)
 internal/nav           back/forward stack
 internal/history       visit log and the generated history page
 internal/bookmarks     bookmark model, Store interface, backends (sqlite/, linkagogo/, memory), conformance tests
-internal/settings      settings.json (bookmark backend choice)
+internal/settings      settings.json (bookmark backend, AI, browsing options such as Bonbon mode)
 internal/auth          per-site credentials in the keychain
 internal/cookies       encrypted persistent cookie jar
 internal/localfile     serves local images to pages opened from disk
 tools/lggcheck         read-only probe of the LinkaGoGo API with your key (prints shapes, not data)
-frontend/              vanilla HTML/CSS/JS (no framework)
+frontend/              vanilla HTML/CSS/JS (no framework); `userstyle.js` limits a page style to the page
+android/               the Android app (a Kotlin WebView around the core; see android/README.md)
+core/styles            the five built-in page styles, copied to the stylesheets folder
 ```
 
 ## License
