@@ -12,6 +12,10 @@ export function AISettings():Promise<core.AIInfo>;
 
 export function About(arg1:number):Promise<page.Page>;
 
+export function Actions():Promise<Array<core.ActionInfo>>;
+
+export function ActionsFolder():Promise<string>;
+
 export function ApplyFiling(arg1:Array<core.Move>):Promise<core.MoveResult>;
 
 export function AskPage(arg1:string,arg2:string,arg3:Array<ai.Message>,arg4:string):Promise<core.AIAnswer>;
@@ -88,6 +92,8 @@ export function NetworkLog():Promise<Array<fetch.Entry>>;
 
 export function NewTab():Promise<number>;
 
+export function OpenActionsFolder():Promise<void>;
+
 export function OpenStylesFolder():Promise<void>;
 
 export function PickFile():Promise<string>;
@@ -101,6 +107,8 @@ export function Reload(arg1:number):Promise<page.Page>;
 export function RenamePath(arg1:string,arg2:string):Promise<string>;
 
 export function RenderPreview(arg1:string,arg2:string):Promise<string>;
+
+export function RunAction(arg1:string,arg2:core.ActionInput):Promise<core.ActionResult>;
 
 export function SaveAI(arg1:core.AIInput,arg2:string):Promise<void>;
 

@@ -1,7 +1,7 @@
 import './style.css';
 import './schemes.css';
 import './pagestyles.css';
-import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage} from '../wailsjs/go/main/App';
+import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn, BrowserOpenURL} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -199,6 +199,106 @@ function closePage() {
     else clearPage(tab);
 }
 
+// --- send to: the actions of the actions folder ---
+
+/** The text the reader selected in the page, or "". */
+function actionSelection() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !content.contains(sel.anchorNode)) return '';
+    return sel.toString().trim().slice(0, 20000);
+}
+
+/** The actions an api call was agreed to, by the fingerprint of the file: changing the file asks again. */
+const agreedKey = (a) => `action.agreed.${a.id}`;
+
+/** Asks, once for each version of an action that calls an api, whether it may send the page there. */
+function agreeToSend(a) {
+    try { if (localStorage.getItem(agreedKey(a)) === a.fingerprint) return Promise.resolve(true); } catch { /* ask */ }
+    return new Promise((resolve) => {
+        const dialog = $('action-dialog');
+        $('action-text').textContent = `"${a.name}" sends the title, address and any text from the page to ${a.host} (${a.method}), using the sign-in saved for that site. It does this each time you choose it, without showing anything first.`;
+        const done = (ok) => {
+            $('action-allow').onclick = $('action-cancel').onclick = null;
+            dialog.close();
+            if (ok) try { localStorage.setItem(agreedKey(a), a.fingerprint); } catch { /* asked next time */ }
+            resolve(ok);
+        };
+        $('action-allow').onclick = () => done(true);
+        $('action-cancel').onclick = () => done(false);
+        dialog.onclose = () => resolve(false);
+        dialog.showModal();
+    });
+}
+
+/** Runs an action of the "Send to" menu for the page in front. */
+async function runAction(a) {
+    const p = currentPage();
+    if (!p?.url || p.kind === 'error' || isSearch(p.url) || p.url === NEW_DOC) return toast('Open a page first.', true);
+    if (a.mode === 'api' && !(await agreeToSend(a))) return;
+    try {
+        const r = await RunAction(a.id, {url: p.url, title: p.title ?? '', source: markdownSource(p), selection: actionSelection()});
+        if (r.mode === 'open') { BrowserOpenURL(r.url); toast(`${a.name}: opened in your browser.`); }
+        else if (r.mode === 'copy') { await writeClipboard(r.text); toast(`${a.name}: copied.`); }
+        else toast(r.message || `${a.name}: sent.`);
+    } catch (e) {
+        toast(String(e).replace(/^Error: /, ''), true);
+    }
+}
+
+const sendbar = $('sendbar');
+let sendBarOn = (() => { try { return localStorage.getItem('sendbar') === '1'; } catch { return false; } })();
+let sendList = [];
+
+/** Shows or hides the Send to toolbar, from the menu. */
+function setSendBar(on) {
+    sendBarOn = on;
+    try { localStorage.setItem('sendbar', on ? '1' : '0'); } catch { /* not kept */ }
+    renderSendBar();
+    if (on) refreshSendBar();
+}
+
+/** Reads the actions folder again, and the toolbar shows what is in it. */
+function refreshSendBar() {
+    if (!sendBarOn) return;
+    Actions().then((list) => { sendList = list ?? []; renderSendBar(); }).catch(() => {});
+}
+
+/** Greys the buttons while there is no page to send; called whenever the page shown changes. */
+function syncSendBar() {
+    if (!sendBarOn) return;
+    const p = currentPage();
+    const ready = Boolean(p?.url) && p.kind !== 'error';
+    for (const b of sendbar.querySelectorAll('button:not(.send-folder)')) b.disabled = !ready;
+}
+
+function renderSendBar() {
+    sendbar.hidden = !sendBarOn;
+    document.documentElement.classList.toggle('has-sendbar', sendBarOn);
+    if (!sendBarOn) return;
+    const ready = Boolean(currentPage()?.url) && currentPage().kind !== 'error';
+    const buttons = sendList.map((a) => {
+        const b = Object.assign(document.createElement('button'), {type: 'button', title: a.name, disabled: !ready});
+        b.setAttribute('aria-label', a.name);
+        if (a.icon.startsWith('data:')) b.append(Object.assign(document.createElement('img'), {src: a.icon, alt: '', width: 16, height: 16}));
+        else b.append(Object.assign(document.createElement('span'), {className: 'send-icon', textContent: a.icon || '\u2192'}));
+        b.append(Object.assign(document.createElement('span'), {className: 'send-name', textContent: a.name}));
+        b.addEventListener('click', () => runAction(a));
+        return b;
+    });
+    const rest = [];
+    if (!sendList.length) rest.push(Object.assign(document.createElement('span'), {className: 'note', textContent: 'No actions yet. Put a markdown file in the actions folder.'}));
+    if (!document.documentElement.classList.contains('phone')) {
+        const folder = Object.assign(document.createElement('button'), {type: 'button', className: 'send-folder', title: 'Open the actions folder', textContent: '\u2026'});
+        folder.setAttribute('aria-label', 'Open the actions folder');
+        folder.addEventListener('click', () => OpenActionsFolder().catch((e) => toast(String(e), true)));
+        rest.push(folder);
+    }
+    sendbar.replaceChildren(...buttons, ...rest);
+}
+window.addEventListener('focus', refreshSendBar); // a file was added or changed in the folder meanwhile
+if (sendBarOn) { renderSendBar(); refreshSendBar(); }
+EventsOn('actionicons', refreshSendBar); // a picture was got for an action
+
 /** The dialog that shows the data address of an edited data page, to copy. */
 function showDataAddress(uri) {
     const box = $('data-uri');
@@ -251,6 +351,7 @@ async function saveEdit() {
 
 function render() {
     const p = currentPage();
+    syncSendBar();
     const showSource = active?.showSource ?? false;
     sourceBtn.disabled = p?.kind !== 'markdown';
     // On a page the server lets you change, the source button becomes the pencil that starts editing.
@@ -838,6 +939,8 @@ const menuItems = {
     styleSheets: () => StyleSheets(),
     styleSheet: (id) => StyleSheet(id),
     openStylesFolder: () => OpenStylesFolder().catch((e) => toast(String(e), true)),
+    sendBar: () => sendBarOn,
+    setSendBar,
     setBonbon: (on) => SetBonbon(on),
     history: () => goActive(FullHistory),
     about: () => goActive(About),

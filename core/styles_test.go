@@ -12,7 +12,9 @@ import (
 func newTestCore(t *testing.T, dir string) *Core {
 	t.Helper()
 	a := New(Config{Dir: dir})
+	a.iconsOff = true // no picture is fetched from the web; the tests of icons turn it on
 	t.Cleanup(func() {
+		a.iconWG.Wait()
 		a.bmMu.Lock()
 		defer a.bmMu.Unlock()
 		if a.bookmarks != nil {

@@ -35,6 +35,7 @@
         <div id="settings-menu" class="menu settings-menu" role="menu" hidden></div>
     </div>
 </header>
+<div id="sendbar" class="sendbar" role="toolbar" aria-label="Send to" hidden></div>
 <div class="workspace">
     <aside id="bookmarks-panel" aria-label="Bookmarks" hidden>
         <div class="panel-head">
@@ -167,6 +168,15 @@
     </div>
 </dialog>
 
+<dialog id="action-dialog" aria-labelledby="action-title">
+    <h2 id="action-title">Send the page?</h2>
+    <p id="action-text"></p>
+    <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button type="button" id="action-cancel">Cancel</button>
+        <button type="button" id="action-allow" class="primary">Allow and send</button>
+    </div>
+</dialog>
 <dialog id="data-dialog" class="wide" aria-labelledby="data-title">
     <h2 id="data-title">Data address</h2>
     <p>The page is in this address. Copy it to share or keep the page; anyone can paste it into the address bar.</p>

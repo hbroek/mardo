@@ -51,6 +51,11 @@ type Core struct {
 
 	pageMu    sync.Mutex
 	pageCache map[string]pageCacheEntry // page text for AI features, see pageText
+	iconMu    sync.Mutex                // guards icons
+	icons     map[string]iconEntry      // the pictures of web addresses, for the actions (see icons.go)
+	iconBusy  map[string]bool           // the ones being fetched
+	iconWG    sync.WaitGroup            // fetches in progress, for tests to wait for
+	iconsOff  bool                      // no fetching of pictures (tests)
 	chats     *chats.Store              // saved Ask this page conversations
 
 	openMu sync.Mutex
@@ -93,6 +98,8 @@ func New(cfg Config) *Core {
 	}
 	if dir != "" {
 		installStyles(a.stylesFolder())
+		installActions(a.actionsFolder())
+		a.loadIcons()
 	}
 	a.fetcher = fetch.NewFetcher(a.auth, a.jar)
 	a.fetcher.Log.OnEntry = func(e fetch.Entry) { host.Emit("net", e) } // each request is pushed to the console as it completes

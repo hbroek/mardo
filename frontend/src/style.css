@@ -133,6 +133,20 @@ body.wails-drop-target-active #content { outline: 3px dashed var(--accent); outl
     cursor: pointer;
 }
 
+/* the Send to toolbar: the actions of the actions folder, under the address bar */
+.sendbar { position: relative; display: flex; gap: 6px; padding: 4px 8px; overflow-x: auto; scrollbar-width: none; background: var(--bar); align-items: center; }
+.sendbar[hidden] { display: none; }
+.sendbar button { display: flex; align-items: center; gap: 6px; flex: none; padding: 3px 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); cursor: pointer; font: inherit; font-size: 0.85em; }
+.sendbar button:not(:disabled):hover { background: var(--hover); }
+.sendbar button:disabled { opacity: 0.4; cursor: default; }
+.sendbar img { display: block; }
+.sendbar .send-icon { min-width: 1.1em; text-align: center; }
+.sendbar .send-folder { margin-left: auto; padding: 3px 8px; }
+/* the colored rule that closes the bars goes under the Send to toolbar, not between the two */
+html:not(.phone).has-sendbar .toolbar::after { display: none; }
+html:not(.phone).has-sendbar .sendbar { padding-bottom: 6px; background: var(--grad) left bottom / 100% 2px no-repeat, var(--bar); }
+html.phone .sendbar .send-name { display: none; } /* icons only on a phone, the name is the long-press title */
+
 .toolbar .icon { width: 1.9em; height: 1.9em; display: block; margin: auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
 .toolbar button:disabled { opacity: 0.4; cursor: default; }
 

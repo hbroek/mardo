@@ -37,6 +37,7 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 - Bookmarks with folders, descriptions and keywords: see below
 - The ☰ menu at the far right holds Site credentials, the theme (follow the OS by default, or Light or Dark), the color scheme (Violet by default, Ocean, Forest, Sunset, Rose or Graphite), the **Page style** (see below) and **Bonbon mode** (see below)
 - **Front matter** at the top of a page gives it a title, arrows to the previous and next page and a picture at the side, and `{{page.title}}`-style macros place its values in the text: see below
+- **Send to** actions, in a toolbar you switch on in the ☰ menu, send the page you are reading to a service, an API or the clipboard: see below
 - Sites that need a login: see below
 
 | Shortcut | Action |
@@ -208,6 +209,44 @@ The format is the one Bonbon's stylesheets use, so a stylesheet written for Bonb
 - `body` for the reading area, `.page` for the text column, and plain elements (`h1`, `p`, `a`, `blockquote`, `img`, `table`, …) for the markdown. `p > img:first-child` floats a picture at the right and `p > img:only-child` is a standalone picture; the `#` link at the end of an item is `a[title="Direct link to this item."]`.
 - Each rule is limited to the page, so a style cannot restyle the toolbar or the panels. `@import` of a file in the folder and the fonts beside it are built in; anything that would fetch from the network is dropped.
 
+## Send to actions
+
+The **Send to toolbar** (switch it on with **Send to toolbar** in the ☰ menu) has a button for each action. An action runs on the page in front: it can open a service's "post this" page with the page's title and address filled in (what a bookmarklet does in a browser), call an API without showing anything, or put a piece of text on the clipboard. Mardo does not run the code of web pages, so this takes the place of bookmarklets.
+
+An action is a markdown file in the `actions` folder of Mardo's config folder (next to `stylesheets`; the **…** button at the end of the toolbar opens it). The toolbar reads the folder again each time you come back to Mardo, so a file you add appears at once. Five examples are put there the first time, with a `README.md` that explains every field: **Copy link as markdown**, **Copy selection as a quote**, and three that take the text you selected to **Google**, **Claude** and **ChatGPT**. After that the folder is yours. The front matter says what the action is, and the text after it is the body to send or copy:
+
+```
+---
+name: Weft it
+icon: favicon
+url: https://weft.example.com/compose?page={{url}}&ptitle={{title}}&pdesc={{description}}&pimg={{image}}&keywords={{keywords}}
+---
+```
+
+| Key | Meaning |
+| --- | --- |
+| `name` | The text in the menu (the file name by default). |
+| `icon` | An emoji or a few letters, a picture file next to the action, a web address of a picture, or `favicon` for the icon of the site the action goes to. Pictures from the web are kept in `favicons.json` in the config folder, so they show at once after a restart, and are fetched again after a week. |
+| `url` | An http or https address. The placeholders below are filled in, percent-encoded. |
+| `method` | `GET` (the default), `POST`, `PUT`, `PATCH` or `DELETE`. |
+| `mode` | `browser` opens the address in your default browser (the default for `GET`; your sign-ins there are used). `api` calls it from Mardo without showing anything, with the credentials saved for that site (the default for the other methods). `copy` puts the body on the clipboard and needs no `url`. |
+| `contentType` | Of the body. JSON when the body starts with `{` or `[`, else text. |
+| `order` | A number: where the button goes in the toolbar, lowest first; actions without one follow by name. |
+| `requires` | `selection`: the action only runs with text selected in the page, and says so when there is none. |
+
+The placeholders are `{{url}}`, `{{title}}`, `{{description}}`, `{{image}}`, `{{keywords}}`, `{{selection}}` (the text you selected), `{{body}}` (the page's markdown without its front matter), `{{fullbody}}` (with it), `{{host}}`, `{{date}}`, `{{datetime}}` (ISO 8601), and any key of the page's own front matter, as `{{author}}` or `{{page.author}}` (a nested one as `{{source.url}}`). The description, picture and keywords come from the page's front matter, or from its first paragraph and first image. In an address the values are percent-encoded, in a JSON body they are escaped to sit inside a string. A placeholder the page has no value for is empty. Each action leaves a line in the network console (Ctrl/Cmd+J) with the address it used, and the actions folder has a `README.md` that explains every field with examples.
+
+```
+---
+name: Post to my site
+method: POST
+url: https://api.example.com/posts
+---
+{ "link": "{{url}}", "title": "{{title}}", "note": "{{selection}}" }
+```
+
+The first time an `api` action runs, Mardo says where it will send the page and asks you to agree; changing the file asks again. A server's answer, or its refusal (with a hint to save credentials for that site), is shown as a message.
+
 ## Bonbon mode
 
 Bonbon mode follows the [charter](https://github.com/scripting/myMarkdownBlog/blob/main/docs/charter.md) of the BonBon browser: a web made of markdown, with nothing between the writer's words and the reader. Turn it on in **Tools > Bonbon Mode** (desktop) or **Bonbon mode: markdown only** in the ☰ menu; it is off by default and remembered (`"browsing": {"bonbon": true}` in `settings.json`). The open page loads again in the new mode. When it is on:
@@ -324,6 +363,7 @@ tools/lggcheck         read-only probe of the LinkaGoGo API with your key (print
 frontend/              vanilla HTML/CSS/JS (no framework); `userstyle.js` limits a page style to the page
 android/               the Android app (a Kotlin WebView around the core; see android/README.md)
 core/styles            the five built-in page styles, copied to the stylesheets folder
+core/actions           the example Send to actions, copied to the actions folder the first time
 ```
 
 ## License

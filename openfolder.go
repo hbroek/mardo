@@ -13,6 +13,19 @@ func (a *App) OpenStylesFolder() error {
 	if folder == "" {
 		return fmt.Errorf("there is no stylesheets folder")
 	}
+	return openFolder(folder)
+}
+
+// OpenActionsFolder shows the folder of the actions in the system's file manager (desktop only).
+func (a *App) OpenActionsFolder() error {
+	folder := a.ActionsFolder()
+	if folder == "" {
+		return fmt.Errorf("there is no actions folder")
+	}
+	return openFolder(folder)
+}
+
+func openFolder(folder string) error {
 	if err := os.MkdirAll(folder, 0o755); err != nil {
 		return err
 	}

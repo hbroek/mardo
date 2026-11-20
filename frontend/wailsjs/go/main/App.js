@@ -10,6 +10,14 @@ export function About(arg1) {
   return window['go']['main']['App']['About'](arg1);
 }
 
+export function Actions() {
+  return window['go']['main']['App']['Actions']();
+}
+
+export function ActionsFolder() {
+  return window['go']['main']['App']['ActionsFolder']();
+}
+
 export function ApplyFiling(arg1) {
   return window['go']['main']['App']['ApplyFiling'](arg1);
 }
@@ -162,6 +170,10 @@ export function NewTab() {
   return window['go']['main']['App']['NewTab']();
 }
 
+export function OpenActionsFolder() {
+  return window['go']['main']['App']['OpenActionsFolder']();
+}
+
 export function OpenStylesFolder() {
   return window['go']['main']['App']['OpenStylesFolder']();
 }
@@ -188,6 +200,10 @@ export function RenamePath(arg1, arg2) {
 
 export function RenderPreview(arg1, arg2) {
   return window['go']['main']['App']['RenderPreview'](arg1, arg2);
+}
+
+export function RunAction(arg1, arg2) {
+  return window['go']['main']['App']['RunAction'](arg1, arg2);
 }
 
 export function SaveAI(arg1, arg2) {

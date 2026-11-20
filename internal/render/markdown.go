@@ -163,6 +163,13 @@ func expandMacros(body []byte, meta map[string]string) []byte {
 	})
 }
 
+// FrontMatter returns the front matter of a markdown document, with its keys in lower case (nested ones as
+// source.url), and the text that follows it. A document without front matter gives no keys and itself.
+func FrontMatter(src []byte) (map[string]string, []byte) {
+	meta, body := frontMatter(bytes.TrimPrefix(src, []byte("\xef\xbb\xbf")))
+	return meta, body
+}
+
 var frontKey = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_-]*:(\s|$)`)
 
 // frontChild is an indented key: line, the child of the key above it that has no value of its own.

@@ -95,6 +95,12 @@ func (l *Log) logFile(url string, size int64, start time.Time, err error) {
 	l.add(e)
 }
 
+// Note puts a line in the console for something Mardo did that is not a request of its own, such as an address an
+// action opened in the browser, so that what was sent can be seen.
+func (l *Log) Note(method, url, text string) {
+	l.add(Entry{ID: l.newID(), Time: time.Now(), Method: method, URL: url, Status: http.StatusOK, StatusText: text, Proto: "action"})
+}
+
 func (l *Log) logData(size int64, start time.Time, err error) {
 	e := Entry{ID: l.newID(), Time: start, Method: "GET", URL: "data:", DurationMS: time.Since(start).Milliseconds(), Bytes: size}
 	if err != nil {

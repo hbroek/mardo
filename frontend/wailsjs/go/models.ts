@@ -305,6 +305,66 @@ export namespace core {
 	        this.millis = source["millis"];
 	    }
 	}
+	export class ActionInfo {
+	    id: string;
+	    name: string;
+	    icon: string;
+	    mode: string;
+	    method: string;
+	    host: string;
+	    fingerprint: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ActionInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.icon = source["icon"];
+	        this.mode = source["mode"];
+	        this.method = source["method"];
+	        this.host = source["host"];
+	        this.fingerprint = source["fingerprint"];
+	    }
+	}
+	export class ActionInput {
+	    url: string;
+	    title: string;
+	    source: string;
+	    selection: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ActionInput(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.url = source["url"];
+	        this.title = source["title"];
+	        this.source = source["source"];
+	        this.selection = source["selection"];
+	    }
+	}
+	export class ActionResult {
+	    mode: string;
+	    url: string;
+	    text: string;
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ActionResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mode = source["mode"];
+	        this.url = source["url"];
+	        this.text = source["text"];
+	        this.message = source["message"];
+	    }
+	}
 	export class BookmarkItem {
 	    bookmark: bookmarks.Bookmark;
 	    path: string;
