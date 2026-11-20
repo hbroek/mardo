@@ -97,6 +97,7 @@ func New(cfg Config) *Core {
 	a.fetcher = fetch.NewFetcher(a.auth, a.jar)
 	a.fetcher.Log.OnEntry = func(e fetch.Entry) { host.Emit("net", e) } // each request is pushed to the console as it completes
 	a.browser = browser.New(history.Open(file("history.json")), a.fetcher)
+	a.browser.OnUpdate = func(tab int, pageURL string) { host.Emit("pageupdated", map[string]any{"tab": tab, "url": pageURL}) } // the site says a page changed (Bonbon mode)
 
 	a.licensesPath = file("licenses.md")
 	a.settingsPath = file("settings.json")

@@ -72,6 +72,7 @@ func isSearchURL(u string) bool {
 type tab struct {
 	mu    sync.Mutex
 	stack *nav.Stack
+	live  *liveWatch // the update socket of the page the tab shows (see live.go)
 }
 
 type Browser struct {
@@ -84,6 +85,9 @@ type Browser struct {
 	bonbon     atomic.Bool     // Bonbon mode: markdown only, no looking further (see SetBonbon)
 	toc        tocCache        // the tables of contents of sites, for the arrows of pages (see toc.go)
 	siteCfg    siteConfigCache // the bonbon.json of sites, for their search (see siteconfig.go)
+
+	// OnUpdate is told when the site says that the page a tab shows has changed (see live.go).
+	OnUpdate func(tabID int, pageURL string)
 
 	tabMu   sync.Mutex
 	tabs    map[int]*tab
@@ -107,6 +111,9 @@ func (b *Browser) NewTab() int {
 func (b *Browser) CloseTab(id int) {
 	b.tabMu.Lock()
 	defer b.tabMu.Unlock()
+	if t := b.tabs[id]; t != nil && t.live != nil {
+		t.live.cancel()
+	}
 	delete(b.tabs, id)
 }
 
@@ -140,7 +147,7 @@ func (b *Browser) FullHistory(ctx context.Context, tabID int) page.Page {
 		t := b.tab(tabID)
 		t.mu.Lock()
 		defer t.mu.Unlock()
-		return t.withState(page.Page{Kind: page.KindError, Error: "cannot write history: " + err.Error()})
+		return b.state(tabID, t, page.Page{Kind: page.KindError, Error: "cannot write history: " + err.Error()})
 	}
 	return b.Navigate(ctx, tabID, path)
 }
@@ -168,7 +175,7 @@ func (b *Browser) Navigate(ctx context.Context, tabID int, rawURL string) page.P
 	}
 	p := keepTextFragment(rawURL, b.load(ctx, rawURL))
 	t.stack.Visit(p.URL)
-	return t.withState(b.record(p))
+	return b.state(tabID, t, b.record(p))
 }
 
 // Follow opens rawURL for a click on a link. Outside Bonbon mode it is Navigate. In it a link to the HTML site that
@@ -191,7 +198,7 @@ func (b *Browser) Follow(ctx context.Context, tabID int, rawURL string) page.Pag
 		return page.Page{URL: p.URL, Kind: page.KindExternal}
 	}
 	t.stack.Visit(p.URL)
-	return t.withState(b.record(p))
+	return b.state(tabID, t, b.record(p))
 }
 
 // keepTextFragment keeps the "#:~:text=" part of the address asked for, which points at a passage,
@@ -212,9 +219,9 @@ func (b *Browser) Reload(ctx context.Context, tabID int) page.Page {
 	defer t.mu.Unlock()
 	cur := t.stack.Current()
 	if cur == "" {
-		return t.withState(page.Page{Kind: page.KindError, Error: "nothing to reload"})
+		return b.state(tabID, t, page.Page{Kind: page.KindError, Error: "nothing to reload"})
 	}
-	return t.withState(b.load(ctx, cur))
+	return b.state(tabID, t, b.load(ctx, cur))
 }
 
 // Back loads the previous entry.
@@ -224,9 +231,9 @@ func (b *Browser) Back(ctx context.Context, tabID int) page.Page {
 	defer t.mu.Unlock()
 	u, ok := t.stack.Back()
 	if !ok {
-		return t.withState(page.Page{URL: t.stack.Current(), Kind: page.KindError, Error: "no earlier page"})
+		return b.state(tabID, t, page.Page{URL: t.stack.Current(), Kind: page.KindError, Error: "no earlier page"})
 	}
-	return t.withState(b.record(b.load(ctx, u)))
+	return b.state(tabID, t, b.record(b.load(ctx, u)))
 }
 
 // Forward loads the next entry.
@@ -236,9 +243,15 @@ func (b *Browser) Forward(ctx context.Context, tabID int) page.Page {
 	defer t.mu.Unlock()
 	u, ok := t.stack.Forward()
 	if !ok {
-		return t.withState(page.Page{URL: t.stack.Current(), Kind: page.KindError, Error: "no later page"})
+		return b.state(tabID, t, page.Page{URL: t.stack.Current(), Kind: page.KindError, Error: "no later page"})
 	}
-	return t.withState(b.record(b.load(ctx, u)))
+	return b.state(tabID, t, b.record(b.load(ctx, u)))
+}
+
+func (b *Browser) state(tabID int, t *tab, p page.Page) page.Page {
+	p = t.withState(p)
+	b.watch(tabID, t, p)
+	return p
 }
 
 func (t *tab) withState(p page.Page) page.Page {
@@ -272,7 +285,7 @@ func (b *Browser) NavigateAsIs(ctx context.Context, tabID int, rawURL string) pa
 	defer t.mu.Unlock()
 	p := keepTextFragment(rawURL, b.loadPage(ctx, rawURL, false))
 	t.stack.Visit(p.URL)
-	return t.withState(b.record(p))
+	return b.state(tabID, t, b.record(p))
 }
 
 // load fetches rawURL and builds the Page to display. Failures become error pages.

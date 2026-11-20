@@ -927,6 +927,13 @@ EventsOn('menu', (id) => menuActions[id]?.());
 // Bonbon mode: markdown only. The page is loaded again so it shows in the new mode.
 const showBonbon = (on) => document.documentElement.classList.toggle('bonbon-mode', !!on);
 Bonbon().then(showBonbon).catch(() => {});
+// The site says the page of a tab changed (Bonbon live updates): load it again where the reader is, unless the
+// reader is editing it, and say nothing if that fails.
+EventsOn('pageupdated', ({tab: id, url}) => {
+    const tab = tabs.find((t) => t.id === id);
+    if (!tab || tab.draft != null || tab.loading || tab.page?.url?.split('#')[0] !== url) return;
+    go(tab, async () => { const p = await Reload(tab.id); return p.kind === 'error' ? null : p; }, true);
+});
 EventsOn('bonbon', (on) => { showBonbon(on); if (currentPage()?.url) goActive(Reload, true); });
 
 // The macOS View menu says Show or Hide for these four. Watch them rather than every place that changes them.
