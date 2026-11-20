@@ -45,7 +45,7 @@ func Alternates(body []byte, contentType string, base *url.URL) []Alternate {
 			}
 			mt, _, err := mime.ParseMediaType(typ)
 			if err == nil && href != "" && hasWord(rel, "alternate") {
-				if u, err := base.Parse(strings.TrimSpace(href)); err == nil && (u.Scheme == "http" || u.Scheme == "https") {
+				if u, err := base.Parse(strings.TrimSpace(href)); err == nil && (u.Scheme == "http" || u.Scheme == "https" || u.Scheme == "data") { // a data: address holds the page itself
 					out = append(out, Alternate{Type: mt, Href: u.String()})
 				}
 			}

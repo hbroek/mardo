@@ -2,6 +2,7 @@ package browser
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -175,5 +176,20 @@ func TestPageThatAdvertisesMarkdownShowsIt(t *testing.T) {
 	p := New(history.Open(""), fetch.NewFetcher(nil, nil)).load(context.Background(), srv.URL+"/page")
 	if p.Kind != page.KindMarkdown || p.Title != "From the advertised link" {
 		t.Errorf("page = kind %v title %q error %q", p.Kind, p.Title, p.Error)
+	}
+}
+
+// A page can carry its markdown version inside the address: <link rel="alternate" type="text/markdown" href="data:…">.
+func TestMarkdownVersionInADataAddress(t *testing.T) {
+	data := fetch.DataURL("# From the address\n\n[A link](https://example.com/)\n")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		io.WriteString(w, `<html><head><title>Hi</title><link rel="alternate" type="text/markdown" title="Markdown version" href="`+data+`" /></head><body><p>web page</p></body></html>`)
+	}))
+	defer srv.Close()
+	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
+	p := b.Navigate(t.Context(), b.NewTab(), srv.URL+"/")
+	if p.Kind != page.KindMarkdown || p.MarkdownOf != srv.URL+"/" || !strings.Contains(p.HTML, "From the address") || !strings.Contains(p.HTML, `href="https://example.com/"`) {
+		t.Fatalf("page = kind %q markdownOf %q html %q error %q", p.Kind, p.MarkdownOf, p.HTML, p.Error)
 	}
 }

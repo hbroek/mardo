@@ -136,7 +136,7 @@ func Alternates(res *Result) []Alternate {
 			if err != nil || !hasRel(l.rel, "alternate") {
 				continue
 			}
-			if u, err := base.Parse(strings.TrimSpace(l.href)); err == nil && (u.Scheme == "http" || u.Scheme == "https") {
+			if u, err := base.Parse(strings.TrimSpace(l.href)); err == nil && (u.Scheme == "http" || u.Scheme == "https" || u.Scheme == "data") { // a data: address holds the page itself
 				out = append(out, Alternate{Type: mt, Href: u.String()})
 			}
 		}
