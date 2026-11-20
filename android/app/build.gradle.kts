@@ -16,7 +16,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = (project.findProperty("versionCode") as String? ?: "1").toInt()
-        versionName = project.findProperty("versionName") as String? ?: "0.17.0"
+        versionName = project.findProperty("versionName") as String? ?: "0.18.0"
     }
     signingConfigs {
         if (keys.isNotEmpty()) create("release") {

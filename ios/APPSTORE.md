@@ -56,17 +56,18 @@ WRITE
 PRIVATE
 - No account, no ads, no tracking. Your bookmarks and settings stay on your device. Mardo is free and open source.
 
-**What's new (0.17.0)** (4000 max):
+**What's new (0.18.0)** (4000 max):
 ```
-- Bonbon mode (Menu > Bonbon Mode): read the Bonbon web the way it is meant to be read. Markdown only, no raw HTML, links to web pages open in your browser.
-- Arrows from a site's table of contents (toc.opml) step to the newer and older page.
-- Search a site with its own search (bonbon.json), with the results first and links to jump to them.
-- Page styles: Basic, Book, Classic, Mono and Newsprint, in the Menu. Bonbon-format stylesheets work too.
-- Front matter and {{page.key}} macros, with a title, byline and picture header.
+- Send to: a toolbar of actions (Menu > Send to toolbar) that sends the page, or the text you selected, to a service, an API or the clipboard. Search Google, Claude or ChatGPT for your selection, post a link, copy it as markdown. Edit the actions in Mardo with the pencil button, or make your own.
+- Bonbon mode: pages reload by themselves when the site says they changed, and keep your place.
+- data: addresses open as pages. Edit one and Mardo shows the new address to copy.
+- Front matter can nest, as {{page.source.url}}.
+- Interact with this page knows today's date, your cursor and earlier messages, and says why it cannot do something.
+- A markdown file with only front matter opens as its source.
 - Fixes and polish.
 ```
 
-Previous (0.16.0): find in page, live preview, a cheatsheet, footnotes, and Back and Forward buttons.
+Previous (0.17.0): Bonbon mode, arrows from a site's table of contents, site search, page styles, and front matter macros. Before that (0.16.0): find in page, live preview, a cheatsheet, footnotes, and Back and Forward buttons.
 
 Earlier: 0.13.0 was the first release on iPhone and iPad.
 
