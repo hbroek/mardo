@@ -7,7 +7,10 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"mardo/internal/fetch"
 )
 
 func TestWriteNewDocumentAddsExtension(t *testing.T) {
@@ -46,5 +49,20 @@ func TestSaveSourceTellsWhenTheServerOnlyQueuedTheChange(t *testing.T) {
 	}
 	if !p.Submitted || p.SubmittedNote != "waiting for review" || p.Kind != "markdown" {
 		t.Errorf("page after a queued save: submitted=%v note=%q kind=%q", p.Submitted, p.SubmittedNote, p.Kind)
+	}
+}
+
+func TestEditingADataPageMakesANewDataAddress(t *testing.T) {
+	a := newTestCore(t, t.TempDir())
+	p := a.Navigate(0, fetch.DataURL("# Old\n"))
+	if p.EditURL == "" {
+		t.Fatalf("a data page cannot be edited: %+v", p)
+	}
+	fresh, err := a.SaveSource(0, p.URL, p.EditURL, p.ETag, "# New\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fresh.URL != fetch.DataURL("# New\n") || !strings.Contains(fresh.HTML, "New") {
+		t.Errorf("page after the edit: url %q html %q", fresh.URL, fresh.HTML)
 	}
 }

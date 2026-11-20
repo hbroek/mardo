@@ -86,7 +86,7 @@ export ANDROID_HOME ANDROID_NDK_HOME
 STUDIO_JBR ?= /Applications/Android\ Studio.app/Contents/jbr/Contents/Home
 
 android-aar:
-	env -u CGO_CFLAGS -u CGO_LDFLAGS gomobile bind -androidapi 24 -target android/arm64,android/amd64 -ldflags "-X mardo/internal/about.Date=$(BUILT)" -o build/mardo.aar ./mobile
+	env -u CGO_CFLAGS -u CGO_LDFLAGS gomobile bind -androidapi 24 -target android/arm64,android/arm,android/amd64 -ldflags "-X mardo/internal/about.Date=$(BUILT)" -o build/mardo.aar ./mobile
 
 # A debug build to try on an emulator or a phone: adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 android-apk: android-aar ios-web

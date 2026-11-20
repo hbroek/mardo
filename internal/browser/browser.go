@@ -147,7 +147,7 @@ func (b *Browser) FullHistory(ctx context.Context, tabID int) page.Page {
 
 // record adds a successfully loaded page to the visit log.
 func (b *Browser) record(p page.Page) page.Page {
-	if p.Kind != page.KindError && !isSearchURL(p.URL) { // searches are not visits
+	if p.Kind != page.KindError && !isSearchURL(p.URL) && !strings.HasPrefix(p.URL, "data:") { // searches are not visits, and a page that is its own address is too long to keep
 		b.history.Add(p.URL, p.Title)
 	}
 	return p

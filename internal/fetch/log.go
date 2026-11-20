@@ -95,6 +95,16 @@ func (l *Log) logFile(url string, size int64, start time.Time, err error) {
 	l.add(e)
 }
 
+func (l *Log) logData(size int64, start time.Time, err error) {
+	e := Entry{ID: l.newID(), Time: start, Method: "GET", URL: "data:", DurationMS: time.Since(start).Milliseconds(), Bytes: size}
+	if err != nil {
+		e.Error = err.Error()
+	} else {
+		e.Status, e.StatusText, e.Proto = http.StatusOK, "200 OK (data address)", "data"
+	}
+	l.add(e)
+}
+
 // redact hides secret values but keeps enough to tell what was sent.
 func redact(name, value string) string {
 	const hidden = "[redacted]"

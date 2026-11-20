@@ -244,3 +244,20 @@ func TestBonbonFollowLeavesWebPagesToTheBrowser(t *testing.T) {
 		t.Errorf("the tab stayed on %q, but is on %q", first.URL, p.URL)
 	}
 }
+
+func TestDataAddressIsAPage(t *testing.T) {
+	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
+	for name, addr := range map[string]string{
+		"base64":  "data:text/markdown;charset=utf-8;base64,IyBIZWxsbywgV29ybGQhCgpUaGlzIGlzIGEgc2ltcGxlIE1hcmtkb3duIGZpbGUuCg==",
+		"percent": "data:text/markdown,%23%20Hello%2C%20World!%0A%0AThis is a simple Markdown file.",
+		"no type": "data:,%23%20Hello%2C%20World!",
+	} {
+		p := b.Navigate(context.Background(), 0, addr)
+		if p.Kind == page.KindError || p.Kind != page.KindMarkdown || !strings.Contains(p.HTML, "Hello, World!") || !strings.HasPrefix(p.URL, "data:") {
+			t.Errorf("%s: kind %q url %.20q error %q html %q", name, p.Kind, p.URL, p.Error, p.HTML)
+		}
+	}
+	if got := b.History(); len(got) != 0 {
+		t.Errorf("a data page was put in the history: %v", got)
+	}
+}

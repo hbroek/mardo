@@ -18,6 +18,9 @@ func SearchQuery(input string) (string, bool) {
 	if s == "" {
 		return "", false
 	}
+	if IsData(s) {
+		return "", false
+	}
 	if strings.HasPrefix(s, "?") {
 		return strings.TrimSpace(s[1:]), true
 	}

@@ -167,6 +167,17 @@
     </div>
 </dialog>
 
+<dialog id="data-dialog" class="wide" aria-labelledby="data-title">
+    <h2 id="data-title">Data address</h2>
+    <p>The page is in this address. Copy it to share or keep the page; anyone can paste it into the address bar.</p>
+    <textarea id="data-uri" readonly rows="6" spellcheck="false" aria-label="Data address"></textarea>
+    <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button type="button" id="data-close">Close</button>
+        <button type="button" id="data-copy" class="primary">Copy</button>
+    </div>
+</dialog>
+
 <dialog id="folder-dialog" aria-labelledby="folder-title">
     <h2 id="folder-title">New folder</h2>
     <form id="folder-form" autocomplete="off">

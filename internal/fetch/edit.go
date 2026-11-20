@@ -31,6 +31,9 @@ func Editable(res *Result) string {
 		}
 		return ""
 	}
+	if base.Scheme == "data" {
+		return res.URL // changing it makes a new address, which the reader is shown to copy
+	}
 	if base.Scheme != "http" && base.Scheme != "https" {
 		return ""
 	}

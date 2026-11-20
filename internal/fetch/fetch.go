@@ -90,7 +90,7 @@ func NewFetcher(auth Authorizer, jar http.CookieJar) *Fetcher {
 
 var defaultFetcher = NewFetcher(nil, nil)
 
-// Normalize turns address bar input into an absolute http, https or file URL.
+// Normalize turns address bar input into an absolute http, https, file or data URL.
 func Normalize(input string) (*url.URL, error) {
 	s := strings.TrimSpace(input)
 	if s == "" {
@@ -105,6 +105,9 @@ func Normalize(input string) (*url.URL, error) {
 	}
 	if filepath.IsAbs(s) || strings.HasPrefix(s, "/") {
 		return fileURL(s), nil
+	}
+	if IsData(s) {
+		return &url.URL{Scheme: "data", Opaque: s[5:]}, nil
 	}
 	if !strings.Contains(s, "://") {
 		scheme := "https://"
@@ -122,7 +125,7 @@ func Normalize(input string) (*url.URL, error) {
 		if u.Host == "" {
 			return nil, fmt.Errorf("missing host in %q", input)
 		}
-	case "file":
+	case "file", "data":
 	default:
 		return nil, fmt.Errorf("unsupported scheme %q", u.Scheme)
 	}
@@ -170,6 +173,9 @@ func (f *Fetcher) Get(ctx context.Context, rawURL string) (*Result, error) {
 	if u.Scheme == "file" {
 		return f.getFile(u)
 	}
+	if u.Scheme == "data" {
+		return f.getData(u)
+	}
 	if f.bonbon.Load() {
 		return f.getHTTP(ctx, u, AcceptBonbon)
 	}
@@ -185,6 +191,9 @@ func (f *Fetcher) GetHTML(ctx context.Context, rawURL string) (*Result, error) {
 	}
 	if u.Scheme == "file" {
 		return f.getFile(u)
+	}
+	if u.Scheme == "data" {
+		return f.getData(u)
 	}
 	return f.getHTTP(ctx, u, AcceptHTML)
 }

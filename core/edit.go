@@ -58,6 +58,16 @@ func writeNewDocument(path, text string) (string, error) {
 func (a *Core) SaveSource(tab int, pageURL, editURL, etag, text string) (page.Page, error) {
 	pu, err1 := url.Parse(pageURL)
 	eu, err2 := url.Parse(editURL)
+	if err1 == nil && pu.Scheme == "data" {
+		// There is nothing to save to: the edited text is its own new address, which the tab now shows.
+		if len(text) > fetch.MaxBody {
+			return page.Page{}, fmt.Errorf("page larger than %d MB", fetch.MaxBody>>20)
+		}
+		a.pageMu.Lock()
+		delete(a.pageCache, pageURL)
+		a.pageMu.Unlock()
+		return a.browser.Navigate(a.ctx, tab, fetch.DataURL(text)), nil
+	}
 	if err1 == nil && err2 == nil && pu.Scheme == "file" {
 		if eu.String() != pu.String() {
 			return page.Page{}, errors.New("this page can only be saved where it was opened from")

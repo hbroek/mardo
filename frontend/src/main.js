@@ -199,6 +199,20 @@ function closePage() {
     else clearPage(tab);
 }
 
+/** The dialog that shows the data address of an edited data page, to copy. */
+function showDataAddress(uri) {
+    const box = $('data-uri');
+    box.value = uri;
+    const dialog = $('data-dialog');
+    if (!dialog.open) dialog.showModal();
+    box.select();
+}
+$('data-close').addEventListener('click', () => $('data-dialog').close());
+$('data-copy').addEventListener('click', async () => {
+    const box = $('data-uri');
+    try { await writeClipboard(box.value); toast('Address copied.'); } catch { box.select(); toast('Select the address and copy it.', true); }
+});
+
 /** Saves the edited source to the server; the tab then shows what is stored. */
 async function saveEdit() {
     const tab = active;
@@ -223,7 +237,8 @@ async function saveEdit() {
         if (fresh.kind === 'error') throw new Error(fresh.error);
         tab.saving = false;
         show(tab, fresh);
-        if (fresh.submitted) { // the server queued the change: the page is the old text until someone approves it
+        if (fresh.url.startsWith('data:')) showDataAddress(fresh.url); // a data page has nowhere to be saved: its new address is the result
+        else if (fresh.submitted) { // the server queued the change: the page is the old text until someone approves it
             const note = fresh.submittedNote ? ` (${fresh.submittedNote.slice(0, 160)})` : '';
             toast(`Submitted for review${note}. The page shows your change once it is approved.`, false, 9000);
         } else toast(p.url === NEW_DOC ? 'Saved.' : p.url.startsWith('file:') ? 'Saved the file.' : 'Saved to the server.');
