@@ -55,6 +55,7 @@ type Browser struct {
 
 	noVariants atomic.Bool // do not look for .md versions of pages (see variant.go)
 	bonbon     atomic.Bool // Bonbon mode: markdown only, no looking further (see SetBonbon)
+	toc        tocCache    // the tables of contents of sites, for the arrows of pages (see toc.go)
 
 	tabMu   sync.Mutex
 	tabs    map[int]*tab
@@ -280,7 +281,7 @@ func (b *Browser) loadPage(ctx context.Context, rawURL string, versions bool) pa
 		return p
 	}
 	if b.Bonbon() {
-		return b.bonbonPage(p, res, base)
+		return b.bonbonPage(ctx, p, res, base)
 	}
 	if render.IsFeed(res.Body) {
 		if html, title, ok, err := render.Feed(res.Body, base); err != nil {
@@ -312,7 +313,12 @@ func (b *Browser) loadPage(ctx context.Context, rawURL string, versions bool) pa
 
 // markdownPage fills p from a markdown response.
 func (b *Browser) markdownPage(p page.Page, res *fetch.Result, base *url.URL) page.Page {
-	html, title, err := render.Markdown(res.Body, base)
+	return b.markdownPageWith(p, res, base, nil)
+}
+
+// markdownPageWith is markdownPage with front matter values (urlprev, urlnext) for a page that has none.
+func (b *Browser) markdownPageWith(p page.Page, res *fetch.Result, base *url.URL, defaults map[string]string) page.Page {
+	html, title, err := render.MarkdownWith(res.Body, base, defaults)
 	if err != nil {
 		p.Kind, p.Error = page.KindError, err.Error()
 		return p
@@ -360,9 +366,14 @@ func (b *Browser) loadSearch(ctx context.Context, rawURL string) page.Page {
 // bonbonPage builds the page for a response in Bonbon mode: markdown is a page, text of any other kind (HTML,
 // XML, OPML, JSON, code) is shown as it is, in color, and the rest (a picture, a download) is left to the
 // fallback page.
-func (b *Browser) bonbonPage(p page.Page, res *fetch.Result, base *url.URL) page.Page {
+func (b *Browser) bonbonPage(ctx context.Context, p page.Page, res *fetch.Result, base *url.URL) page.Page {
 	if fetch.IsBonbonMarkdown(res.ContentType, base.Path) {
-		return b.markdownPage(p, res, base)
+		// A page that names no arrows of its own gets them from the site's table of contents.
+		var arrows map[string]string
+		if !render.HasArrows(res.Body) {
+			arrows = b.tocArrows(ctx, res, base)
+		}
+		return b.markdownPageWith(p, res, base, arrows)
 	}
 	if looksText(res) {
 		p.Kind, p.Title = page.KindMarkdown, res.URL

@@ -59,8 +59,28 @@ func newPolicy() *bluemonday.Policy {
 // left out. Its title names the page (and the tab), ahead of the first h1. Bonbon keys (link,
 // author, pubDate, urlPrev, urlNext, rightMarginImage) add a header above the text, see bonbonHeader.
 func Markdown(src []byte, base *url.URL) (string, string, error) {
+	return MarkdownWith(src, base, nil)
+}
+
+// HasArrows reports whether the front matter of src names urlPrev or urlNext.
+func HasArrows(src []byte) bool {
+	meta, _ := frontMatter(bytes.TrimPrefix(src, []byte("\xef\xbb\xbf")))
+	return meta["urlprev"] != "" || meta["urlnext"] != ""
+}
+
+// MarkdownWith is Markdown for a page whose front matter is given more values: defaults (urlprev and urlnext,
+// from a table of contents) apply when the page names neither itself.
+func MarkdownWith(src []byte, base *url.URL, defaults map[string]string) (string, string, error) {
 	src = bytes.TrimPrefix(src, []byte("\xef\xbb\xbf"))
 	meta, body := frontMatter(src)
+	if len(defaults) > 0 && meta["urlprev"] == "" && meta["urlnext"] == "" {
+		if meta == nil {
+			meta = map[string]string{}
+		}
+		for k, v := range defaults {
+			meta[k] = v
+		}
+	}
 	strict := Bonbon.Load()
 	conv := md
 	if strict {
