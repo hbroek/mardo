@@ -9,7 +9,7 @@ make android-bundle CODE=2        # CODE is the versionCode: it must go up with 
 ```
 
 The signed bundle is `android/app/build/outputs/bundle/release/app-release.aab`. The version name is
-`0.16.0` unless you pass `-PversionName=...` to Gradle. It is signed with the upload key from
+`0.17.0` unless you pass `-PversionName=...` to Gradle. It is signed with the upload key from
 `android/keystore.properties` and `android/mardo-upload.jks`. Neither is in the repository: keep a copy of
 both somewhere safe (a password manager). Google re-signs the app with its own key (Play App Signing),
 so a lost upload key can be reset through Play support, but it is a hassle.
