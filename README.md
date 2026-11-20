@@ -191,7 +191,7 @@ By {{page.author}} on {{page.pubDate}}.
 
 - `title` names the page and its tab, ahead of the first heading. `description`, `author` and `pubDate` are yours to place in the text.
 - `urlPrev` and `urlNext` give the page a left and a right arrow in its upper corners. `rightMarginImage` is the address of a picture shown at the top right of the text, below the arrows. Addresses may be relative; only `http`, `https` and relative addresses are used.
-- `{{page.key}}` in the text is replaced with that key's value, for any key you put in the front matter (names are not case sensitive). A macro for a key the page does not have is left as written. When the page has a `link`, `{{page.title}}` becomes a link to it.
+- `{{page.key}}` in the text is replaced with that key's value, for any key you put in the front matter (names are not case sensitive). Keys can nest: under `source:` with `url:` and `title:` indented below it, `{{page.source.title}}` and `{{page.source.url}}` give those values. A macro for a key the page does not have is left as written. When the page has a `link`, `{{page.title}}` becomes a link to it.
 - Mardo draws nothing of its own for the title, author or date: the page places them where it wants, with macros.
 - Values are single lines; a list or a nested block is ignored.
 - The editor's **Cheatsheet** has a *Front matter* group that adds these lines, starting the block or joining the one that is there.

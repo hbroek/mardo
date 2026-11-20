@@ -141,7 +141,7 @@ func bonbonHeader(meta map[string]string) string {
 	return b.String()
 }
 
-var macro = regexp.MustCompile(`\{\{\s*page\.([A-Za-z0-9_-]+)\s*\}\}`)
+var macro = regexp.MustCompile(`\{\{\s*page\.([A-Za-z0-9_.-]+)\s*\}\}`)
 
 // expandMacros replaces {{page.title}} and the like in the text with the page's own front matter
 // values. A macro that names a key the page does not have is left as written. When the page has a link,
@@ -165,9 +165,27 @@ func expandMacros(body []byte, meta map[string]string) []byte {
 
 var frontKey = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_-]*:(\s|$)`)
 
+// frontChild is an indented key: line, the child of the key above it that has no value of its own.
+var frontChild = regexp.MustCompile(`^[ \t]+[A-Za-z0-9_][A-Za-z0-9_-]*:(\s|$)`)
+
+// frontParent is a key of a nested block that is still open: it has no value of its own, and what is
+// indented under it is named after it (source: then url: is "source.url").
+type frontParent struct {
+	indent int
+	key    string
+}
+
+func frontValue(v string) string {
+	v = strings.TrimSpace(v)
+	if len(v) >= 2 && (v[0] == '"' || v[0] == '\'') && v[len(v)-1] == v[0] {
+		v = v[1 : len(v)-1]
+	}
+	return v
+}
+
 // frontMatter splits a leading block between two --- lines off src when it reads as YAML metadata
 // (key: value lines, with indented or list continuations); anything else, such as a document that
-// starts with a horizontal rule, is left whole. The values of simple keys are returned.
+// starts with a horizontal rule, is left whole. The values of simple keys are returned, and of nested ones under their dotted names (source.url).
 func frontMatter(src []byte) (map[string]string, []byte) {
 	text := string(src)
 	rest, ok := strings.CutPrefix(text, "---\n")
@@ -179,6 +197,7 @@ func frontMatter(src []byte) (map[string]string, []byte) {
 	meta := map[string]string{}
 	consumed := len(text) - len(rest)
 	keys := 0
+	var parents []frontParent
 	for len(rest) > 0 {
 		line, tail, _ := strings.Cut(rest, "\n")
 		consumed += len(rest) - len(tail)
@@ -190,14 +209,22 @@ func frontMatter(src []byte) (map[string]string, []byte) {
 				return nil, src
 			}
 			return meta, src[consumed:]
-		case frontKey.MatchString(line):
+		case frontKey.MatchString(line), frontChild.MatchString(line):
 			keys++
-			k, v, _ := strings.Cut(line, ":")
-			v = strings.TrimSpace(v)
-			if len(v) >= 2 && (v[0] == '"' || v[0] == '\'') && v[len(v)-1] == v[0] {
-				v = v[1 : len(v)-1]
+			indent := len(line) - len(strings.TrimLeft(line, " \t"))
+			for len(parents) > 0 && parents[len(parents)-1].indent >= indent {
+				parents = parents[:len(parents)-1]
 			}
-			meta[strings.ToLower(k)] = v
+			k, v, _ := strings.Cut(strings.TrimSpace(line), ":")
+			name := strings.ToLower(k)
+			if len(parents) > 0 {
+				name = parents[len(parents)-1].key + "." + name
+			}
+			v = frontValue(v)
+			meta[name] = v
+			if v == "" { // a nested block follows, or nothing
+				parents = append(parents, frontParent{indent, name})
+			}
 		case strings.TrimSpace(line) == "", strings.HasPrefix(line, " "), strings.HasPrefix(line, "\t"), strings.HasPrefix(line, "- "), strings.HasPrefix(line, "#"):
 			// a blank line, a continuation of the previous key, or a comment
 		default:

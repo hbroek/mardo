@@ -268,3 +268,24 @@ func TestPageMacrosTakeFrontMatterValues(t *testing.T) {
 		t.Fatalf("html = %q, title = %q, err = %v", html, title, err)
 	}
 }
+
+// Front matter can nest: a key without a value, then indented keys under it, named source.url and so on.
+func TestNestedFrontMatter(t *testing.T) {
+	src := "---\ntitle: \"Testing BonBon feature\"\nauthor: \"Dave Winer\"\nsource:\n  url: \"http://scripting.com/rss.xml\"\n  title: \"Scripting News\"\n  owner:\n    name: Dave\ngenerator: \"opmlToMarkdown v0.5.26\"\nurlPrev: \"../12/a151841.md\"\n---\n\nFrom {{page.source.title}} ({{page.source.url}}) by {{page.source.owner.name}}, {{page.generator}}.\n"
+	meta, body := frontMatter([]byte(src))
+	for k, want := range map[string]string{
+		"title": "Testing BonBon feature", "source.url": "http://scripting.com/rss.xml", "source.title": "Scripting News",
+		"source.owner.name": "Dave", "generator": "opmlToMarkdown v0.5.26", "urlprev": "../12/a151841.md",
+	} {
+		if meta[k] != want {
+			t.Errorf("meta[%q] = %q, want %q", k, meta[k], want)
+		}
+	}
+	if !strings.HasPrefix(string(body), "\nFrom {{") {
+		t.Errorf("body = %q", body)
+	}
+	html, title, err := Markdown([]byte(src), nil)
+	if err != nil || title != "Testing BonBon feature" || !strings.Contains(html, "From Scripting News (") || !strings.Contains(html, ">http://scripting.com/rss.xml</a>) by Dave, opmlToMarkdown v0.5.26.") {
+		t.Errorf("title %q html %q err %v", title, html, err)
+	}
+}
