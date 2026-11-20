@@ -31,6 +31,7 @@ type Page struct {
 	Links         []Link `json:"links"`      // fallback only
 	MarkdownOf    string `json:"markdownOf"` // set when this is the .md version of an HTML page: that page's address
 	Negotiated    bool   `json:"negotiated"` // this address answered with markdown because it was asked to; it has a web page too
+	OwnAddress    string `json:"ownAddress"` // the address of this page under the name the site asks for (bonbon.json, cname)
 	EditURL       string `json:"editUrl"`    // where the markdown can be saved with PUT, when the server allows it
 	ETag          string `json:"etag"`       // the version loaded, sent back as If-Match
 	Error         string `json:"error"`

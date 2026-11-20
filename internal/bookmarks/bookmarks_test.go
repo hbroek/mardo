@@ -80,7 +80,7 @@ func TestSearchMarkdown(t *testing.T) {
 	md := bookmarks.SearchMarkdown("rust_async", results, visits, folders)
 	for _, want := range []string{
 		"# Results for \u201crust\\_async\u201d",
-		"2 bookmarks, 1 page from history.",
+		"2 bookmarks, 1 page from history.", "\n## Bookmarks\n\n", "\n## History\n\n",
 		`- [A \[odd\] \*title\*](<https://a.test/x%20y>)`,
 		"_Bookmarks / Dev / Web_ \u00B7 go, web",
 		"Some notes",

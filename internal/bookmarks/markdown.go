@@ -75,6 +75,9 @@ func SearchMarkdown(query string, results []Bookmark, visits []Visit, folders []
 		}
 		fmt.Fprintf(&b, "- [%s](<%s>)  \n  _%s_", mdSpecial.Replace(title), linkSafe.Replace(url), mdSpecial.Replace(where))
 	}
+	if len(results) > 0 {
+		b.WriteString("## Bookmarks\n\n")
+	}
 	for _, r := range results {
 		item(r.Title, r.URL, path(r.FolderID))
 		if len(r.Keywords) > 0 {
@@ -88,6 +91,9 @@ func SearchMarkdown(query string, results []Bookmark, visits []Visit, folders []
 			fmt.Fprintf(&b, "  \n  %s", mdSpecial.Replace(d))
 		}
 		b.WriteString("\n")
+	}
+	if len(history) > 0 {
+		b.WriteString("\n## History\n\n")
 	}
 	for _, v := range history {
 		item(v.Title, v.URL, "History \u00B7 "+v.Time.Local().Format("2 Jan 2006 15:04"))

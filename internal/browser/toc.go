@@ -66,14 +66,8 @@ func (b *Browser) tocArrows(ctx context.Context, res *fetch.Result, base *url.UR
 			want[tocKey(u.String())] = true
 		}
 	}
-	dir := path.Dir(base.Path)
-	if strings.HasSuffix(base.Path, "/") {
-		dir = strings.TrimSuffix(base.Path, "/")
-	}
-	for level := 0; level < maxTocLevels; level++ {
-		d := *base
-		d.Path, d.RawPath, d.RawQuery, d.Fragment = strings.TrimSuffix(dir, "/")+"/.well-known/toc.opml", "", "", ""
-		entries := b.tocEntries(ctx, d.String())
+	for _, u := range wellKnownURLs(base, "toc.opml") {
+		entries := b.tocEntries(ctx, u)
 		for i, e := range entries {
 			if want[tocKey(e)] {
 				arrows := map[string]string{}
@@ -86,12 +80,31 @@ func (b *Browser) tocArrows(ctx context.Context, res *fetch.Result, base *url.UR
 				return arrows
 			}
 		}
-		if dir == "" || dir == "/" || dir == "." || ctx.Err() != nil {
+		if ctx.Err() != nil {
+			break
+		}
+	}
+	return nil
+}
+
+// wellKnownURLs lists where the site file name (toc.opml, bonbon.json) may be for the page at base: in the folder of
+// the page and in each folder above it, the nearest first.
+func wellKnownURLs(base *url.URL, name string) []string {
+	dir := path.Dir(base.Path)
+	if strings.HasSuffix(base.Path, "/") {
+		dir = strings.TrimSuffix(base.Path, "/")
+	}
+	var out []string
+	for level := 0; level < maxTocLevels; level++ {
+		d := *base
+		d.Path, d.RawPath, d.RawQuery, d.Fragment = strings.TrimSuffix(dir, "/")+"/.well-known/"+name, "", "", ""
+		out = append(out, d.String())
+		if dir == "" || dir == "/" || dir == "." {
 			break
 		}
 		dir = path.Dir(dir)
 	}
-	return nil
+	return out
 }
 
 // tocKey is how addresses are compared: without a fragment.

@@ -36,6 +36,33 @@ const meaningPrefix = "bookmarks:meaning?q="
 // MeaningURL is the address of the results page of a search by meaning.
 func MeaningURL(query string) string { return meaningPrefix + url.QueryEscape(query) }
 
+// siteParam follows the words in the address of a results page that also has the results of a site's own search:
+// "bookmarks:search?q=rust&site=https%3A%2F%2Fexample.org%2Fsearch". QueryEscape leaves no & in the words.
+const siteParam = "&site="
+
+// siteSearchFor is the address of the search of the site the tab is on, for words typed in the address bar. Only in
+// Bonbon mode, and for words, not for the list of all bookmarks. A results page that came from a site's search
+// keeps it for the next search.
+func (b *Browser) siteSearchFor(ctx context.Context, current, query string) string {
+	if !b.Bonbon() || strings.TrimSpace(query) == "" || current == "" {
+		return ""
+	}
+	if isSearchURL(current) {
+		_, site := splitSearchURL(current, searchPrefix)
+		return site
+	}
+	return b.siteConfig(ctx, current).searchEndpoint()
+}
+
+// splitSearchURL takes a results page's address apart into its words and the site search it also asked.
+func splitSearchURL(raw, prefix string) (query, site string) {
+	rest := strings.TrimPrefix(raw, prefix)
+	words, siteRaw, _ := strings.Cut(rest, siteParam)
+	query, _ = url.QueryUnescape(words)
+	site, _ = url.QueryUnescape(siteRaw)
+	return query, site
+}
+
 func isSearchURL(u string) bool {
 	return strings.HasPrefix(u, searchPrefix) || strings.HasPrefix(u, meaningPrefix)
 }
@@ -53,9 +80,10 @@ type Browser struct {
 	meaning Searcher // searches by meaning, with an AI model
 	history *history.Log
 
-	noVariants atomic.Bool // do not look for .md versions of pages (see variant.go)
-	bonbon     atomic.Bool // Bonbon mode: markdown only, no looking further (see SetBonbon)
-	toc        tocCache    // the tables of contents of sites, for the arrows of pages (see toc.go)
+	noVariants atomic.Bool     // do not look for .md versions of pages (see variant.go)
+	bonbon     atomic.Bool     // Bonbon mode: markdown only, no looking further (see SetBonbon)
+	toc        tocCache        // the tables of contents of sites, for the arrows of pages (see toc.go)
+	siteCfg    siteConfigCache // the bonbon.json of sites, for their search (see siteconfig.go)
 
 	tabMu   sync.Mutex
 	tabs    map[int]*tab
@@ -134,13 +162,17 @@ func (b *Browser) Navigate(ctx context.Context, tabID int, rawURL string) page.P
 		rawURL = MeaningURL(q)
 	} else if q, ok := fetch.SearchQuery(rawURL); ok {
 		rawURL = SearchURL(q)
+		if site := b.siteSearchFor(ctx, t.stack.Current(), q); site != "" {
+			rawURL += siteParam + url.QueryEscape(site) // the results page remembers whose search it asked, for Reload and Back
+		}
 	}
 	p := keepTextFragment(rawURL, b.load(ctx, rawURL))
 	t.stack.Visit(p.URL)
 	return t.withState(b.record(p))
 }
 
-// Follow opens rawURL for a click on a link. Outside Bonbon mode it is Navigate. In it a link to a web page
+// Follow opens rawURL for a click on a link. Outside Bonbon mode it is Navigate. In it a link to the HTML site that
+// the current site mirrors (bonbon.json, urlMirrorOf) goes to its markdown twin, and a link to a web page
 // (HTML) is not shown here: the answer is KindExternal, for the reader's default browser, and the tab and its
 // history stay as they are. Anything else loads as usual.
 func (b *Browser) Follow(ctx context.Context, tabID int, rawURL string) page.Page {
@@ -150,6 +182,10 @@ func (b *Browser) Follow(ctx context.Context, tabID int, rawURL string) page.Pag
 	t := b.tab(tabID)
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	// A link to the HTML site this one is the markdown version of goes to the same page here, when there is one.
+	if mapped := b.mirrorOf(ctx, t.stack.Current(), rawURL); mapped != "" {
+		rawURL = mapped
+	}
 	p := keepTextFragment(rawURL, b.load(ctx, rawURL))
 	if isHTML(p.ContentType) {
 		return page.Page{URL: p.URL, Kind: page.KindExternal}
@@ -341,8 +377,9 @@ func (b *Browser) loadSearch(ctx context.Context, rawURL string) page.Page {
 	if strings.HasPrefix(rawURL, meaningPrefix) {
 		search, prefix = b.meaning, meaningPrefix
 	}
-	query, err := url.QueryUnescape(strings.TrimPrefix(rawURL, prefix))
-	if err == nil && search == nil {
+	query, site := splitSearchURL(rawURL, prefix)
+	var err error
+	if search == nil {
 		err = fmt.Errorf("bookmarks are not available")
 	}
 	var md string
@@ -360,6 +397,13 @@ func (b *Browser) loadSearch(ctx context.Context, rawURL string) page.Page {
 		return p
 	}
 	p.Kind, p.HTML, p.Source, p.Title = page.KindMarkdown, html, md, title
+	if prefix == searchPrefix {
+		if site != "" && b.Bonbon() {
+			p = b.withSiteResults(ctx, p, site, query, md, base)
+		} else if nav := jumpLinks(nil, md, false); nav != "" {
+			p.HTML = strings.Replace(p.HTML, "</h1>", "</h1>"+nav, 1)
+		}
+	}
 	return p
 }
 
@@ -373,7 +417,11 @@ func (b *Browser) bonbonPage(ctx context.Context, p page.Page, res *fetch.Result
 		if !render.HasArrows(res.Body) {
 			arrows = b.tocArrows(ctx, res, base)
 		}
-		return b.markdownPageWith(p, res, base, arrows)
+		p = b.markdownPageWith(p, res, base, arrows)
+		if p.Kind == page.KindMarkdown {
+			p.OwnAddress = b.siteConfig(ctx, res.URL).ownAddress(base)
+		}
+		return p
 	}
 	if looksText(res) {
 		p.Kind, p.Title = page.KindMarkdown, res.URL
