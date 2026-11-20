@@ -1,7 +1,7 @@
 import './style.css';
 import './schemes.css';
 import './pagestyles.css';
-import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, ConvertPage} from '../wailsjs/go/main/App';
+import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn, BrowserOpenURL} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -255,7 +255,7 @@ function render() {
             : p.kind === 'markdown' ? (showSource ? view.source(p, editor()) : view.markdown(p))
             : p.kind === 'fallback' ? view.fallback(p, (origin) => openCredentials({origin}), {rules: () => convertPage('rules'), ai: () => convertPage('ai'), aiAvailable: aiReady()})
             : view.error(p, () => goActive((id) => Navigate(id, p.url)), (page) => openCredentials({origin: page.origin, kind: page.authScheme === 'basic' ? 'basic' : page.authScheme === 'bearer' ? 'bearer' : 'cookie'})));
-    const extras = [active?.draft != null ? null : copyBar(p), variantBar(p), searchSwitch(p), // no copy button over the text box while editing
+    const extras = [active?.draft != null ? null : copyBar(p), variantBar(p), ownAddressBar(p), searchSwitch(p), // no copy button over the text box while editing
         active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
     content.replaceChildren(...extras, body);
     content.scrollTop = 0;
@@ -382,7 +382,8 @@ const NEW_DOC = 'new:document';
 const isSearch = (url) => url.startsWith(SEARCH_PREFIX) || url.startsWith(MEANING_PREFIX);
 function searchQueryOf(url) {
     const prefix = url.startsWith(MEANING_PREFIX) ? MEANING_PREFIX : SEARCH_PREFIX;
-    try { return decodeURIComponent(url.slice(prefix.length).replace(/\+/g, ' ')); } catch { return ''; }
+    const words = url.slice(prefix.length).split('&site=')[0]; // a results page may also carry the site search it asked
+    try { return decodeURIComponent(words.replace(/\+/g, ' ')); } catch { return ''; }
 }
 function displayAddress(url) {
     if (url === NEW_DOC) return '';
@@ -458,6 +459,21 @@ function variantBar(p) {
     view.addEventListener('click', (e) => { e.preventDefault(); goActive((id) => NavigateAsIs(id, p.markdownOf)); });
     const site = p.url.endsWith('/llms.txt'); // the site's overview for language models, in markdown
     bar.append(site ? 'This site has no markdown home page; this is its llms.txt. ' : 'This is the markdown version of this page. ', view);
+    return bar;
+}
+
+/** On a page that the site asks to be read under its own name (bonbon.json, cname): offer that address. */
+function ownAddressBar(p) {
+    if (!p?.ownAddress) return null;
+    const bar = document.createElement('p');
+    bar.className = 'variant-bar note';
+    const go = document.createElement('a');
+    go.href = '#';
+    go.textContent = 'Open it there';
+    let host = p.ownAddress;
+    try { host = new URL(p.ownAddress).host; } catch { /* shown whole */ }
+    go.addEventListener('click', (e) => { e.preventDefault(); goActive((id) => Navigate(id, p.ownAddress)); });
+    bar.append(`This site has its own address, ${host}. `, go);
     return bar;
 }
 
@@ -804,6 +820,9 @@ const menuItems = {
     markdownVersions: () => MarkdownVersions(),
     setMarkdownVersions: (on) => SetMarkdownVersions(on),
     bonbon: () => Bonbon(),
+    styleSheets: () => StyleSheets(),
+    styleSheet: (id) => StyleSheet(id),
+    openStylesFolder: () => OpenStylesFolder().catch((e) => toast(String(e), true)),
     setBonbon: (on) => SetBonbon(on),
     history: () => goActive(FullHistory),
     about: () => goActive(About),

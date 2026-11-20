@@ -2,6 +2,7 @@
 // scheme. Theme is System, Light or Dark; the palettes of the color schemes live
 // in schemes.css and `swatch` is only the preview shown here.
 import {svgIcon} from './icons.js';
+import {showPageStyle} from './userstyle.js';
 
 const $ = (id) => document.getElementById(id);
 const root = document.documentElement;
@@ -20,16 +21,6 @@ const schemes = [
     {id: 'graphite', name: 'Graphite', swatch: ['#475569', '#64748b', '#0ea5e9']},
 ];
 
-// How the text of a page is set: Mardo's own look, or one of the five styles Bonbon offers (pagestyles.css).
-const pageStyles = [
-    {id: '', name: 'Mardo'},
-    {id: 'basic', name: 'Basic'},
-    {id: 'book', name: 'Book'},
-    {id: 'classic', name: 'Classic'},
-    {id: 'mono', name: 'Mono'},
-    {id: 'newsprint', name: 'Newsprint'},
-];
-
 function read(key) {
     try { return localStorage.getItem(key); } catch { return null; }
 }
@@ -43,7 +34,8 @@ function write(key, value) {
 
 let theme = themes.some((t) => t.id === read('theme')) ? read('theme') : 'system';
 let scheme = schemes.some((s) => s.id === read('scheme')) ? read('scheme') : '';
-let pageStyle = pageStyles.some((s) => s.id === read('pagestyle')) ? read('pagestyle') : '';
+let pageStyle = read('pagestyle') || ''; // the file name of a page style (the stylesheets folder), or '' for Mardo's own look
+let pageStyles = [];                       // what the stylesheets folder has, read each time the menu opens
 let credentials = {saved: false, origin: ''};
 
 function applyTheme(id) {
@@ -60,10 +52,20 @@ function applyScheme(id) {
     write('scheme', id);
 }
 
-function applyPageStyle(id) {
+/** Puts the page style `id` on the page, or Mardo's own look when it is '' or cannot be read. */
+async function applyPageStyle(id, actions) {
+    let css = null;
+    if (id) {
+        try { css = await actions.styleSheet(id); } catch { id = ''; }
+    }
     pageStyle = id;
-    if (id) root.dataset.pagestyle = id;
-    else delete root.dataset.pagestyle;
+    if (id) {
+        root.dataset.pagestyle = id;
+        showPageStyle(css);
+    } else {
+        delete root.dataset.pagestyle;
+        showPageStyle(null);
+    }
     write('pagestyle', id);
 }
 
@@ -137,7 +139,9 @@ export function initMenu(actions) {
                 return item('menuitemradio', s.name, s.id === scheme, () => { applyScheme(s.id); build(); }, sw);
             }),
             heading('Page style'),
-            ...pageStyles.map((p) => item('menuitemradio', p.name, p.id === pageStyle, () => { applyPageStyle(p.id); build(); })),
+            item('menuitemradio', 'Mardo', pageStyle === '', async () => { await applyPageStyle('', actions); build(); }),
+            ...pageStyles.map((p) => item('menuitemradio', p.name, p.id === pageStyle, async () => { await applyPageStyle(p.id, actions); build(); })),
+            ...(phone ? [] : [item('menuitem', 'Open stylesheets folder\u2026', null, () => { close(); actions.openStylesFolder(); }, icon('folder'))]),
         ];
         menu.replaceChildren(...(phone
             ? [...phoneRows, findEntry, historyEntry, creds, aiEntry, markdownEntry, bonbonEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), aboutEntry]
@@ -149,6 +153,7 @@ export function initMenu(actions) {
 
     function open() {
         build();
+        actions.styleSheets().then((list) => { pageStyles = list ?? []; if (!menu.hidden) build(); }).catch(() => {});
         actions.bonbon().then((on) => { if (on !== bonbon) { bonbon = on; if (!menu.hidden) build(); } }).catch(() => {});
         actions.markdownVersions().then((on) => { if (on !== markdownVersions) { markdownVersions = on; if (!menu.hidden) build(); } }).catch(() => {});
         menu.hidden = false;
@@ -158,7 +163,7 @@ export function initMenu(actions) {
 
     applyTheme(theme);
     applyScheme(scheme);
-    applyPageStyle(pageStyle);
+    if (pageStyle) applyPageStyle(pageStyle, actions);
     btn.addEventListener('click', () => (menu.hidden ? open() : close()));
     document.addEventListener('mousedown', (e) => {
         if (!menu.hidden && !e.target.closest('#settings-menu') && !e.target.closest('#menu')) close();

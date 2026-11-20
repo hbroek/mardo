@@ -33,6 +33,7 @@ import (
 // Core holds the state shared with the frontend. Its exported methods are what the frontend calls;
 // whatever needs the window or the system (dialogs, menus, events) goes through the Host.
 type Core struct {
+	dir     string // where the files are, "" for none
 	ctx     context.Context
 	host    Host
 	browser *browser.Browser
@@ -84,10 +85,14 @@ func New(cfg Config) *Core {
 		host = noHost{}
 	}
 	a := &Core{
+		dir:  dir,
 		ctx:  context.Background(),
 		host: host,
 		auth: auth.NewManager(keychain, file("credentials.json")),
 		jar:  cookies.New(keychain, file("cookies.bin")),
+	}
+	if dir != "" {
+		installStyles(a.stylesFolder())
 	}
 	a.fetcher = fetch.NewFetcher(a.auth, a.jar)
 	a.fetcher.Log.OnEntry = func(e fetch.Entry) { host.Emit("net", e) } // each request is pushed to the console as it completes

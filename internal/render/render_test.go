@@ -244,7 +244,7 @@ func TestBonbonModeIsMarkdownOnly(t *testing.T) {
 			t.Errorf("%q should be gone: %s", not, html)
 		}
 	}
-	if !strings.Contains(html, `<figure class="bonbon-figure"><img src="https://x.test/e.png" alt="Emily"/><figcaption>Emily</figcaption></figure>`) {
+	if !strings.Contains(html, `<p class="bonbon-figure" data-caption="Emily"><img src="https://x.test/e.png" alt="Emily"/></p>`) {
 		t.Errorf("a picture alone is a figure with a caption: %s", html)
 	}
 	if !strings.Contains(html, `class="bonbon-right"`) || !strings.Contains(html, "The paragraph goes on.") {
@@ -256,7 +256,7 @@ func TestBonbonModeIsMarkdownOnly(t *testing.T) {
 	// Outside Bonbon mode the same text keeps its HTML and its pictures.
 	Bonbon.Store(false)
 	html, _, _ = Markdown([]byte(src), base)
-	if !strings.Contains(html, "<b>bold</b>") || strings.Contains(html, "figure") {
+	if !strings.Contains(html, "<b>bold</b>") || strings.Contains(html, "bonbon-figure") {
 		t.Errorf("html = %s", html)
 	}
 }

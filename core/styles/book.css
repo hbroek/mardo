@@ -1,0 +1,87 @@
+/* Book: a serif page, narrow, with indented paragraphs. A page style for Mardo, in the format of Bonbon's stylesheets: tokens on :root, the
+   page on body and .page, and the elements of the rendered markdown. Edit it, or copy it and make your own: the
+   file shows up under Page style when the menu opens. Mardo puts it back at the next start only if it is deleted. */
+
+:root {
+	--bg: #fbf6ea;
+	--fg: #2d2820;
+	--muted: #6f6657;
+	--rule: #d8cdb2;
+	--link: #7a3b12;
+	--link-visited: #6a4a7a;
+	--accent: #7a3b12;
+	--tint-code: #f1e9d6;
+	--tint-pre: #f4ecda;
+	--font-body: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+	--font-head: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+	--font-code: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		--bg: #1d1a15;
+		--fg: #e6dfd0;
+		--muted: #a39a88;
+		--rule: #4a4333;
+		--link: #e0a76b;
+		--link-visited: #c1a0d0;
+		--accent: #e0a76b;
+		--tint-code: #29251d;
+		--tint-pre: #25221b;
+	}
+}
+:root[data-theme="dark"] {
+	--bg: #1d1a15;
+	--fg: #e6dfd0;
+	--muted: #a39a88;
+	--rule: #4a4333;
+	--link: #e0a76b;
+	--link-visited: #c1a0d0;
+	--accent: #e0a76b;
+	--tint-code: #29251d;
+	--tint-pre: #25221b;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family: var(--font-body);
+	font-size: 1.2rem;
+	line-height: 1.7;
+}
+.page {
+	max-width: 36rem;
+	margin: 0 auto;
+	padding-block: 1rem;
+}
+
+h1, h2, h3 { font-family: var(--font-head); color: var(--fg); clear: both; }
+h1 { text-align: center; font-size: 2em; font-weight: 600; margin: 1.2em 0 .9em; }
+h2 { font-size: 1.4em; font-style: italic; font-weight: 600; margin: 1.6em 0 .5em; }
+h3 { font-size: 1.15em; font-variant: small-caps; letter-spacing: .05em; margin: 1.4em 0 .4em; }
+p { margin: 0; text-align: justify; hyphens: auto; }
+p + p { text-indent: 1.5em; }
+ul, ol, blockquote, pre, table { margin-top: 1em; margin-bottom: 1em; }
+p { margin-top: 0; }
+a { color: var(--link); }
+a:visited { color: var(--link-visited); }
+a:hover { color: var(--accent); }
+h2 a, h3 a { color: inherit; text-decoration: none; }
+h2 a:hover, h3 a:hover { text-decoration: underline; }
+a[title="Direct link to this item."] { color: var(--muted); font-size: .8em; text-decoration: none; }
+a[title="Direct link to this item."]:hover { color: var(--accent); }
+strong { font-weight: 700; }
+ul, ol { padding-left: 1.6em; }
+li > p { margin: .3em 0; }
+blockquote { margin-left: 0; padding: 0 1em; color: var(--muted); border-left: 3px solid var(--rule); }
+blockquote p:last-child { margin-bottom: 0; }
+code { font-family: var(--font-code); font-size: .9em; background: var(--tint-code); padding: .1em .3em; border-radius: 3px; }
+pre { background: var(--tint-pre); padding: .8em 1em; overflow-x: auto; border-radius: 4px; }
+pre code { background: none; padding: 0; font-size: .88em; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2em 0; }
+table { border-collapse: collapse; }
+th, td { padding: .4em .8em; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 700; }
+img { max-width: 100%; height: auto; }
+p > img:first-child { float: right; max-width: 40%; margin: .2em 0 .8em 1.25em; }
+p > img:only-child { float: none; display: block; max-width: 100%; margin: 1.2em auto; }

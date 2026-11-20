@@ -88,6 +88,8 @@ export function NetworkLog():Promise<Array<fetch.Entry>>;
 
 export function NewTab():Promise<number>;
 
+export function OpenStylesFolder():Promise<void>;
+
 export function PickFile():Promise<string>;
 
 export function PrintNative():Promise<void>;
@@ -127,6 +129,12 @@ export function SetMarkdownVersions(arg1:boolean):Promise<void>;
 export function SetViewShown(arg1:string,arg2:boolean):Promise<void>;
 
 export function ShareItem(arg1:string):Promise<void>;
+
+export function StyleSheet(arg1:string):Promise<string>;
+
+export function StyleSheets():Promise<Array<core.StyleInfo>>;
+
+export function StylesFolder():Promise<string>;
 
 export function SuggestBookmark(arg1:string,arg2:string):Promise<ai.Suggestion>;
 

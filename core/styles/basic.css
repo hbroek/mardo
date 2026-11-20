@@ -1,0 +1,84 @@
+/* Basic: the plain web page. A page style for Mardo, in the format of Bonbon's stylesheets: tokens on :root, the
+   page on body and .page, and the elements of the rendered markdown. Edit it, or copy it and make your own: the
+   file shows up under Page style when the menu opens. Mardo puts it back at the next start only if it is deleted. */
+
+:root {
+	--bg: #ffffff;
+	--fg: #1f2328;
+	--muted: #59636e;
+	--rule: #d9dde3;
+	--link: #0b57d0;
+	--link-visited: #6b3fa0;
+	--accent: #0b57d0;
+	--tint-code: #f1f3f5;
+	--tint-pre: #f6f8fa;
+	--font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font-head: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font-code: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		--bg: #14161a;
+		--fg: #e6e8eb;
+		--muted: #98a0aa;
+		--rule: #2c3138;
+		--link: #8ab4ff;
+		--link-visited: #c3a6ef;
+		--accent: #8ab4ff;
+		--tint-code: #20242a;
+		--tint-pre: #1a1d22;
+	}
+}
+:root[data-theme="dark"] {
+	--bg: #14161a;
+	--fg: #e6e8eb;
+	--muted: #98a0aa;
+	--rule: #2c3138;
+	--link: #8ab4ff;
+	--link-visited: #c3a6ef;
+	--accent: #8ab4ff;
+	--tint-code: #20242a;
+	--tint-pre: #1a1d22;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family: var(--font-body);
+	font-size: 1rem;
+	line-height: 1.55;
+}
+.page {
+	max-width: 44rem;
+	margin: 0 auto;
+	padding-block: 1rem;
+}
+
+h1, h2, h3 { font-family: var(--font-head); color: var(--fg); clear: both; }
+h1 { font-size: 2em; margin: 0 0 .6em; }
+h2 { font-size: 1.45em; margin: 1.6em 0 .5em; }
+h3 { font-size: 1.15em; margin: 1.4em 0 .4em; }
+p { margin-top: 0; }
+a { color: var(--link); }
+a:visited { color: var(--link-visited); }
+a:hover { color: var(--accent); }
+h2 a, h3 a { color: inherit; text-decoration: none; }
+h2 a:hover, h3 a:hover { text-decoration: underline; }
+a[title="Direct link to this item."] { color: var(--muted); font-size: .8em; text-decoration: none; }
+a[title="Direct link to this item."]:hover { color: var(--accent); }
+strong { font-weight: 700; }
+ul, ol { padding-left: 1.6em; }
+li > p { margin: .3em 0; }
+blockquote { margin-left: 0; padding: 0 1em; color: var(--muted); border-left: 3px solid var(--rule); }
+blockquote p:last-child { margin-bottom: 0; }
+code { font-family: var(--font-code); font-size: .9em; background: var(--tint-code); padding: .1em .3em; border-radius: 3px; }
+pre { background: var(--tint-pre); padding: .8em 1em; overflow-x: auto; border-radius: 4px; }
+pre code { background: none; padding: 0; font-size: .88em; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2em 0; }
+table { border-collapse: collapse; }
+th, td { padding: .4em .8em; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 700; }
+img { max-width: 100%; height: auto; }
+p > img:first-child { float: right; max-width: 40%; margin: .2em 0 .8em 1.25em; }
+p > img:only-child { float: none; display: block; max-width: 100%; margin: 1.2em auto; }

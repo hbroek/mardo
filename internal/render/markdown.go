@@ -334,8 +334,8 @@ func attrOf(n *xhtml.Node, key string) string {
 	return ""
 }
 
-// bonbonPicture applies Bonbon's two rules for pictures to a paragraph: one that is only a picture becomes a
-// figure, centered, with its alt text drawn under it; one that begins with a picture and goes on with text
+// bonbonPicture applies Bonbon's two rules for pictures to a paragraph: one that is only a picture is marked as
+// a figure, centered, with its alt text drawn under it; one that begins with a picture and goes on with text
 // floats the picture at the right.
 func bonbonPicture(p *xhtml.Node) {
 	for c := p.FirstChild; c != nil; c = c.NextSibling {
@@ -361,12 +361,10 @@ func bonbonPicture(p *xhtml.Node) {
 		first.Attr = append(first.Attr, xhtml.Attribute{Key: "class", Val: "bonbon-right"})
 		return
 	}
-	alt := strings.TrimSpace(attrOf(first, "alt"))
-	p.Data, p.DataAtom = "figure", atom.Figure
+	// The paragraph stays a paragraph with its picture alone in it, which is what a stylesheet's p > img:only-child
+	// takes for a standalone picture; the alt text is the caption, which the style draws from data-caption.
 	p.Attr = []xhtml.Attribute{{Key: "class", Val: "bonbon-figure"}}
-	if alt != "" {
-		cap := &xhtml.Node{Type: xhtml.ElementNode, Data: "figcaption", DataAtom: atom.Figcaption}
-		cap.AppendChild(&xhtml.Node{Type: xhtml.TextNode, Data: alt})
-		p.AppendChild(cap)
+	if alt := strings.TrimSpace(attrOf(first, "alt")); alt != "" {
+		p.Attr = append(p.Attr, xhtml.Attribute{Key: "data-caption", Val: alt})
 	}
 }

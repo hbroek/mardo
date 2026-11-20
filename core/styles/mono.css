@@ -1,0 +1,85 @@
+/* Mono: a typewriter face, headings marked with #. A page style for Mardo, in the format of Bonbon's stylesheets: tokens on :root, the
+   page on body and .page, and the elements of the rendered markdown. Edit it, or copy it and make your own: the
+   file shows up under Page style when the menu opens. Mardo puts it back at the next start only if it is deleted. */
+
+:root {
+	--bg: #ffffff;
+	--fg: #1b1b1b;
+	--muted: #6a6a6a;
+	--rule: #dcdcdc;
+	--link: #1a4fb4;
+	--link-visited: #6b3fa0;
+	--accent: #1a4fb4;
+	--tint-code: #f1f1f1;
+	--tint-pre: #f6f6f6;
+	--font-body: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+	--font-head: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+	--font-code: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		--bg: #121212;
+		--fg: #e4e4e4;
+		--muted: #9a9a9a;
+		--rule: #333333;
+		--link: #8ab4ff;
+		--link-visited: #c3a6ef;
+		--accent: #8ab4ff;
+		--tint-code: #202020;
+		--tint-pre: #1a1a1a;
+	}
+}
+:root[data-theme="dark"] {
+	--bg: #121212;
+	--fg: #e4e4e4;
+	--muted: #9a9a9a;
+	--rule: #333333;
+	--link: #8ab4ff;
+	--link-visited: #c3a6ef;
+	--accent: #8ab4ff;
+	--tint-code: #202020;
+	--tint-pre: #1a1a1a;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family: var(--font-body);
+	font-size: .95rem;
+	line-height: 1.65;
+}
+.page {
+	max-width: 50rem;
+	margin: 0 auto;
+	padding-block: 1rem;
+}
+
+h1, h2, h3 { font-family: var(--font-head); color: var(--fg); clear: both; }
+h1, h2, h3 { font-size: 1em; margin: 1.8em 0 .6em; }
+h1::before { content: "# "; opacity: .45; }
+h2::before { content: "## "; opacity: .45; }
+h3::before { content: "### "; opacity: .45; }
+p { margin-top: 0; }
+a { color: var(--link); }
+a:visited { color: var(--link-visited); }
+a:hover { color: var(--accent); }
+h2 a, h3 a { color: inherit; text-decoration: none; }
+h2 a:hover, h3 a:hover { text-decoration: underline; }
+a[title="Direct link to this item."] { color: var(--muted); font-size: .8em; text-decoration: none; }
+a[title="Direct link to this item."]:hover { color: var(--accent); }
+strong { font-weight: 700; }
+ul, ol { padding-left: 1.6em; }
+li > p { margin: .3em 0; }
+blockquote { margin-left: 0; padding: 0 1em; color: var(--muted); border-left: 3px solid var(--rule); }
+blockquote p:last-child { margin-bottom: 0; }
+code { font-family: var(--font-code); font-size: .9em; background: var(--tint-code); padding: .1em .3em; border-radius: 3px; }
+pre { background: var(--tint-pre); padding: .8em 1em; overflow-x: auto; border-radius: 4px; }
+pre code { background: none; padding: 0; font-size: .88em; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 2em 0; }
+table { border-collapse: collapse; }
+th, td { padding: .4em .8em; border-bottom: 1px solid var(--rule); text-align: left; }
+th { font-weight: 700; }
+img { max-width: 100%; height: auto; }
+p > img:first-child { float: right; max-width: 40%; margin: .2em 0 .8em 1.25em; }
+p > img:only-child { float: none; display: block; max-width: 100%; margin: 1.2em auto; }

@@ -978,10 +978,13 @@ html.phone #replace-input { font-size: 16px; }
 
 /* Bonbon mode: pictures as the charter has them. A picture alone in a paragraph is centered with its alt text
    under it; one at the head of a paragraph floats right. The image float button is hidden then. */
-.markdown figure.bonbon-figure { margin: 1.2em auto; text-align: center; }
-.markdown figure.bonbon-figure img { display: block; margin: 0 auto; }
-.markdown figure.bonbon-figure figcaption { margin-top: .4em; font-size: .85em; opacity: .7; }
+.markdown p.bonbon-figure { margin: 1.2em 0; text-align: center; }
+.markdown p.bonbon-figure > img { display: block; margin: 0 auto; }
+.markdown p.bonbon-figure[data-caption]::after { content: attr(data-caption); display: block; margin-top: .4em; font-size: .85em; opacity: .7; }
 html.bonbon-mode .markdown img.bonbon-right { float: right; max-width: 40%; margin: .3rem 0 .75rem 1.25rem; }
 html.bonbon-mode.img-left .markdown img:not(.bonbon-right):not(.bonbon-margin), html.bonbon-mode.img-right .markdown img:not(.bonbon-right):not(.bonbon-margin), html.bonbon-mode.img-center .markdown img:not(.bonbon-right):not(.bonbon-margin) { float: none; max-width: 100%; margin: 0; }
-html.bonbon-mode.img-left .markdown figure.bonbon-figure img, html.bonbon-mode.img-right .markdown figure.bonbon-figure img, html.bonbon-mode.img-center .markdown figure.bonbon-figure img { margin: 0 auto; }
+html.bonbon-mode.img-left .markdown p.bonbon-figure img, html.bonbon-mode.img-right .markdown p.bonbon-figure img, html.bonbon-mode.img-center .markdown p.bonbon-figure img { margin: 0 auto; }
 html.bonbon-mode.img-left .markdown :is(h1, h2, h3, h4, hr, pre, table), html.bonbon-mode.img-right .markdown :is(h1, h2, h3, h4, hr, pre, table) { clear: none; }
+
+/* The links under the title of a search results page, to its sections. */
+.markdown .search-jump { margin: -.4em 0 1.2em; font-size: .9em; color: var(--muted); }

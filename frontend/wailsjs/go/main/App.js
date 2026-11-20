@@ -162,6 +162,10 @@ export function NewTab() {
   return window['go']['main']['App']['NewTab']();
 }
 
+export function OpenStylesFolder() {
+  return window['go']['main']['App']['OpenStylesFolder']();
+}
+
 export function PickFile() {
   return window['go']['main']['App']['PickFile']();
 }
@@ -240,6 +244,18 @@ export function SetViewShown(arg1, arg2) {
 
 export function ShareItem(arg1) {
   return window['go']['main']['App']['ShareItem'](arg1);
+}
+
+export function StyleSheet(arg1) {
+  return window['go']['main']['App']['StyleSheet'](arg1);
+}
+
+export function StyleSheets() {
+  return window['go']['main']['App']['StyleSheets']();
+}
+
+export function StylesFolder() {
+  return window['go']['main']['App']['StylesFolder']();
 }
 
 export function SuggestBookmark(arg1, arg2) {
