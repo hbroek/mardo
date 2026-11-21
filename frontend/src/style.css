@@ -147,6 +147,19 @@ body.wails-drop-target-active #content { outline: 3px dashed var(--accent); outl
 /* the colored rule that closes the bars goes under the Send to toolbar, not between the two */
 html:not(.phone).has-sendbar .toolbar::after { display: none; }
 html:not(.phone).has-sendbar .sendbar { padding-bottom: 6px; background: var(--grad) left bottom / 100% 2px no-repeat, var(--bar); }
+.markbar { position: relative; display: flex; gap: 6px; padding: 4px 8px; overflow-x: auto; scrollbar-width: none; background: var(--bar); align-items: center; }
+.markbar[hidden] { display: none; }
+.markbar button { display: flex; align-items: center; gap: 6px; flex: none; max-width: 14em; padding: 3px 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); cursor: pointer; font: inherit; font-size: 0.85em; }
+.markbar button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.markbar button:hover { background: var(--hover); }
+.markbar .mark-pick { margin-left: auto; padding: 5px 8px; align-self: center; }
+.markbar .mark-pick svg { display: block; }
+.markbar .note { color: var(--muted); font-size: 0.85em; }
+.markbar-menu { z-index: 30; }
+/* the colored rule that closes the bars goes under the last toolbar shown */
+html:not(.phone).has-markbar .toolbar::after { display: none; }
+html:not(.phone).has-markbar .markbar { padding-bottom: 6px; background: var(--grad) left bottom / 100% 2px no-repeat, var(--bar); }
+html:not(.phone).has-markbar.has-sendbar .sendbar { padding-bottom: 4px; background: var(--bar); }
 html.phone .sendbar .send-name { display: none; } /* icons only on a phone, the name is the long-press title */
 
 .toolbar .icon { width: 1.9em; height: 1.9em; display: block; margin: auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }

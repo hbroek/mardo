@@ -7,7 +7,8 @@ import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
 import {svgIcon} from './icons.js';
 import {initConsole, toggleConsole} from './console.js';
-import {initBookmarks, openBookmark} from './bookmarks.js';
+import {initBookmarks, openBookmark, openFolder as openBookmarkFolder} from './bookmarks.js';
+import {initMarkBar, setMarkBar, markBarShown, render as renderMarkBar} from './markbar.js';
 import {initPanel, panelShortcut, refreshPanel, togglePanel} from './bookmarkpanel.js';
 import {initStorage} from './storage.js';
 import {initTagging} from './tagging.js';
@@ -986,6 +987,8 @@ const menuItems = {
     openStylesFolder: () => OpenStylesFolder().catch((e) => toast(String(e), true)),
     sendBar: () => sendBarOn,
     setSendBar,
+    markBar: markBarShown,
+    setMarkBar,
     setBonbon: (on) => SetBonbon(on),
     history: () => goActive(FullHistory),
     about: () => goActive(About),
@@ -1023,6 +1026,8 @@ const menuActions = {
     address: () => address.focus(),
     // The menu item says Show or Hide, so it does just that (the Ctrl+B key moves into the panel first).
     bookmarks: () => ($('bookmarks-panel').hidden ? panelShortcut() : togglePanel(false)),
+    sendbar: () => setSendBar(!sendBarOn),
+    markbar: () => setMarkBar(!markBarShown()),
     'bookmarks-new-folder': () => bookmarkTool('folder-new'),
     'bookmarks-organize': () => bookmarkTool('bookmarks-organize'),
     'bookmarks-tag': () => bookmarkTool('bookmarks-tag'),
@@ -1092,13 +1097,15 @@ function syncViewMenu() {
         console: !$('console').hidden,
         source: sourceBtn.getAttribute('aria-pressed') === 'true',
         ask: !$('ask-panel').hidden,
+        sendbar: !sendbar.hidden,
+        markbar: !$('markbar').hidden,
     };
     for (const [id, shown] of Object.entries(now)) {
         if (viewShown[id] !== shown) { viewShown[id] = shown; if (navigator.platform.startsWith('Mac')) SetViewShown(id, shown); }
     }
 }
 const viewObserver = new MutationObserver(syncViewMenu);
-for (const [id, attr] of [['bookmarks-panel', 'hidden'], ['console', 'hidden'], ['ask-panel', 'hidden']]) viewObserver.observe($(id), {attributes: true, attributeFilter: [attr]});
+for (const [id, attr] of [['bookmarks-panel', 'hidden'], ['console', 'hidden'], ['ask-panel', 'hidden'], ['sendbar', 'hidden'], ['markbar', 'hidden']]) viewObserver.observe($(id), {attributes: true, attributeFilter: [attr]});
 viewObserver.observe(sourceBtn, {attributes: true, attributeFilter: ['aria-pressed']});
 syncViewMenu();
 
@@ -1175,6 +1182,7 @@ async function updateCredentialIndicator() {
 
 initCredentials((origin) => {
     updateCredentialIndicator();
+    renderMarkBar();
     refreshPanel(); // the bookmarks may be kept at this site: they load, or stop saying they are not connected
     if (currentPage()?.url && originOf(currentPage().url) === originOf(origin)) goActive(Reload, true);
 });
@@ -1198,11 +1206,12 @@ function openBookmarkDialog() {
     openBookmark({bookmark: saved, url: p.url, title: p.title === p.url ? friendly(p.url) : p.title});
 }
 bookmarkBtn.addEventListener('click', openBookmarkDialog);
-initBookmarks(() => { updateBookmarkIndicator(); refreshPanel(); });
-initPanel((url, newTab) => newTab ? openTab(url) : goActive((id) => Navigate(id, url)), updateBookmarkIndicator);
-initStorage(() => { updateBookmarkIndicator(); refreshPanel(); });
-initTagging(() => { updateBookmarkIndicator(); refreshPanel(); });
-initOrganize(() => { updateBookmarkIndicator(); refreshPanel(); });
+initMarkBar((url, newTab) => newTab ? openTab(url, {background: true}) : goActive((id) => Navigate(id, url)), {bookmark: (b) => openBookmark({bookmark: b}), folder: (f) => openBookmarkFolder({folder: f})});
+initBookmarks(() => { updateBookmarkIndicator(); refreshPanel(); renderMarkBar(); });
+initPanel((url, newTab) => newTab ? openTab(url) : goActive((id) => Navigate(id, url)), () => { updateBookmarkIndicator(); renderMarkBar(); });
+initStorage(() => { updateBookmarkIndicator(); refreshPanel(); renderMarkBar(); });
+initTagging(() => { updateBookmarkIndicator(); refreshPanel(); renderMarkBar(); });
+initOrganize(() => { updateBookmarkIndicator(); refreshPanel(); renderMarkBar(); });
 
 initMenu(menuItems);
 initAI();

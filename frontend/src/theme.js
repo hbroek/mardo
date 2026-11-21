@@ -124,6 +124,7 @@ export function initMenu(actions) {
         const markdownEntry = item('menuitemcheckbox', 'Look for markdown versions of pages', markdownVersions, async () => { markdownVersions = !markdownVersions; try { await actions.setMarkdownVersions(markdownVersions); } catch { markdownVersions = !markdownVersions; } build(); });
         const bonbonEntry = item('menuitemcheckbox', 'Bonbon mode: markdown only', bonbon, async () => { bonbon = !bonbon; try { await actions.setBonbon(bonbon); } catch { bonbon = !bonbon; } build(); });
         const sendEntry = item('menuitemcheckbox', 'Send to toolbar', sendBar, () => { sendBar = !sendBar; actions.setSendBar(sendBar); build(); });
+        const markEntry = item('menuitemcheckbox', 'Bookmarks toolbar', markBar, () => { markBar = !markBar; actions.setMarkBar(markBar); build(); });
         const aiEntry = item('menuitem', 'AI assistant\u2026', null, () => { close(); actions.ai(); }, icon('sparkle'));
         const newEntry = item('menuitem', 'New page', null, () => { close(); actions.newDocument(); }, icon('page'));
         const openEntry = item('menuitem', 'Open page\u2026', null, () => { close(); actions.openFile(); }, icon('folder'));
@@ -155,11 +156,12 @@ export function initMenu(actions) {
             ...(phone ? [] : [item('menuitem', 'Open stylesheets folder\u2026', null, () => { close(); actions.openStylesFolder(); }, icon('folder'))]),
         ];
         menu.replaceChildren(...(phone
-            ? [...phoneRows, findEntry, historyEntry, creds, aiEntry, markdownEntry, bonbonEntry, sendEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), aboutEntry]
-            : [findEntry, creds, aiEntry, ...writing, historyEntry, clearEntry, markdownEntry, bonbonEntry, sendEntry, ...themeRows, aboutEntry]));
+            ? [...phoneRows, findEntry, historyEntry, creds, aiEntry, markdownEntry, bonbonEntry, sendEntry, markEntry, clearEntry, heading('Write'), ...writing, ...themeRows, heading('About'), aboutEntry]
+            : [findEntry, creds, aiEntry, ...writing, historyEntry, clearEntry, markdownEntry, bonbonEntry, sendEntry, markEntry, ...themeRows, aboutEntry]));
     }
 
     let sendBar = false; // the Send to toolbar
+    let markBar = false; // the bookmarks toolbar
     let bonbon = false; // Bonbon mode, which the menu bar can also change
     let markdownVersions = true; // whether .md versions of web pages are looked for; the menu bar can change it too
 
@@ -167,6 +169,7 @@ export function initMenu(actions) {
         build();
         actions.styleSheets().then((list) => { pageStyles = list ?? []; if (!menu.hidden) build(); }).catch(() => {});
         sendBar = Boolean(actions.sendBar());
+        markBar = Boolean(actions.markBar());
         actions.bonbon().then((on) => { if (on !== bonbon) { bonbon = on; if (!menu.hidden) build(); } }).catch(() => {});
         actions.markdownVersions().then((on) => { if (on !== markdownVersions) { markdownVersions = on; if (!menu.hidden) build(); } }).catch(() => {});
         menu.hidden = false;

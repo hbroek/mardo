@@ -103,7 +103,7 @@ func (a *App) appMenu() *menu.Menu {
 	view.AddSeparator()
 	item(view, "Focus Address Bar", "address", cmd("l"))
 	view.AddSeparator()
-	// These four say Show or Hide, kept up to date by SetViewShown.
+	// These six say Show or Hide, kept up to date by SetViewShown.
 	a.viewItems = map[string]*menu.MenuItem{}
 	toggle := func(id, name string, accel *keys.Accelerator) {
 		viewKeys[id] = accel
@@ -117,6 +117,8 @@ func (a *App) appMenu() *menu.Menu {
 	toggle("console", "Console", cmd("j"))
 	toggle("source", "Source", cmd("u"))
 	toggle("ask", "Interact Panel", cmdShift("a"))
+	toggle("sendbar", "Send to Toolbar", nil)
+	toggle("markbar", "Bookmarks Toolbar", nil)
 
 	marks := bar.AddSubmenu("Bookmarks")
 	item(marks, "Bookmark This Page…", "bookmark-page", cmd("d"))
@@ -194,7 +196,7 @@ func (a *App) checkMenu(item *menu.MenuItem, on bool) {
 }
 
 // viewNames is what each View menu toggle is called after "Show " / "Hide ".
-var viewNames = map[string]string{"bookmarks": "Bookmarks", "console": "Console", "source": "Source", "ask": "Interact Panel"}
+var viewNames = map[string]string{"bookmarks": "Bookmarks", "console": "Console", "source": "Source", "ask": "Interact Panel", "sendbar": "Send to Toolbar", "markbar": "Bookmarks Toolbar"}
 
 // SetViewShown keeps a View menu item saying what it will do: Show or Hide.
 func (a *App) SetViewShown(id string, shown bool) {
