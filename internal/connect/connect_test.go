@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -25,6 +26,7 @@ type site struct {
 	codes      map[string]string // code to challenge
 	refreshes  map[string]bool
 	registered int
+	issued     int
 	revoked    []string
 	noRefresh  bool // a refresh answer without a new refresh token
 	meta       func(map[string]any)
@@ -92,7 +94,8 @@ func newSite(t *testing.T) *site {
 			}
 			delete(s.refreshes, r.Form.Get("refresh_token")) // rotation: the old one is used up
 		}
-		access, refresh := "at-"+time.Now().Format("150405.000000000"), "rt-"+time.Now().Format("150405.000000000")
+		s.issued++ // a counter: the clock on Windows can give the same time twice
+		access, refresh := fmt.Sprintf("at-%d", s.issued), fmt.Sprintf("rt-%d", s.issued)
 		out := map[string]any{"access_token": access, "token_type": "Bearer", "expires_in": 3600, "scope": "a b"}
 		if !(s.noRefresh && r.Form.Get("grant_type") == "refresh_token") {
 			out["refresh_token"] = refresh
