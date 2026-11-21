@@ -177,14 +177,25 @@ export function fallback(p, onCredentials, convert) {
     );
 }
 
-export function error(p, onRetry, onCredentials) {
+/** `signIn` is {offer(origin), start(origin)}: when the site offers a sign-in, a button for it comes first. The site is asked
+ *  only here, on a page that needs a sign-in, and the answer is kept. */
+export function error(p, onRetry, onCredentials, signIn) {
     const needsLogin = (p.status === 401 || p.status === 403) && p.origin;
+    const signInSlot = el('span', {className: 'signin-slot'});
+    if (needsLogin && signIn) {
+        Promise.resolve(signIn.offer(p.origin)).then((o) => {
+            if (!o?.available || o.signedIn) return;
+            const host = (() => { try { return new URL(p.origin).host; } catch { return p.origin; } })();
+            signInSlot.replaceChildren(el('button', {className: 'primary', textContent: `Sign in with ${host}`, onclick: () => signIn.start(p.origin)}));
+        }).catch(() => {});
+    }
     return el('section', {className: 'error'},
         el('h1', {textContent: needsLogin ? 'Sign-in required' : 'Cannot display this page'}),
         el('p', {textContent: p.error}),
         needsLogin ? el('p', {className: 'note', textContent: 'This site did not accept the request as anonymous. Add your session cookies or a token for it.'}) : '',
         p.url ? el('p', {className: 'href', textContent: p.url}) : '',
-        needsLogin ? el('button', {className: 'primary', textContent: `Add credentials for ${p.origin}`, onclick: () => onCredentials(p)}) : '',
+        signInSlot,
+        needsLogin ? el('button', {className: signIn ? '' : 'primary', textContent: `Add credentials for ${p.origin}`, onclick: () => onCredentials(p)}) : '',
         p.url ? el('button', {textContent: 'Retry', onclick: onRetry}) : '',
     );
 }

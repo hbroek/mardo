@@ -36,7 +36,7 @@ let theme = themes.some((t) => t.id === read('theme')) ? read('theme') : 'system
 let scheme = schemes.some((s) => s.id === read('scheme')) ? read('scheme') : '';
 let pageStyle = read('pagestyle') || ''; // the file name of a page style (the stylesheets folder), or '' for Mardo's own look
 let pageStyles = [];                       // what the stylesheets folder has, read each time the menu opens
-let credentials = {saved: false, origin: ''};
+let credentials = {saved: false, origin: '', signedIn: false, offered: false};
 
 function applyTheme(id) {
     theme = id;
@@ -70,9 +70,19 @@ async function applyPageStyle(id, actions) {
 }
 
 /** The key lights up the menu button when the current site has a saved credential. */
-export function showCredentialState(saved, origin) {
-    credentials = {saved, origin};
+export function showCredentialState(saved, origin, {signedIn = false, offered = false} = {}) {
+    credentials = {saved, origin, signedIn, offered};
     $('menu').classList.toggle('active', saved);
+}
+
+const hostName = (origin) => { try { return new URL(origin).host; } catch { return origin; } };
+
+/** The menu entry for site credentials says what is known about the current site, without asking anyone. */
+function credentialsLabel() {
+    if (credentials.signedIn) return `Signed in to ${hostName(credentials.origin)}`;
+    if (credentials.saved) return 'Site credentials (saved for this site)';
+    if (credentials.offered) return `Sign in with ${hostName(credentials.origin)}\u2026`;
+    return 'Site credentials\u2026';
 }
 
 function item(role, label, checked, onClick, lead) {
@@ -109,7 +119,7 @@ export function initMenu(actions) {
     };
 
     function build() {
-        const creds = item('menuitem', credentials.saved ? 'Site credentials (saved for this site)' : 'Site credentials\u2026', null,
+        const creds = item('menuitem', credentialsLabel(), null,
             () => { close(); actions.credentials(); }, icon('key'));
         const markdownEntry = item('menuitemcheckbox', 'Look for markdown versions of pages', markdownVersions, async () => { markdownVersions = !markdownVersions; try { await actions.setMarkdownVersions(markdownVersions); } catch { markdownVersions = !markdownVersions; } build(); });
         const bonbonEntry = item('menuitemcheckbox', 'Bonbon mode: markdown only', bonbon, async () => { bonbon = !bonbon; try { await actions.setBonbon(bonbon); } catch { bonbon = !bonbon; } build(); });

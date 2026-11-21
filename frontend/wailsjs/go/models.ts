@@ -57,6 +57,51 @@ export namespace ai {
 
 export namespace auth {
 	
+	export class OAuthInfo {
+	    clientId: string;
+	    clientSecret?: string;
+	    redirect: string;
+	    tokenUrl: string;
+	    revocationUrl?: string;
+	    refreshToken?: string;
+	    // Go type: time
+	    expiresAt?: any;
+	    scope?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OAuthInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.clientId = source["clientId"];
+	        this.clientSecret = source["clientSecret"];
+	        this.redirect = source["redirect"];
+	        this.tokenUrl = source["tokenUrl"];
+	        this.revocationUrl = source["revocationUrl"];
+	        this.refreshToken = source["refreshToken"];
+	        this.expiresAt = this.convertValues(source["expiresAt"], null);
+	        this.scope = source["scope"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class Credential {
 	    origin: string;
 	    kind: string;
@@ -65,6 +110,7 @@ export namespace auth {
 	    username?: string;
 	    password?: string;
 	    allowHttp?: boolean;
+	    oauth?: OAuthInfo;
 	
 	    static createFrom(source: any = {}) {
 	        return new Credential(source);
@@ -79,13 +125,34 @@ export namespace auth {
 	        this.username = source["username"];
 	        this.password = source["password"];
 	        this.allowHttp = source["allowHttp"];
+	        this.oauth = this.convertValues(source["oauth"], OAuthInfo);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class Info {
 	    origin: string;
 	    kind: string;
 	    username?: string;
 	    allowHttp?: boolean;
+	    oauth?: boolean;
+	    scope?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Info(source);
@@ -97,6 +164,8 @@ export namespace auth {
 	        this.kind = source["kind"];
 	        this.username = source["username"];
 	        this.allowHttp = source["allowHttp"];
+	        this.oauth = source["oauth"];
+	        this.scope = source["scope"];
 	    }
 	}
 
@@ -433,6 +502,42 @@ export namespace core {
 	        this.html = source["html"];
 	        this.source = source["source"];
 	        this.millis = source["millis"];
+	    }
+	}
+	export class ConnectOffer {
+	    origin: string;
+	    known: boolean;
+	    available: boolean;
+	    reason: string;
+	    scopes: string[];
+	    signedIn: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConnectOffer(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.origin = source["origin"];
+	        this.known = source["known"];
+	        this.available = source["available"];
+	        this.reason = source["reason"];
+	        this.scopes = source["scopes"];
+	        this.signedIn = source["signedIn"];
+	    }
+	}
+	export class ConnectStarted {
+	    id: string;
+	    url: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConnectStarted(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.url = source["url"];
 	    }
 	}
 	export class Converted {

@@ -78,6 +78,26 @@ export function CompareTabs(arg1, arg2, arg3) {
   return window['go']['main']['App']['CompareTabs'](arg1, arg2, arg3);
 }
 
+export function ConnectCancel(arg1) {
+  return window['go']['main']['App']['ConnectCancel'](arg1);
+}
+
+export function ConnectFinish(arg1) {
+  return window['go']['main']['App']['ConnectFinish'](arg1);
+}
+
+export function ConnectOffer(arg1) {
+  return window['go']['main']['App']['ConnectOffer'](arg1);
+}
+
+export function ConnectStart(arg1, arg2) {
+  return window['go']['main']['App']['ConnectStart'](arg1, arg2);
+}
+
+export function ConnectStatus(arg1) {
+  return window['go']['main']['App']['ConnectStatus'](arg1);
+}
+
 export function ConvertPage(arg1, arg2, arg3) {
   return window['go']['main']['App']['ConvertPage'](arg1, arg2, arg3);
 }

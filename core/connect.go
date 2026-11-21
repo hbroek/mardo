@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +26,7 @@ import (
 // ConnectOffer says whether Mardo can sign in to a site.
 type ConnectOffer struct {
 	Origin    string   `json:"origin"`
+	Known     bool     `json:"known"` // the site has been asked (ConnectStatus asks nobody)
 	Available bool     `json:"available"`
 	Reason    string   `json:"reason"` // why not, when it is not available
 	Scopes    []string `json:"scopes"` // what the site offers, to be asked for
@@ -49,12 +52,75 @@ type connectRegistry struct {
 	offers   map[string]cachedOffer
 }
 
+// cachedOffer is what a site said about its sign-in, kept in signin-offers.json so that a restart does not ask again.
 type cachedOffer struct {
-	offer ConnectOffer
-	at    time.Time
+	Available bool      `json:"available"`
+	Scopes    []string  `json:"scopes,omitempty"`
+	Reason    string    `json:"reason,omitempty"`
+	At        time.Time `json:"at"`
+	Unreached bool      `json:"unreached,omitempty"` // the site could not be reached, so the answer is not a real one
 }
 
-const offerTTL = 10 * time.Minute
+// How long an answer is kept: a sign-in that is offered for a week, none for a day, no answer at all for an hour.
+// So a site is asked about at most a few times a week, and only when the reader needs a sign-in there.
+const (
+	offerTTL         = 7 * 24 * time.Hour
+	noOfferTTL       = 24 * time.Hour
+	unreachableTTL   = time.Hour
+	signInOffersFile = "signin-offers.json"
+)
+
+func (c cachedOffer) fresh() bool {
+	ttl := noOfferTTL
+	switch {
+	case c.Available:
+		ttl = offerTTL
+	case c.Unreached:
+		ttl = unreachableTTL
+	}
+	return time.Since(c.At) < ttl
+}
+
+func (a *Core) offersFile() string {
+	if a.dir == "" {
+		return ""
+	}
+	return filepath.Join(a.dir, signInOffersFile)
+}
+
+// loadOffers reads the kept answers.
+func (a *Core) loadOffers() {
+	a.connects.mu.Lock()
+	defer a.connects.mu.Unlock()
+	a.connects.offers = map[string]cachedOffer{}
+	if f := a.offersFile(); f != "" {
+		if data, err := os.ReadFile(f); err == nil {
+			_ = json.Unmarshal(data, &a.connects.offers)
+		}
+	}
+}
+
+// saveOffers writes the answers that are still worth keeping. a.connects.mu is held.
+func (a *Core) saveOffers() {
+	f := a.offersFile()
+	if f == "" {
+		return
+	}
+	keep := map[string]cachedOffer{}
+	for k, v := range a.connects.offers {
+		if v.fresh() {
+			keep[k] = v
+		}
+	}
+	data, err := json.Marshal(keep)
+	if err != nil {
+		return
+	}
+	tmp := f + ".tmp"
+	if os.WriteFile(tmp, data, 0o600) == nil {
+		_ = os.Rename(tmp, f)
+	}
+}
 
 // oauthHTTP is the client for the sign-in's own requests: no cookies, whatever the reader has saved for the site.
 func oauthHTTP() *http.Client { return &http.Client{Timeout: 30 * time.Second} }
@@ -70,38 +136,63 @@ func (a *Core) signInOrigin(input string) (string, error) {
 	return origin, nil
 }
 
-// ConnectOffer asks the site whether it offers a sign-in Mardo can use. The answer is kept for a while.
+func (a *Core) signedInTo(origin string) bool {
+	c, ok := a.auth.Get(origin)
+	return ok && c.OAuth != nil
+}
+
+func offerOf(origin string, c cachedOffer, signedIn bool) ConnectOffer {
+	return ConnectOffer{Origin: origin, Known: true, Available: c.Available, Reason: c.Reason, Scopes: c.Scopes, SignedIn: signedIn}
+}
+
+// ConnectStatus is what Mardo knows about the sign-in at a site without asking anyone: whether the reader is signed
+// in there, and what the site said when it was last asked (Known is false when it never was, or the answer is old).
+// It is for labels that are drawn on every page.
+func (a *Core) ConnectStatus(site string) ConnectOffer {
+	origin, err := auth.NormalizeOrigin(site)
+	if err != nil {
+		return ConnectOffer{Origin: site}
+	}
+	signedIn := a.signedInTo(origin)
+	a.connects.mu.Lock()
+	c, ok := a.connects.offers[origin]
+	a.connects.mu.Unlock()
+	if ok && c.fresh() {
+		return offerOf(origin, c, signedIn)
+	}
+	return ConnectOffer{Origin: origin, SignedIn: signedIn}
+}
+
+// ConnectOffer asks the site whether it offers a sign-in Mardo can use, unless that was asked lately: the answer is
+// kept (see offerTTL). Call it where a sign-in is needed, not for every page.
 func (a *Core) ConnectOffer(site string) ConnectOffer {
 	origin, err := a.signInOrigin(site)
 	if err != nil {
 		return ConnectOffer{Origin: site, Reason: err.Error()}
 	}
-	signedIn := false
-	if c, ok := a.auth.Get(origin); ok && c.OAuth != nil {
-		signedIn = true
-	}
+	signedIn := a.signedInTo(origin)
 	a.connects.mu.Lock()
-	if c, ok := a.connects.offers[origin]; ok && time.Since(c.at) < offerTTL {
-		a.connects.mu.Unlock()
-		c.offer.SignedIn = signedIn
-		return c.offer
-	}
+	c, ok := a.connects.offers[origin]
 	a.connects.mu.Unlock()
+	if ok && c.fresh() {
+		return offerOf(origin, c, signedIn)
+	}
 	ctx, cancel := context.WithTimeout(a.ctx, 10*time.Second)
 	defer cancel()
-	offer := ConnectOffer{Origin: origin, SignedIn: signedIn}
+	c = cachedOffer{At: time.Now()}
 	if md, err := connect.Discover(ctx, oauthHTTP(), origin); err != nil {
-		offer.Reason = err.Error()
+		c.Reason, c.Unreached = err.Error(), errors.Is(err, connect.ErrUnreachable)
 	} else {
-		offer.Available, offer.Scopes = true, md.ScopesSupported
+		c.Available, c.Scopes = true, md.ScopesSupported
 	}
 	a.connects.mu.Lock()
 	if a.connects.offers == nil {
 		a.connects.offers = map[string]cachedOffer{}
 	}
-	a.connects.offers[origin] = cachedOffer{offer: offer, at: time.Now()}
+	a.connects.offers[origin] = c
+	a.saveOffers()
 	a.connects.mu.Unlock()
-	return offer
+	return offerOf(origin, c, signedIn)
 }
 
 // ConnectStart begins a sign-in at the site: scope is what to ask for ("" for all the site offers). It returns the

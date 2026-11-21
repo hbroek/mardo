@@ -1,7 +1,7 @@
 import './style.css';
 import './schemes.css';
 import './pagestyles.css';
-import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions, Favicon} from '../wailsjs/go/main/App';
+import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions, Favicon, ConnectOffer, ConnectStatus} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn, BrowserOpenURL} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -26,7 +26,7 @@ import './imagealign.js';
 import * as finder from './find.js';
 import {hasNoBody} from './emptybody.js';
 import './linkstatus.js';
-import {initCredentials, openCredentials, credentialOrigins} from './creds.js';
+import {initCredentials, openCredentials, credentialOrigins, signInWith} from './creds.js';
 
 const $ = (id) => document.getElementById(id);
 const address = $('address');
@@ -307,15 +307,27 @@ EventsOn('actionicons', () => { refreshSendBar(); faviconFor = ''; syncFavicon(c
 
 let faviconFor = ''; // the page the icon in the bar is for, so that it is asked for once
 
-/** Shows the icon in the address field, or none. It is a background picture, so the field's layout is the same. */
-function setAddressIcon(data) {
+let faviconData = ''; // the icon of the site shown, at the left of the address field
+let signedInHost = ''; // the site shown, when the reader is signed in to it: a key at the right
+const KEY = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg>');
+
+/** Paints the icons in the address field: a background picture each, so the layout of the field is the same. */
+function paintAddress() {
     const s = address.style;
-    s.backgroundImage = data ? `url("${data}")` : '';
-    s.backgroundRepeat = data ? 'no-repeat' : '';
-    s.backgroundPosition = data ? '10px center' : '';
-    s.backgroundSize = data ? '16px 16px' : '';
-    address.classList.toggle('has-icon', Boolean(data));
+    const layers = [];
+    const positions = [];
+    if (faviconData) { layers.push(`url("${faviconData}")`); positions.push('10px center'); }
+    if (signedInHost) { layers.push(`url("${KEY}")`); positions.push('right 10px center'); }
+    s.backgroundImage = layers.join(', ');
+    s.backgroundRepeat = layers.length ? 'no-repeat' : '';
+    s.backgroundPosition = positions.join(', ');
+    s.backgroundSize = layers.length ? '16px 16px' : '';
+    address.classList.toggle('has-icon', Boolean(faviconData));
+    address.classList.toggle('has-key', Boolean(signedInHost));
+    address.title = signedInHost ? `Signed in to ${signedInHost}` : '';
 }
+
+const setAddressIcon = (data) => { faviconData = data; paintAddress(); };
 
 /** Asks for the icon of the page shown (the one its front matter names, else its site's); it comes from the cache, or
  *  later, with an event. Only web pages have one. */
@@ -402,7 +414,7 @@ function render() {
         !p ? view.welcome()
             : p.kind === 'markdown' ? (showSource ? view.source(p, editor()) : view.markdown(p))
             : p.kind === 'fallback' ? view.fallback(p, (origin) => openCredentials({origin}), {rules: () => convertPage('rules'), ai: () => convertPage('ai'), aiAvailable: aiReady()})
-            : view.error(p, () => goActive((id) => Navigate(id, p.url)), (page) => openCredentials({origin: page.origin, kind: page.authScheme === 'basic' ? 'basic' : page.authScheme === 'bearer' ? 'bearer' : 'cookie'})));
+            : view.error(p, () => goActive((id) => Navigate(id, p.url)), (page) => openCredentials({origin: page.origin, kind: page.authScheme === 'basic' ? 'basic' : page.authScheme === 'bearer' ? 'bearer' : 'cookie'}), {offer: (o) => ConnectOffer(o), start: (o) => signInWith(o)}));
     const extras = [active?.draft != null ? null : copyBar(p), variantBar(p), ownAddressBar(p), searchSwitch(p), // no copy button over the text box while editing
         active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
     content.replaceChildren(...extras, body);
@@ -1153,7 +1165,11 @@ function originOf(url) {
 async function updateCredentialIndicator() {
     const origin = originOf(currentPage()?.url ?? '');
     const saved = origin && (await credentialOrigins()).has(origin);
-    showCredentialState(Boolean(saved), origin);
+    let status = {};
+    if (origin) { try { status = await ConnectStatus(origin); } catch { /* the label is the plain one */ } } // from what is kept: no request
+    showCredentialState(Boolean(saved), origin, {signedIn: Boolean(status.signedIn), offered: Boolean(status.known && status.available)});
+    signedInHost = status.signedIn ? new URL(origin).host : '';
+    paintAddress();
 }
 
 initCredentials((origin) => {

@@ -194,6 +194,8 @@ body.loading::before {
 .toolbar button:not(:disabled):hover { background: var(--hover); }
 #address.has-icon { padding-left: 32px; }
 html.phone #address.has-icon { padding-left: 34px; }
+#address.has-key { padding-right: 32px; }
+html.phone #address.has-key { padding-right: 34px; }
 #address:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 /* shared page layout */
@@ -351,6 +353,11 @@ button.primary { background: var(--grad-btn); border-color: transparent; color: 
 #cred-list li { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
 #cred-list li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #cred-list button { padding: 2px 10px; }
+.cred-connect { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bar); }
+.cred-connect p { margin: 0 0 6px; }
+.cred-connect button { margin-top: 2px; }
+.connect-scopes { margin: 0 0 8px; padding-left: 18px; font-size: 0.9em; color: var(--muted); }
+.connect-scopes:empty { display: none; }
 #cred-status { min-height: 1.4em; margin: 0; color: var(--muted); }
 #cred-status.error-text { color: #d1242f; }
 .error button { margin-right: 8px; }

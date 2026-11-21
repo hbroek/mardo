@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -28,6 +29,7 @@ type site struct {
 	noRefresh  bool // a refresh answer without a new refresh token
 	meta       func(map[string]any)
 	denyReg    bool
+	lastReg    map[string]any // what the last registration said about the app
 }
 
 func newSite(t *testing.T) *site {
@@ -56,6 +58,7 @@ func newSite(t *testing.T) *site {
 		json.NewDecoder(r.Body).Decode(&in)
 		s.mu.Lock()
 		s.registered++
+		s.lastReg = in
 		s.mu.Unlock()
 		w.WriteHeader(201)
 		json.NewEncoder(w).Encode(map[string]any{"client_id": "cid", "client_secret": "sec", "redirect_uris": in["redirect_uris"]})
@@ -293,5 +296,39 @@ func TestRevoke(t *testing.T) {
 	}
 	if len(s.revoked) != 1 || s.revoked[0] != "tok" {
 		t.Errorf("revoked %v", s.revoked)
+	}
+}
+
+func TestRegistrationTellsTheSiteWhoMardoIs(t *testing.T) {
+	s := newSite(t)
+	sess, err := Begin(context.Background(), http.DefaultClient, s.URL, "a", nil, freePort(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+	for k, want := range map[string]string{"client_name": "Mardo", "client_uri": ClientURI, "logo_uri": LogoURI, "policy_uri": PolicyURI} {
+		if s.lastReg[k] != want {
+			t.Errorf("%s = %v, want %s", k, s.lastReg[k], want)
+		}
+	}
+	if !strings.HasPrefix(LogoURI, "https://") {
+		t.Errorf("the logo must be an https address: %s", LogoURI)
+	}
+}
+
+func TestAClientFromAnOlderRegistrationIsRegisteredAgain(t *testing.T) {
+	s := newSite(t)
+	port := freePort(t)
+	old := Client{ID: "old", Secret: "old", Redirect: "http://127.0.0.1:" + strconv.Itoa(port) + "/callback"} // no version: made before the logo
+	sess, err := Begin(context.Background(), http.DefaultClient, s.URL, "a", &old, port)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+	if s.registered != 1 || sess.Client().ID == "old" {
+		t.Errorf("registered %d times, client %s", s.registered, sess.Client().ID)
+	}
+	if sess.Client().Version != registrationVersion {
+		t.Errorf("version %d", sess.Client().Version)
 	}
 }

@@ -26,6 +26,7 @@ type oauthSite struct {
 	grants    []string // what the token endpoint was asked for
 	revoked   []string
 	seq       int
+	asked     int // how many times the sign-in metadata was fetched
 }
 
 func newOAuthSite(t *testing.T) *oauthSite {
@@ -34,6 +35,9 @@ func newOAuthSite(t *testing.T) *oauthSite {
 	s.Server = httptest.NewServer(mux)
 	t.Cleanup(s.Close)
 	mux.HandleFunc("/.well-known/oauth-authorization-server", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		s.asked++
+		s.mu.Unlock()
 		json.NewEncoder(w).Encode(map[string]any{
 			"issuer": s.URL, "authorization_endpoint": s.URL + "/oauth/authorize", "token_endpoint": s.URL + "/oauth/token",
 			"registration_endpoint": s.URL + "/oauth/register", "revocation_endpoint": s.URL + "/oauth/revoke",
@@ -224,5 +228,74 @@ func TestSignInRefusals(t *testing.T) {
 	}
 	if _, err := a.ConnectFinish("nothing"); err == nil {
 		t.Error("finished a sign-in that was never started")
+	}
+}
+
+func TestTheSiteIsAskedAboutItsSignInRarely(t *testing.T) {
+	site := newOAuthSite(t)
+	dir := t.TempDir()
+	a := newTestCore(t, dir)
+	// Knowing what is known asks nobody.
+	if st := a.ConnectStatus(site.URL); st.Known || st.Available || site.asked != 0 {
+		t.Fatalf("status before asking = %+v, asked %d", st, site.asked)
+	}
+	first := a.ConnectOffer(site.URL)
+	again := a.ConnectOffer(site.URL)
+	if !first.Available || !again.Available || site.asked != 1 {
+		t.Fatalf("asked %d times for two calls: %+v %+v", site.asked, first, again)
+	}
+	if st := a.ConnectStatus(site.URL); !st.Known || !st.Available || site.asked != 1 {
+		t.Errorf("status after asking = %+v, asked %d", st, site.asked)
+	}
+	// A restart remembers: no new request.
+	a.bmMu.Lock()
+	a.bookmarks.Close()
+	a.bmMu.Unlock()
+	b := newTestCore(t, dir)
+	if st := b.ConnectStatus(site.URL); !st.Known || !st.Available || len(st.Scopes) != 2 {
+		t.Errorf("after a restart: %+v", st)
+	}
+	if b.ConnectOffer(site.URL); site.asked != 1 {
+		t.Errorf("asked again after a restart (%d)", site.asked)
+	}
+}
+
+func TestSitesWithoutASignInAreRememberedToo(t *testing.T) {
+	var asked int
+	none := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { asked++; http.NotFound(w, r) }))
+	defer none.Close()
+	a := newTestCore(t, t.TempDir())
+	for i := 0; i < 3; i++ {
+		if o := a.ConnectOffer(none.URL); o.Available || !o.Known {
+			t.Fatalf("offer = %+v", o)
+		}
+	}
+	if asked != 2 { // the two well-known addresses, once
+		t.Errorf("asked %d times", asked)
+	}
+	// A site that cannot be reached is a different answer: it is asked again soon, not tomorrow.
+	gone := httptest.NewServer(http.NotFoundHandler())
+	url := gone.URL
+	gone.Close()
+	o := a.ConnectOffer(url)
+	if o.Available || !strings.Contains(o.Reason, "could not reach") {
+		t.Fatalf("unreachable = %+v", o)
+	}
+	a.connects.mu.Lock()
+	c := a.connects.offers[url]
+	a.connects.mu.Unlock()
+	if !c.Unreached || !c.fresh() {
+		t.Errorf("the unreached answer = %+v", c)
+	}
+	c.At = time.Now().Add(-2 * time.Hour)
+	if c.fresh() {
+		t.Error("an answer of no contact was kept for hours")
+	}
+	n := cachedOffer{Reason: "none", At: time.Now().Add(-2 * time.Hour)}
+	if !n.fresh() {
+		t.Error("an answer of no sign-in was not kept for a day")
+	}
+	if (cachedOffer{Available: true, At: time.Now().Add(-6 * 24 * time.Hour)}).fresh() != true || (cachedOffer{Available: true, At: time.Now().Add(-8 * 24 * time.Hour)}).fresh() {
+		t.Error("a sign-in that is offered should be kept for a week")
 	}
 }

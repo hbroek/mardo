@@ -108,6 +108,11 @@
     <h2 id="creds-title">Site credentials</h2>
     <p class="note">Stored in your system keychain and sent only to the exact site you enter.</p>
     <ul id="cred-list"></ul>
+    <div id="cred-connect" class="cred-connect" hidden>
+        <p><strong id="cred-connect-title"></strong></p>
+        <p class="note" id="cred-connect-note"></p>
+        <button type="button" id="cred-connect-btn" class="primary"></button>
+    </div>
     <form id="cred-form" autocomplete="off">
         <label>Site <input id="cred-origin" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="https://example.com" required></label>
         <label>Type
@@ -170,6 +175,17 @@
     </div>
 </dialog>
 
+<dialog id="connect-dialog" aria-labelledby="connect-title">
+    <h2 id="connect-title">Sign in</h2>
+    <p id="connect-text"></p>
+    <ul id="connect-scopes" class="connect-scopes"></ul>
+    <p id="connect-status" role="status"></p>
+    <div class="dialog-actions">
+        <span class="spacer"></span>
+        <button type="button" id="connect-cancel">Cancel</button>
+        <button type="button" id="connect-go" class="primary">Open the sign-in page</button>
+    </div>
+</dialog>
 <dialog id="action-dialog" aria-labelledby="action-title">
     <h2 id="action-title">Send the page?</h2>
     <p id="action-text"></p>

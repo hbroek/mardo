@@ -46,6 +46,16 @@ export function CloseTab(arg1:number):Promise<void>;
 
 export function CompareTabs(arg1:string,arg2:Array<string>,arg3:string):Promise<core.AISummary>;
 
+export function ConnectCancel(arg1:string):Promise<void>;
+
+export function ConnectFinish(arg1:string):Promise<auth.Info>;
+
+export function ConnectOffer(arg1:string):Promise<core.ConnectOffer>;
+
+export function ConnectStart(arg1:string,arg2:string):Promise<core.ConnectStarted>;
+
+export function ConnectStatus(arg1:string):Promise<core.ConnectOffer>;
+
 export function ConvertPage(arg1:string,arg2:string,arg3:string):Promise<core.Converted>;
 
 export function Credentials():Promise<Array<auth.Info>>;

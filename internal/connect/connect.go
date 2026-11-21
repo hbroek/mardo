@@ -45,11 +45,25 @@ type Metadata struct {
 	ScopesSupported       []string `json:"scopes_supported"`
 }
 
+// What Mardo tells a site about itself when it registers, for the page where the reader is asked to approve it
+// (RFC 7591: client_name, client_uri, logo_uri, policy_uri).
+const (
+	ClientName = "Mardo"
+	ClientURI  = "https://mardo.henryvandenbroek.com"
+	LogoURI    = "https://mardo.henryvandenbroek.com/icon.png"
+	PolicyURI  = "https://mardo.henryvandenbroek.com/privacy.html"
+)
+
+// registrationVersion changes when what Mardo tells a site about itself does. A site cannot be asked to update a
+// registration, so a client kept from an older version is registered again.
+const registrationVersion = 2
+
 // Client is what a site gave Mardo when it registered.
 type Client struct {
 	ID       string `json:"id"`
 	Secret   string `json:"secret,omitempty"`
 	Redirect string `json:"redirect"` // the local address this client was registered for
+	Version  int    `json:"v,omitempty"`
 }
 
 // Tokens is what a site gives for a sign-in.
@@ -71,6 +85,10 @@ type wire struct {
 	Error        string `json:"error"`
 	Description  string `json:"error_description"`
 }
+
+// ErrUnreachable means the site could not be asked (no network, a timeout), as against a site that answered and has no
+// sign-in. The first is worth asking again soon, the second is not.
+var ErrUnreachable = errors.New("could not reach the site")
 
 // ErrInvalidGrant means the site no longer accepts the refresh token (revoked or expired): the reader must sign in again.
 var ErrInvalidGrant = errors.New("the sign-in has ended: sign in to the site again")
@@ -109,9 +127,16 @@ func Discover(ctx context.Context, hc *http.Client, origin string) (Metadata, er
 	origin = strings.TrimRight(origin, "/")
 	hc = NoRedirects(hc)
 	var md Metadata
+	var unreached error
+	answered := false
 	for _, path := range []string{"/.well-known/oauth-authorization-server", "/.well-known/openid-configuration"} {
 		status, body, err := get(ctx, hc, origin+path)
-		if err != nil || status != http.StatusOK {
+		if err != nil {
+			unreached = err
+			continue
+		}
+		answered = true
+		if status != http.StatusOK {
 			continue
 		}
 		md = Metadata{}
@@ -130,6 +155,9 @@ func Discover(ctx context.Context, hc *http.Client, origin string) (Metadata, er
 			}
 		}
 		return md, nil
+	}
+	if !answered && unreached != nil {
+		return Metadata{}, fmt.Errorf("%w: %v", ErrUnreachable, unreached)
 	}
 	return Metadata{}, errors.New("this site does not offer a sign-in that Mardo can use")
 }
@@ -153,7 +181,7 @@ func Register(ctx context.Context, hc *http.Client, md Metadata, redirect, scope
 		method = "none"
 	}
 	body, _ := json.Marshal(map[string]any{
-		"client_name": "Mardo", "client_uri": "https://mardo.henryvandenbroek.com",
+		"client_name": ClientName, "client_uri": ClientURI, "logo_uri": LogoURI, "policy_uri": PolicyURI,
 		"redirect_uris": []string{redirect}, "grant_types": []string{"authorization_code", "refresh_token"},
 		"response_types": []string{"code"}, "token_endpoint_auth_method": method, "scope": scope,
 	})
@@ -183,7 +211,7 @@ func Register(ctx context.Context, hc *http.Client, md Metadata, redirect, scope
 	if len(out.RedirectURIs) > 0 && !contains(out.RedirectURIs, redirect) {
 		return Client{}, errors.New("the site did not keep the address Mardo comes back to")
 	}
-	return Client{ID: out.ClientID, Secret: out.ClientSecret, Redirect: redirect}, nil
+	return Client{ID: out.ClientID, Secret: out.ClientSecret, Redirect: redirect, Version: registrationVersion}, nil
 }
 
 func tokenRequest(ctx context.Context, hc *http.Client, endpoint string, form url.Values) (Tokens, error) {
@@ -298,7 +326,7 @@ func Begin(ctx context.Context, hc *http.Client, origin, scope string, kept *Cli
 	}
 	redirect := fmt.Sprintf("http://127.0.0.1:%d/callback", l.Addr().(*net.TCPAddr).Port)
 	s := &Session{hc: hc, md: md, redirect: redirect, listener: l, got: make(chan callback, 1)}
-	if kept != nil && kept.ID != "" && kept.Redirect == redirect {
+	if kept != nil && kept.ID != "" && kept.Redirect == redirect && kept.Version == registrationVersion {
 		s.client = *kept
 	} else if s.client, err = Register(ctx, hc, md, redirect, scope); err != nil {
 		l.Close()
