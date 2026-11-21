@@ -209,14 +209,12 @@ func (a *Core) refreshSignIn(ctx context.Context, c auth.Credential) (auth.Crede
 	return next, nil
 }
 
-// revokeSignIn tells the site to forget a sign-in that is being removed. It is best effort: the credential goes either way.
-func (a *Core) revokeSignIn(origin string) {
-	c, ok := a.auth.Get(origin)
-	if !ok || c.OAuth == nil || c.OAuth.RevocationURL == "" {
+// revokeSignIn tells the site to forget a sign-in that is being removed (the auth package calls it). It is best
+// effort: the credential goes either way.
+func (a *Core) revokeSignIn(ctx context.Context, c auth.Credential) {
+	if c.OAuth == nil || c.OAuth.RevocationURL == "" {
 		return
 	}
-	ctx, cancel := context.WithTimeout(a.ctx, 8*time.Second)
-	defer cancel()
 	client := connect.Client{ID: c.OAuth.ClientID, Secret: c.OAuth.ClientSecret}
 	if c.OAuth.RefreshToken != "" {
 		_ = connect.Revoke(ctx, oauthHTTP(), c.OAuth.RevocationURL, client, c.OAuth.RefreshToken)

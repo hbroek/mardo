@@ -73,6 +73,9 @@ type Info struct {
 // Refresher gets a credential with new tokens for one that is about to end. It must not change c.
 type Refresher func(ctx context.Context, c Credential) (Credential, error)
 
+// Revoker tells the site to forget the tokens of a credential that is being removed or thrown away. Best effort.
+type Revoker func(ctx context.Context, c Credential)
+
 // Manager implements fetch.Authorizer. Secrets live in the keychain; a small
 // index of origins (no secrets) lives in a file so they can be listed.
 type Manager struct {
@@ -84,6 +87,7 @@ type Manager struct {
 
 	refreshMu sync.Mutex // one renewal at a time: a site that replaces refresh tokens would end the sign-in at the second
 	refresher Refresher
+	revoker   Revoker
 	failed    map[string]time.Time // when renewing last failed, so that it is not tried at every request
 }
 
@@ -246,6 +250,13 @@ func (m *Manager) Delete(origin string) error {
 	if err != nil {
 		return err
 	}
+	// Wait for a renewal that is under way, and keep new ones from starting: it would save its tokens after this.
+	// Then the site is told to forget the latest tokens.
+	m.refreshMu.Lock()
+	defer m.refreshMu.Unlock()
+	if c, ok := m.lookup(origin); ok {
+		m.revoke(c)
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.secrets.Delete(secretName(origin)); err != nil {
@@ -320,6 +331,23 @@ func (m *Manager) SetRefresher(r Refresher) {
 	m.refreshMu.Unlock()
 }
 
+// SetRevoker says how a sign-in is ended at the site when it is removed.
+func (m *Manager) SetRevoker(r Revoker) {
+	m.refreshMu.Lock()
+	m.revoker = r
+	m.refreshMu.Unlock()
+}
+
+// revoke ends a credential's tokens at the site, within a short time. refreshMu is held.
+func (m *Manager) revoke(c Credential) {
+	if m.revoker == nil || c.OAuth == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	m.revoker(ctx, c)
+}
+
 // Get is the saved credential for origin, for what Mardo does itself (revoking a sign-in); the frontend never has it.
 func (m *Manager) Get(origin string) (Credential, bool) {
 	origin, err := NormalizeOrigin(origin)
@@ -354,6 +382,15 @@ func (m *Manager) fresh(origin string, c Credential) Credential {
 		return c
 	}
 	next.Origin = origin
+	// Signed out, or signed in again, while the site was answering: the new tokens are not wanted, and the site is told
+	// to forget them. Saving them would undo the sign-out.
+	if cur, ok := m.lookup(origin); !ok || cur.Token != c.Token {
+		m.revoke(next)
+		if ok {
+			return cur
+		}
+		return c
+	}
 	if _, err := m.Save(next); err != nil {
 		m.failed[origin] = time.Now()
 		return c

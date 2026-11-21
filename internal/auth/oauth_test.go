@@ -119,3 +119,80 @@ func TestKeptClients(t *testing.T) {
 		t.Errorf("client = %q, %v", got, ok)
 	}
 }
+
+// slowRefresher is a renewal that waits, as a site answering slowly does, until it is let go.
+func slowRefresher(started, release chan struct{}) Refresher {
+	return func(ctx context.Context, c Credential) (Credential, error) {
+		close(started)
+		<-release
+		next := c
+		o := *c.OAuth
+		o.RefreshToken, o.ExpiresAt = "renewed-refresh", time.Now().Add(time.Hour)
+		next.Token, next.OAuth = "renewed-access", &o
+		return next, nil
+	}
+}
+
+func TestSigningOutDuringARenewalIsNotUndone(t *testing.T) {
+	m := NewManager(&MemorySecrets{}, "")
+	started, release := make(chan struct{}), make(chan struct{})
+	m.SetRefresher(slowRefresher(started, release))
+	var mu sync.Mutex
+	var revoked []string
+	m.SetRevoker(func(ctx context.Context, c Credential) { mu.Lock(); revoked = append(revoked, c.Token); mu.Unlock() })
+	m.Save(oauthCred(-time.Minute)) // ended: the next request renews it
+
+	done := make(chan struct{})
+	go func() { bearerOf(m); close(done) }()
+	<-started // the site is answering
+
+	deleted := make(chan error, 1)
+	go func() { deleted <- m.Delete("https://site.test") }() // the reader signs out meanwhile
+	select {
+	case <-deleted:
+		t.Fatal("signing out did not wait for the renewal")
+	case <-time.After(100 * time.Millisecond):
+	}
+	close(release)
+	<-done
+	if err := <-deleted; err != nil {
+		t.Fatal(err)
+	}
+	if m.Readable("https://site.test") || len(m.List()) != 0 {
+		t.Errorf("the credential came back: %+v", m.List())
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(revoked) != 1 || revoked[0] != "renewed-access" {
+		t.Errorf("the site was told to forget %v; it should be the newest tokens", revoked)
+	}
+}
+
+func TestSigningInAgainDuringARenewalKeepsTheNewSignIn(t *testing.T) {
+	m := NewManager(&MemorySecrets{}, "")
+	started, release := make(chan struct{}), make(chan struct{})
+	m.SetRefresher(slowRefresher(started, release))
+	var mu sync.Mutex
+	var revoked []string
+	m.SetRevoker(func(ctx context.Context, c Credential) { mu.Lock(); revoked = append(revoked, c.Token); mu.Unlock() })
+	m.Save(oauthCred(-time.Minute))
+
+	done := make(chan struct{})
+	go func() { bearerOf(m); close(done) }()
+	<-started
+	again := oauthCred(time.Hour)
+	again.Token, again.OAuth.RefreshToken = "second-sign-in", "second-refresh"
+	if _, err := m.Save(again); err != nil { // a new sign-in while the old one is renewing
+		t.Fatal(err)
+	}
+	close(release)
+	<-done
+	if c, _ := m.Get("https://site.test"); c.Token != "second-sign-in" || c.OAuth.RefreshToken != "second-refresh" {
+		t.Errorf("the renewal of the old sign-in replaced the new one: %+v", c.Token)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(revoked) != 1 || revoked[0] != "renewed-access" {
+		t.Errorf("the discarded tokens were not revoked: %v", revoked)
+	}
+}
