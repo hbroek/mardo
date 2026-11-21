@@ -3,6 +3,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +37,27 @@ type Credential struct {
 	Username  string `json:"username,omitempty"`
 	Password  string `json:"password,omitempty"`
 	AllowHTTP bool   `json:"allowHttp,omitempty"` // the user accepted sending this over plain http
+
+	// OAuth is set when the token came from signing in to the site (see internal/connect): the token is then renewed
+	// before it expires. A token the user typed in has none.
+	OAuth *OAuthInfo `json:"oauth,omitempty"`
+}
+
+// OAuthInfo is what is needed to renew a token got by signing in.
+type OAuthInfo struct {
+	ClientID      string    `json:"clientId"`
+	ClientSecret  string    `json:"clientSecret,omitempty"`
+	Redirect      string    `json:"redirect"`
+	TokenURL      string    `json:"tokenUrl"`
+	RevocationURL string    `json:"revocationUrl,omitempty"`
+	RefreshToken  string    `json:"refreshToken,omitempty"`
+	ExpiresAt     time.Time `json:"expiresAt,omitempty"` // zero: the site did not say
+	Scope         string    `json:"scope,omitempty"`
+}
+
+// expiring says whether the access token has ended or is about to.
+func (o *OAuthInfo) expiring() bool {
+	return o != nil && o.RefreshToken != "" && !o.ExpiresAt.IsZero() && time.Until(o.ExpiresAt) < time.Minute
 }
 
 // Info is the non-secret description of a saved credential.
@@ -44,7 +66,12 @@ type Info struct {
 	Kind      Kind   `json:"kind"`
 	Username  string `json:"username,omitempty"`
 	AllowHTTP bool   `json:"allowHttp,omitempty"`
+	OAuth     bool   `json:"oauth,omitempty"` // signed in to the site, not a token typed in
+	Scope     string `json:"scope,omitempty"`
 }
+
+// Refresher gets a credential with new tokens for one that is about to end. It must not change c.
+type Refresher func(ctx context.Context, c Credential) (Credential, error)
 
 // Manager implements fetch.Authorizer. Secrets live in the keychain; a small
 // index of origins (no secrets) lives in a file so they can be listed.
@@ -54,10 +81,14 @@ type Manager struct {
 	indexPath string // empty keeps the index in memory
 	index     map[string]Info
 	cache     map[string]Credential
+
+	refreshMu sync.Mutex // one renewal at a time: a site that replaces refresh tokens would end the sign-in at the second
+	refresher Refresher
+	failed    map[string]time.Time // when renewing last failed, so that it is not tried at every request
 }
 
 func NewManager(secrets Secrets, indexPath string) *Manager {
-	m := &Manager{secrets: secrets, indexPath: indexPath, index: map[string]Info{}, cache: map[string]Credential{}}
+	m := &Manager{secrets: secrets, indexPath: indexPath, index: map[string]Info{}, cache: map[string]Credential{}, failed: map[string]time.Time{}}
 	if data, err := os.ReadFile(indexPath); err == nil {
 		var infos []Info
 		if json.Unmarshal(data, &infos) == nil {
@@ -201,7 +232,11 @@ func (m *Manager) Save(c Credential) (string, error) {
 		return "", fmt.Errorf("cannot write to the keychain: %w", err)
 	}
 	m.cache[origin] = c
-	m.index[origin] = Info{Origin: origin, Kind: c.Kind, Username: c.Username, AllowHTTP: c.AllowHTTP}
+	info := Info{Origin: origin, Kind: c.Kind, Username: c.Username, AllowHTTP: c.AllowHTTP}
+	if c.OAuth != nil {
+		info.OAuth, info.Scope = true, c.OAuth.Scope
+	}
+	m.index[origin] = info
 	m.saveIndex()
 	return origin, nil
 }
@@ -220,6 +255,22 @@ func (m *Manager) Delete(origin string) error {
 	delete(m.index, origin)
 	m.saveIndex()
 	return nil
+}
+
+func clientName(origin string) string { return "oauthclient:" + origin }
+
+// SaveClient keeps what a site gave Mardo when it registered, for the next sign-in there.
+func (m *Manager) SaveClient(origin string, data []byte) error {
+	return m.secrets.Set(clientName(origin), string(data))
+}
+
+// Client is what SaveClient kept for origin.
+func (m *Manager) Client(origin string) ([]byte, bool) {
+	raw, err := m.secrets.Get(clientName(origin))
+	if err != nil || raw == "" {
+		return nil, false
+	}
+	return []byte(raw), true
 }
 
 // List returns the saved credentials without their secrets.
@@ -262,6 +313,55 @@ func (m *Manager) lookup(origin string) (Credential, bool) {
 	return c, true
 }
 
+// SetRefresher says how a token got by signing in is renewed.
+func (m *Manager) SetRefresher(r Refresher) {
+	m.refreshMu.Lock()
+	m.refresher = r
+	m.refreshMu.Unlock()
+}
+
+// Get is the saved credential for origin, for what Mardo does itself (revoking a sign-in); the frontend never has it.
+func (m *Manager) Get(origin string) (Credential, bool) {
+	origin, err := NormalizeOrigin(origin)
+	if err != nil {
+		return Credential{}, false
+	}
+	return m.lookup(origin)
+}
+
+// fresh renews a token that has ended or is about to, once, whatever the number of requests that notice. When the site
+// refuses, the old token is used (the request then fails with the site's answer) and it is not tried again for a minute.
+func (m *Manager) fresh(origin string, c Credential) Credential {
+	if c.Kind != Bearer || !c.OAuth.expiring() {
+		return c
+	}
+	m.refreshMu.Lock()
+	defer m.refreshMu.Unlock()
+	if cur, ok := m.lookup(origin); ok { // someone renewed it while this waited
+		c = cur
+		if !c.OAuth.expiring() {
+			return c
+		}
+	}
+	if m.refresher == nil || time.Since(m.failed[origin]) < time.Minute {
+		return c
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	next, err := m.refresher(ctx, c)
+	if err != nil {
+		m.failed[origin] = time.Now()
+		return c
+	}
+	next.Origin = origin
+	if _, err := m.Save(next); err != nil {
+		m.failed[origin] = time.Now()
+		return c
+	}
+	delete(m.failed, origin)
+	return next
+}
+
 // Apply attaches the saved credential, if any, for req's exact origin.
 func (m *Manager) Apply(req *http.Request) {
 	origin := Origin(req.URL)
@@ -269,6 +369,7 @@ func (m *Manager) Apply(req *http.Request) {
 	if !ok || !(Allowed(origin) || (c.AllowHTTP && isHTTP(origin))) {
 		return
 	}
+	c = m.fresh(origin, c)
 	switch c.Kind {
 	case Cookie:
 		req.Header.Set("Cookie", c.Cookie) // the cookie jar appends its own

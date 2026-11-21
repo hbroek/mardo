@@ -55,6 +55,7 @@ type Core struct {
 	icons     map[string]iconEntry      // the pictures of web addresses, for the actions (see icons.go)
 	iconBusy  map[string]bool           // the ones being fetched
 	iconWG    sync.WaitGroup            // fetches in progress, for tests to wait for
+	connects  connectRegistry           // sign-ins under way, and what sites offered (see connect.go)
 	iconsOff  bool                      // no fetching of pictures (tests)
 	chats     *chats.Store              // saved Ask this page conversations
 
@@ -102,6 +103,7 @@ func New(cfg Config) *Core {
 		a.loadIcons()
 	}
 	a.fetcher = fetch.NewFetcher(a.auth, a.jar)
+	a.auth.SetRefresher(a.refreshSignIn)
 	a.fetcher.Log.OnEntry = func(e fetch.Entry) { host.Emit("net", e) } // each request is pushed to the console as it completes
 	a.browser = browser.New(history.Open(file("history.json")), a.fetcher)
 	a.browser.OnUpdate = func(tab int, pageURL string) { host.Emit("pageupdated", map[string]any{"tab": tab, "url": pageURL}) } // the site says a page changed (Bonbon mode)
@@ -213,7 +215,10 @@ func (a *Core) Credentials() []auth.Info { return a.auth.List() }
 // normalized site origin it applies to.
 func (a *Core) SaveCredential(c auth.Credential) (string, error) { return a.auth.Save(c) }
 
-func (a *Core) DeleteCredential(origin string) error { return a.auth.Delete(origin) }
+func (a *Core) DeleteCredential(origin string) error {
+	a.revokeSignIn(origin) // a sign-in is ended at the site too
+	return a.auth.Delete(origin)
+}
 
 // ImportCookiesTxt saves the cookies for origin found in a cookies.txt export.
 func (a *Core) ImportCookiesTxt(origin, text string) (int, error) {
