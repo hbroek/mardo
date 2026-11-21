@@ -11,6 +11,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	_ "embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -361,16 +362,16 @@ func Begin(ctx context.Context, hc *http.Client, origin, scope string, kept *Cli
 		q := r.URL.Query()
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
-		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'")
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:")
 		if q.Get("state") != s.state { // not the sign-in Mardo started: something else on this computer, or an old page. It does not end the real one.
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, page, "Not for Mardo", "This does not belong to a sign-in that Mardo started.")
+			io.WriteString(w, "<!doctype html><meta charset=utf-8><title>Mardo</title><p>This does not belong to a sign-in that Mardo started.")
 			return
 		}
 		if q.Get("error") != "" || q.Get("code") == "" {
-			fmt.Fprintf(w, page, "Not signed in", "Mardo was not given access to "+html.EscapeString(host)+". You can close this window.")
+			io.WriteString(w, answerPage(false, host))
 		} else {
-			fmt.Fprintf(w, page, "Back in Mardo", "Mardo has the answer of "+html.EscapeString(host)+". You can close this window and go back to Mardo.")
+			io.WriteString(w, answerPage(true, host))
 		}
 		select {
 		case s.got <- callback{code: q.Get("code"), state: q.Get("state"), err: q.Get("error")}:
@@ -381,7 +382,38 @@ func Begin(ctx context.Context, hc *http.Client, origin, scope string, kept *Cli
 	return s, nil
 }
 
-const page = `<!doctype html><meta charset="utf-8"><title>Mardo</title><body style="font:16px system-ui;max-width:32em;margin:15vh auto;padding:0 1em"><h1>%s</h1><p>%s</p>`
+//go:embed icon.png
+var iconPNG []byte
+
+// answerPage is what the browser shows after the site sends the reader back. Its only text from outside is the
+// site's host name, escaped. The close button works when the browser allows a page to close its own window
+// (it does not for a window the reader opened themselves in some browsers), and says so when it does not.
+func answerPage(ok bool, host string) string {
+	title, text := "Back in Mardo", "Mardo has the answer of "+html.EscapeString(host)+". You can close this window and go back to Mardo."
+	mark := "&#10003;"
+	if !ok {
+		title, text, mark = "Not signed in", "Mardo was not given access to "+html.EscapeString(host)+". You can close this window.", "&#10005;"
+	}
+	return fmt.Sprintf(pageHTML, base64.StdEncoding.EncodeToString(iconPNG), mark, title, text)
+}
+
+const pageHTML = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mardo</title>
+<style>
+:root{color-scheme:light dark;--bg:#f6f3ee;--card:#fff;--ink:#241f2d;--soft:#6b6478;--accent:#6b4fbb}
+@media(prefers-color-scheme:dark){:root{--bg:#17151c;--card:#221f2b;--ink:#f1eef7;--soft:#a39cb3;--accent:#a58bf0}}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
+main{background:var(--card);border-radius:16px;box-shadow:0 8px 32px #0002;padding:2.5em 2em;max-width:26em;margin:1em;text-align:center}
+img{width:96px;height:96px;border-radius:22px}
+.mark{display:inline-grid;place-items:center;width:2em;height:2em;border-radius:50%%;background:var(--accent);color:#fff;font-weight:700;margin:.8em 0 0}
+h1{font-size:1.5em;margin:.3em 0}
+p{color:var(--soft);margin:.5em 0 1.5em}
+button{font:inherit;font-weight:600;background:var(--accent);color:#fff;border:0;border-radius:10px;padding:.6em 1.6em;cursor:pointer}
+button:hover{opacity:.9}
+small{display:block;margin-top:1em;color:var(--soft)}
+</style>
+<main><img alt="" src="data:image/png;base64,%s"><div class="mark">%s</div><h1>%s</h1><p>%s</p>
+<button id="x" type="button">Close this window</button><small id="n" hidden>Your browser did not let this page close itself. Close this tab yourself.</small></main>
+<script>document.getElementById("x").onclick=function(){window.close();setTimeout(function(){document.getElementById("n").hidden=false},300)}</script>`
 
 // Wait waits until the browser comes back (or ctx ends, or Timeout passes), checks that it is this sign-in that
 // came back, and trades the code for tokens.

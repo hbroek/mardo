@@ -332,3 +332,18 @@ func TestAClientFromAnOlderRegistrationIsRegisteredAgain(t *testing.T) {
 		t.Errorf("version %d", sess.Client().Version)
 	}
 }
+
+func TestTheAnswerPage(t *testing.T) {
+	p := answerPage(true, "<b>x</b>.example")
+	for _, want := range []string{"data:image/png;base64,", "Close this window", "Back in Mardo", "&lt;b&gt;x"} {
+		if !strings.Contains(p, want) {
+			t.Errorf("the page lacks %q", want)
+		}
+	}
+	if strings.Contains(p, "<b>x") || strings.Contains(p, "%!") {
+		t.Error("the host is not escaped, or the template is broken")
+	}
+	if !strings.Contains(answerPage(false, "h"), "Not signed in") {
+		t.Error("the refusal page")
+	}
+}
