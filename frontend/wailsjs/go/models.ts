@@ -763,6 +763,7 @@ export namespace page {
 	    html: string;
 	    source: string;
 	    links: Link[];
+	    favicon: string;
 	    markdownOf: string;
 	    negotiated: boolean;
 	    ownAddress: string;
@@ -790,6 +791,7 @@ export namespace page {
 	        this.html = source["html"];
 	        this.source = source["source"];
 	        this.links = this.convertValues(source["links"], Link);
+	        this.favicon = source["favicon"];
 	        this.markdownOf = source["markdownOf"];
 	        this.negotiated = source["negotiated"];
 	        this.ownAddress = source["ownAddress"];

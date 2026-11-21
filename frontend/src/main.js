@@ -1,7 +1,7 @@
 import './style.css';
 import './schemes.css';
 import './pagestyles.css';
-import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions} from '../wailsjs/go/main/App';
+import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions, Favicon} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn, BrowserOpenURL} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -301,7 +301,32 @@ function renderSendBar() {
 }
 window.addEventListener('focus', refreshSendBar); // a file was added or changed in the folder meanwhile
 if (sendBarOn) { renderSendBar(); refreshSendBar(); }
-EventsOn('actionicons', refreshSendBar); // a picture was got for an action
+EventsOn('actionicons', () => { refreshSendBar(); faviconFor = ''; syncFavicon(currentPage()); }); // a picture was got
+
+// --- the icon of the site, in the address bar ---
+
+let faviconFor = ''; // the page the icon in the bar is for, so that it is asked for once
+
+/** Shows the icon in the address field, or none. It is a background picture, so the field's layout is the same. */
+function setAddressIcon(data) {
+    const s = address.style;
+    s.backgroundImage = data ? `url("${data}")` : '';
+    s.backgroundRepeat = data ? 'no-repeat' : '';
+    s.backgroundPosition = data ? '10px center' : '';
+    s.backgroundSize = data ? '16px 16px' : '';
+    address.classList.toggle('has-icon', Boolean(data));
+}
+
+/** Asks for the icon of the page shown (the one its front matter names, else its site's); it comes from the cache, or
+ *  later, with an event. Only web pages have one. */
+function syncFavicon(p) {
+    const key = p && /^https?:/.test(p.url ?? '') && p.kind !== 'error' ? `${p.url}\n${p.favicon ?? ''}` : '';
+    if (key === faviconFor) return;
+    faviconFor = key;
+    setAddressIcon('');
+    if (!key) return;
+    Favicon(p.url, p.favicon ?? '').then((d) => { if (faviconFor === key) setAddressIcon(d); }).catch(() => {});
+}
 
 /** The dialog that shows the data address of an edited data page, to copy. */
 function showDataAddress(uri) {
@@ -357,6 +382,7 @@ async function saveEdit() {
 function render() {
     const p = currentPage();
     syncSendBar();
+    syncFavicon(p);
     const noBody = p?.kind === 'markdown' && hasNoBody(p.source); // only front matter: nothing to read, so show its source
     const showSource = (active?.showSource ?? false) || noBody;
     sourceBtn.disabled = p?.kind !== 'markdown';

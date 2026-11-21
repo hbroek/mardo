@@ -374,6 +374,11 @@ func (b *Browser) markdownPageWith(p page.Page, res *fetch.Result, base *url.URL
 	}
 	p.Kind, p.HTML, p.Source = page.KindMarkdown, html, string(res.Body)
 	p.Title = title
+	if meta, _ := render.FrontMatter(res.Body); meta["favicon"] != "" { // favicon: in the front matter names the page's icon
+		if u, err := base.Parse(strings.TrimSpace(meta["favicon"])); err == nil && (u.Scheme == "http" || u.Scheme == "https" || u.Scheme == "data") {
+			p.Favicon = u.String()
+		}
+	}
 	if p.EditURL = fetch.Editable(res); p.EditURL != "" {
 		p.ETag = res.Header.Get("ETag")
 	}

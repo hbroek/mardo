@@ -114,6 +114,10 @@ export function ExportBookmarks(arg1) {
   return window['go']['main']['App']['ExportBookmarks'](arg1);
 }
 
+export function Favicon(arg1, arg2) {
+  return window['go']['main']['App']['Favicon'](arg1, arg2);
+}
+
 export function FollowLink(arg1, arg2) {
   return window['go']['main']['App']['FollowLink'](arg1, arg2);
 }

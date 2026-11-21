@@ -29,6 +29,7 @@ type Page struct {
 	HTML          string `json:"html"`       // sanitized, links resolved (markdown only)
 	Source        string `json:"source"`     // raw markdown (markdown only)
 	Links         []Link `json:"links"`      // fallback only
+	Favicon       string `json:"favicon"`    // the icon the page names in its front matter (favicon:), as a full address
 	MarkdownOf    string `json:"markdownOf"` // set when this is the .md version of an HTML page: that page's address
 	Negotiated    bool   `json:"negotiated"` // this address answered with markdown because it was asked to; it has a web page too
 	OwnAddress    string `json:"ownAddress"` // the address of this page under the name the site asks for (bonbon.json, cname)

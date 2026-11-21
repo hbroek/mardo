@@ -192,6 +192,8 @@ body.loading::before {
 
 .toolbar button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
 .toolbar button:not(:disabled):hover { background: var(--hover); }
+#address.has-icon { padding-left: 32px; }
+html.phone #address.has-icon { padding-left: 34px; }
 #address:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 /* shared page layout */

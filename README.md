@@ -191,6 +191,7 @@ By {{page.author}} on {{page.pubDate}}.
 ```
 
 - `title` names the page and its tab, ahead of the first heading. `description`, `author` and `pubDate` are yours to place in the text.
+- `favicon` is the address of the page's icon, shown at the left of the address bar. Without it Mardo looks for the root of the domain (`/favicon.ico`), then the first folder of the page (for a site that keeps others in folders), then the icons the site's home page names. Icons are kept in `favicons.json` in the config folder and looked at again after a week. A relative address works; so does a `data:` address.
 - `urlPrev` and `urlNext` give the page a left and a right arrow in its upper corners. `rightMarginImage` is the address of a picture shown at the top right of the text, below the arrows. Addresses may be relative; only `http`, `https` and relative addresses are used.
 - `{{page.key}}` in the text is replaced with that key's value, for any key you put in the front matter (names are not case sensitive). Keys can nest: under `source:` with `url:` and `title:` indented below it, `{{page.source.title}}` and `{{page.source.url}}` give those values. A macro for a key the page does not have is left as written. When the page has a `link`, `{{page.title}}` becomes a link to it.
 - Mardo draws nothing of its own for the title, author or date: the page places them where it wants, with macros.

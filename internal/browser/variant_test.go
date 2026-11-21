@@ -193,3 +193,17 @@ func TestMarkdownVersionInADataAddress(t *testing.T) {
 		t.Fatalf("page = kind %q markdownOf %q html %q error %q", p.Kind, p.MarkdownOf, p.HTML, p.Error)
 	}
 }
+
+// favicon: in the front matter of a markdown page names its icon, relative to the page.
+func TestFaviconNamedInFrontMatter(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/markdown")
+		io.WriteString(w, "---\ntitle: T\nfavicon: ../img/me.png\n---\n\nHello\n")
+	}))
+	defer srv.Close()
+	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
+	p := b.Navigate(t.Context(), b.NewTab(), srv.URL+"/blog/a.md")
+	if p.Favicon != srv.URL+"/img/me.png" {
+		t.Errorf("favicon = %q", p.Favicon)
+	}
+}

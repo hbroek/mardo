@@ -64,6 +64,8 @@ export function EditPage(arg1:string,arg2:string,arg3:string,arg4:Array<ai.Messa
 
 export function ExportBookmarks(arg1:string):Promise<string>;
 
+export function Favicon(arg1:string,arg2:string):Promise<string>;
+
 export function FollowLink(arg1:number,arg2:string):Promise<page.Page>;
 
 export function ForgetConversations():Promise<number>;

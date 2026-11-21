@@ -109,6 +109,26 @@ func (a *Core) webIcon(address string) string {
 // faviconPrefix marks the icon of a site, "favicon:https://example.com", as against the address of a picture.
 const faviconPrefix = "favicon:"
 
+// favdirPrefix marks the icon of the pages of a site for the address bar, "favdir:https://example.com" or, for a site
+// that keeps others in folders, "favdir:https://example.com/folder". See pageIconCandidates.
+const favdirPrefix = "favdir:"
+
+// pageIconCandidates is where to look for the icon of a page of a site that has no <link rel="icon"> to say, which is
+// what a markdown site is: the root of the domain, then the first folder of the page (a site that keeps others in
+// folders), then what the home page names, if it is a web page. site is the origin, with that folder if there is one.
+func (a *Core) pageIconCandidates(ctx context.Context, site string) []string {
+	u, err := url.Parse(site)
+	if err != nil {
+		return nil
+	}
+	origin := u.Scheme + "://" + u.Host
+	out := []string{origin + "/favicon.ico"}
+	if u.Path != "" && u.Path != "/" {
+		out = append(out, strings.TrimRight(site, "/")+"/favicon.ico")
+	}
+	return append(out, a.siteIcons(ctx, origin)...)
+}
+
 // fetchIcon gets a picture for the menu and keeps it.
 func (a *Core) fetchIcon(address string) {
 	data := ""
@@ -117,6 +137,8 @@ func (a *Core) fetchIcon(address string) {
 	candidates := []string{address}
 	if origin, ok := strings.CutPrefix(address, faviconPrefix); ok {
 		candidates = append(a.siteIcons(ctx, origin), origin+"/favicon.ico")
+	} else if site, ok := strings.CutPrefix(address, favdirPrefix); ok {
+		candidates = a.pageIconCandidates(ctx, site)
 	}
 	for _, c := range candidates {
 		if res, err := a.fetcher.GetImage(ctx, c); err == nil && res.Status == http.StatusOK && len(res.Body) <= maxActionIcon {
