@@ -311,3 +311,16 @@ func TestAnchorsInBonbonAndNormalMode(t *testing.T) {
 		t.Errorf("Bonbon mode lost the heading address:\n%s", h)
 	}
 }
+
+func TestPagesCannotNameTheAppsGlobals(t *testing.T) {
+	u, _ := url.Parse("https://a.com/p")
+	h, _, _ := Markdown([]byte("<a id=\"mardoDocuments\"></a><a name=\"MardoAndroid\"></a><a id=\"webkit\"></a><a id=\"fine\"></a>\n\n## Mardo docs\n"), u)
+	for _, bad := range []string{`id="mardoDocuments"`, `name="MardoAndroid"`, `id="webkit"`} {
+		if strings.Contains(h, bad) {
+			t.Errorf("kept %s in %s", bad, h)
+		}
+	}
+	if !strings.Contains(h, `id="fine"`) || !strings.Contains(h, `<h2 id="mardo-docs">`) {
+		t.Errorf("an ordinary anchor, or the heading, was lost: %s", h)
+	}
+}

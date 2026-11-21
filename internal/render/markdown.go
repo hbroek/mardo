@@ -267,8 +267,27 @@ func finish(clean []byte, base *url.URL, strict bool) (string, string, error) {
 	return out.String(), title, nil
 }
 
+// dropReservedNames removes an id or name that would stand in for one of the app's own globals. A page's id
+// becomes a property of the window, and the app reads a few that only the host sets (mardoDocuments, mardoEmit,
+// MardoAndroid, webkit), so a page must not be able to fill them in.
+var reservedNames = map[string]bool{"mardodocuments": true, "mardoemit": true, "mardoreply": true, "mardoandroid": true, "webkit": true}
+
+func dropReservedNames(n *xhtml.Node) {
+	kept := n.Attr[:0]
+	for _, a := range n.Attr {
+		if a.Key == "id" || a.Key == "name" {
+			if reservedNames[strings.ToLower(a.Val)] {
+				continue
+			}
+		}
+		kept = append(kept, a)
+	}
+	n.Attr = kept
+}
+
 func rewrite(n *xhtml.Node, base *url.URL, title *string, strict bool) {
 	if n.Type == xhtml.ElementNode {
+		dropReservedNames(n)
 		switch n.DataAtom {
 		case atom.P:
 			if strict {
