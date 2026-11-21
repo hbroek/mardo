@@ -57,7 +57,7 @@ const (
 
 // registrationVersion changes when what Mardo tells a site about itself does. A site cannot be asked to update a
 // registration, so a client kept from an older version is registered again.
-const registrationVersion = 2
+const registrationVersion = 3
 
 // Client is what a site gave Mardo when it registered.
 type Client struct {

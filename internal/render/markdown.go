@@ -46,6 +46,7 @@ var policy = newPolicy()
 func newPolicy() *bluemonday.Policy {
 	p := bluemonday.UGCPolicy()
 	p.AllowAttrs("id").Matching(regexp.MustCompile(`^[\w\-.:%]+$`)).OnElements("h1", "h2", "h3", "h4", "h5", "h6", "li", "sup")
+	p.AllowAttrs("id", "name").Matching(regexp.MustCompile(`^[\w\-.:]+$`)).OnElements("a")
 	p.AllowAttrs("type").Matching(regexp.MustCompile(`^checkbox$`)).OnElements("input")
 	p.AllowAttrs("checked", "disabled").OnElements("input")
 	p.AllowAttrs("class").Matching(regexp.MustCompile(`^bonbon[\w-]*$`)).OnElements("div", "a", "img", "p", "h1", "span")

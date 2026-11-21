@@ -91,6 +91,16 @@ func newOAuthSite(t *testing.T) *oauthSite {
 		delete(s.valid, r.Form.Get("token"))
 		s.mu.Unlock()
 	})
+	mux.HandleFunc("/api/v1/folders", func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		ok := s.valid[strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")]
+		s.mu.Unlock()
+		if !ok {
+			w.WriteHeader(401)
+			return
+		}
+		io.WriteString(w, `[{"id":1,"name":"Reading","folder_id":0,"public":false}]`)
+	})
 	mux.HandleFunc("/app/new", func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		ok := s.valid[strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")]
@@ -297,5 +307,38 @@ func TestSitesWithoutASignInAreRememberedToo(t *testing.T) {
 	}
 	if (cachedOffer{Available: true, At: time.Now().Add(-6 * 24 * time.Hour)}).fresh() != true || (cachedOffer{Available: true, At: time.Now().Add(-8 * 24 * time.Hour)}).fresh() {
 		t.Error("a sign-in that is offered should be kept for a week")
+	}
+}
+
+// The sign-in is the same credential the bookmark storage uses, so a reader who signed in
+// does not also need to paste an API key.
+func TestTheSignInAlsoServesBookmarkStorage(t *testing.T) {
+	site := newOAuthSite(t)
+	a := newTestCore(t, t.TempDir())
+	a.lggURL = site.URL + "/api/v1"
+	if a.BookmarkSettings().Connected {
+		t.Fatal("connected before any sign-in")
+	}
+	if _, err := a.LinkaGoGoFolders(""); err == nil {
+		t.Fatal("the folders were listed without a sign-in")
+	}
+	started, err := a.ConnectStart(site.URL, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	go func() {
+		if resp, err := http.Get(started.URL); err == nil {
+			resp.Body.Close()
+		}
+	}()
+	if _, err := a.ConnectFinish(started.ID); err != nil {
+		t.Fatal(err)
+	}
+	if !a.BookmarkSettings().Connected {
+		t.Error("the bookmark settings do not see the sign-in")
+	}
+	folders, err := a.LinkaGoGoFolders("")
+	if err != nil || len(folders) != 1 || folders[0].Name != "Reading" {
+		t.Fatalf("folders = %+v, %v", folders, err)
 	}
 }

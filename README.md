@@ -82,7 +82,7 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 - **Where bookmarks are kept** (the ⚙ in the panel header): by default a local SQLite file, `bookmarks.db` in the
   app's config folder, or a folder of your [LinkaGoGo](https://www.linkagogo.com) account. For LinkaGoGo, create
   an API key under Account Settings → API Keys, paste it in the dialog, load your folders and
-  pick the one to use as this app's top level, or let it create one. Only that folder and what is inside it is ever
+  pick the one to use as this app's top level, or let it create one. If you already signed in to www.linkagogo.com from Site credentials (the key button), that sign-in is used and no key needs pasting. Only that folder and what is inside it is ever
   shown, searched or changed. The key goes to your system keychain (never to a plain file; with no keyring on Linux, to an encrypted file in the config folder). Switching does not move
   bookmarks: export, switch, then import. The choice is saved in `settings.json` next to the database
   (`{"bookmarks": {"backend": "linkagogo", "config": {"root": "<folder id>"}}}`), and further backends plug in

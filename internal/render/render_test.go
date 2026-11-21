@@ -289,3 +289,25 @@ func TestNestedFrontMatter(t *testing.T) {
 		t.Errorf("title %q html %q err %v", title, html, err)
 	}
 }
+
+func TestAnchorsInBonbonAndNormalMode(t *testing.T) {
+	defer Bonbon.Store(false)
+	u, _ := url.Parse("https://a.com/p")
+	src := []byte("# Top\n\n[go](#note)\n\n<a id=\"note\"></a>\n## Note\n\nText<a name=\"n2\"></a> <b>bold</b>\n")
+	Bonbon.Store(false)
+	h, _, _ := Markdown(src, u)
+	for _, want := range []string{`<a id="note"></a>`, `<a name="n2"></a>`, `<h2 id="note">`} {
+		if !strings.Contains(h, want) {
+			t.Errorf("normal mode lacks %q in\n%s", want, h)
+		}
+	}
+	// Bonbon is markdown only: the HTML anchors go, the headings' own addresses stay.
+	Bonbon.Store(true)
+	h, _, _ = Markdown(src, u)
+	if strings.Contains(h, `<a id=`) || strings.Contains(h, `<a name=`) || strings.Contains(h, "<b>") {
+		t.Errorf("Bonbon mode kept HTML:\n%s", h)
+	}
+	if !strings.Contains(h, `<h2 id="note">`) {
+		t.Errorf("Bonbon mode lost the heading address:\n%s", h)
+	}
+}

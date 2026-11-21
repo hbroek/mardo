@@ -955,7 +955,8 @@ content.addEventListener('click', (e) => {
     e.preventDefault();
     const href = a.getAttribute('href');
     if (href.startsWith('#')) {
-        document.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView();
+        const frag = decodeURIComponent(href.slice(1));
+        (document.getElementById(frag) ?? [...content.querySelectorAll('a[name]')].find((x) => x.name === frag))?.scrollIntoView();
     } else if (e.metaKey || e.ctrlKey) {
         openTab(a.href, {background: true}); // Cmd/Ctrl+click: a tab in the background
     } else {
@@ -1174,6 +1175,7 @@ async function updateCredentialIndicator() {
 
 initCredentials((origin) => {
     updateCredentialIndicator();
+    refreshPanel(); // the bookmarks may be kept at this site: they load, or stop saying they are not connected
     if (currentPage()?.url && originOf(currentPage().url) === originOf(origin)) goActive(Reload, true);
 });
 

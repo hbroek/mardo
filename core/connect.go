@@ -248,6 +248,9 @@ func (a *Core) ConnectFinish(id string) (auth.Info, error) {
 	}()
 	tok, err := st.session.Wait(st.ctx)
 	if err != nil {
+		// The site may have forgotten the client kept from before (its page then says it does not know the app and
+		// nothing comes back here). A registration costs one request, so the next attempt makes a new one.
+		_ = a.auth.SaveClient(st.origin, nil)
 		return auth.Info{}, err
 	}
 	md, client := st.session.Metadata(), st.session.Client()
