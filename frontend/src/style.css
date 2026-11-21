@@ -451,13 +451,17 @@ body.moving #bookmarks-tree { opacity: 0.6; pointer-events: none; }
 #console-close { padding: 4px 10px; font-size: 16px; line-height: 1; }
 #console-count { color: var(--muted); white-space: nowrap; }
 
-#console-panel { height: 40vh; min-height: 160px; display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
+#console-panel { position: relative; height: 40vh; min-height: 120px; display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
+/* the grips: the top edge of the console sets its height, the line between the list and the details sets their widths */
+.console-resize { position: absolute; left: 0; right: 0; top: -3px; height: 7px; z-index: 2; cursor: row-resize; touch-action: none; }
+.console-colsplit { cursor: col-resize; touch-action: none; margin: 0 -3px; z-index: 1; }
+.console-resize:hover, .console-resize:focus-visible, .console-colsplit:hover, .console-colsplit:focus-visible, body.resizing .console-resize.dragging, body.resizing .console-colsplit.dragging { background: var(--accent); opacity: 0.5; outline: 0; }
 .console-head { display: flex; gap: 10px; align-items: center; padding: 4px 10px; border-bottom: 1px solid var(--border); }
 .console-head button { padding: 2px 8px; border: 1px solid var(--border); border-radius: 4px; }
-.console-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.console-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(120px, var(--console-list, 1fr)) 1px minmax(120px, 1fr); }
 #console-list { overflow: auto; border-right: 1px solid var(--border); }
 #console-detail { overflow: auto; padding: 4px 12px 12px; background: var(--bg); }
-@media (max-width: 700px) { .console-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } }
+@media (max-width: 700px) { .console-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } .console-colsplit { display: none; } }
 
 .net-row { display: flex; width: 100%; gap: 8px; align-items: center; padding: 3px 10px; text-align: left; }
 .net-row.selected { background: var(--hover); box-shadow: inset 3px 0 0 var(--accent); }

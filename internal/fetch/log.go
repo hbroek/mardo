@@ -101,6 +101,23 @@ func (l *Log) Note(method, url, text string) {
 	l.add(Entry{ID: l.newID(), Time: time.Now(), Method: method, URL: url, Status: http.StatusOK, StatusText: text, Proto: "action"})
 }
 
+// Socket puts what happens on a websocket in the console: WS OPEN (with the answer of the server), WS SEND and
+// WS RECV (text is the message), WS CLOSE and WS RETRY. err is what went wrong, if anything.
+func (l *Log) Socket(method, address, text string, err error) {
+	shown := address
+	if text != "" && method != "WS OPEN" {
+		shown += " — " + text // the console lists the address, so the message goes with it
+	}
+	e := Entry{ID: l.newID(), Time: time.Now(), Method: method, URL: shown, Status: http.StatusOK, StatusText: text, Proto: "websocket", Bytes: int64(len(text))}
+	switch {
+	case err != nil:
+		e.Status, e.StatusText, e.Error = 0, "", err.Error()
+	case method == "WS OPEN":
+		e.Status, e.StatusText, e.Bytes = http.StatusSwitchingProtocols, "101 Switching Protocols", 0
+	}
+	l.add(e)
+}
+
 func (l *Log) logData(size int64, start time.Time, err error) {
 	e := Entry{ID: l.newID(), Time: start, Method: "GET", URL: "data:", DurationMS: time.Since(start).Milliseconds(), Bytes: size}
 	if err != nil {

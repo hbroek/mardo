@@ -87,4 +87,26 @@ func TestLiveUpdateSocket(t *testing.T) {
 		t.Errorf("%d updates; the one for another page should be ignored", n)
 	}
 	b.CloseTab(id)
+
+	// What happened on the socket is in the console.
+	var seen []string
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		seen = seen[:0]
+		for _, e := range b.fetcher.Log.Entries() {
+			if e.Proto == "websocket" {
+				seen = append(seen, e.Method+" "+e.StatusText)
+			}
+		}
+		if strings.Contains(strings.Join(seen, "|"), "WS CLOSE") {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	consoleText := strings.Join(seen, "|")
+	for _, want := range []string{"WS OPEN 101 Switching Protocols", "WS SEND watch " + site.URL + "/a.md", "WS RECV update " + site.URL + "/a.md", "WS CLOSE closed: the tab left the page"} {
+		if !strings.Contains(consoleText, want) {
+			t.Errorf("the console lacks %q; it has %s", want, consoleText)
+		}
+	}
 }

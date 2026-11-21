@@ -143,7 +143,87 @@ export function toggleConsole() {
     apply();
 }
 
+// --- sizes: the height of the console and the width of its list, kept ---
+
+const MIN_HEIGHT = 120;
+const MIN_COLUMN = 120;
+
+function savedNumber(key) {
+    const n = parseInt(stored(key), 10);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/** Makes a grip draggable. `get` is the size now, `set(size)` applies one; `delta(dx, dy)` is how far a drag changes it,
+ *  `reset` puts the size back, and the arrow keys (the ones in `keys`, with + or - for the direction) move it. */
+function dragGrip(grip, {get, set, delta, reset, keys}) {
+    grip.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        const x0 = e.clientX, y0 = e.clientY, s0 = get();
+        grip.setPointerCapture(e.pointerId);
+        grip.classList.add('dragging');
+        document.body.classList.add('resizing');
+        const move = (ev) => set(s0 + delta(ev.clientX - x0, ev.clientY - y0), false);
+        const stop = () => {
+            grip.removeEventListener('pointermove', move);
+            grip.removeEventListener('pointerup', stop);
+            grip.removeEventListener('pointercancel', stop);
+            grip.classList.remove('dragging');
+            document.body.classList.remove('resizing');
+            set(get(), true);
+        };
+        grip.addEventListener('pointermove', move);
+        grip.addEventListener('pointerup', stop);
+        grip.addEventListener('pointercancel', stop);
+    });
+    grip.addEventListener('dblclick', reset);
+    grip.addEventListener('keydown', (e) => {
+        const dir = keys[e.key];
+        if (!dir) return;
+        e.preventDefault();
+        set(get() + dir * (e.shiftKey ? 80 : 20), true);
+    });
+}
+
+function initSizes() {
+    const panel = $('console-panel');
+    const body = panel.querySelector('.console-body');
+    const maxHeight = () => Math.max(MIN_HEIGHT, Math.floor(window.innerHeight * 0.85));
+    const setHeight = (h, keep = true) => {
+        const height = Math.min(maxHeight(), Math.max(MIN_HEIGHT, Math.round(h)));
+        panel.style.height = `${height}px`;
+        if (keep) stored('console.height', String(height));
+    };
+    const savedHeight = savedNumber('console.height');
+    if (savedHeight) setHeight(savedHeight, false);
+    dragGrip($('console-resize'), {
+        get: () => panel.getBoundingClientRect().height,
+        set: setHeight,
+        delta: (dx, dy) => -dy, // dragging the top edge up makes it taller
+        reset: () => { panel.style.height = ''; stored('console.height', '0'); },
+        keys: {ArrowUp: 1, ArrowDown: -1},
+    });
+    window.addEventListener('resize', () => { if (panel.style.height) setHeight(parseFloat(panel.style.height), false); });
+
+    const list = $('console-list');
+    const setColumn = (w, keep = true) => {
+        const room = body.getBoundingClientRect().width || 800;
+        const width = Math.min(Math.max(MIN_COLUMN, room - MIN_COLUMN), Math.max(MIN_COLUMN, Math.round(w)));
+        body.style.setProperty('--console-list', `${width}px`);
+        if (keep) stored('console.list', String(width));
+    };
+    const savedColumn = savedNumber('console.list');
+    if (savedColumn) setColumn(savedColumn, false);
+    dragGrip($('console-colsplit'), {
+        get: () => list.getBoundingClientRect().width,
+        set: setColumn,
+        delta: (dx) => dx,
+        reset: () => { body.style.removeProperty('--console-list'); stored('console.list', '0'); },
+        keys: {ArrowRight: 1, ArrowLeft: -1},
+    });
+}
+
 export async function initConsole() {
+    initSizes();
     visible = stored('console.visible') === '1'; // hidden unless the user turned it on
     $('console-toggle').addEventListener('click', toggleConsole);
     $('console-close').addEventListener('click', toggleConsole);

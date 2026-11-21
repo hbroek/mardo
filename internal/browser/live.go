@@ -70,6 +70,9 @@ func (b *Browser) follow(ctx context.Context, tabID int, pageURL string) {
 			return
 		}
 		b.listen(ctx, sock, tabID, pageURL)
+		if ctx.Err() == nil {
+			b.fetcher.Log.Socket("WS RETRY", sock, "opening it again in "+updateRetry.String(), nil)
+		}
 		select {
 		case <-ctx.Done():
 		case <-time.After(updateRetry):
@@ -100,19 +103,26 @@ func socketAddress(cfg *SiteConfig) string {
 
 // listen watches one page on one connection until it drops or ctx ends.
 func (b *Browser) listen(ctx context.Context, sock string, tabID int, pageURL string) {
+	log := b.fetcher.Log
 	dialer := websocket.Dialer{HandshakeTimeout: updateDialTimeout, Proxy: http.ProxyFromEnvironment}
 	conn, _, err := dialer.DialContext(ctx, sock, nil)
 	if err != nil {
+		if ctx.Err() == nil {
+			log.Socket("WS OPEN", sock, "", err)
+		}
 		return
 	}
+	log.Socket("WS OPEN", sock, "", nil)
 	defer conn.Close()
 	go func() { // the tab left the page, or closed: the read below stops
 		<-ctx.Done()
 		conn.Close()
 	}()
-	if conn.WriteMessage(websocket.TextMessage, []byte("watch "+pageURL)) != nil {
+	if err := conn.WriteMessage(websocket.TextMessage, []byte("watch "+pageURL)); err != nil {
+		log.Socket("WS SEND", sock, "watch "+pageURL, err)
 		return
 	}
+	log.Socket("WS SEND", sock, "watch "+pageURL, nil)
 	conn.SetReadDeadline(time.Now().Add(updateQuietTimeout))
 	conn.SetPongHandler(func(string) error { return conn.SetReadDeadline(time.Now().Add(updateQuietTimeout)) })
 	go func() {
@@ -132,14 +142,29 @@ func (b *Browser) listen(ctx context.Context, sock string, tabID int, pageURL st
 	for {
 		kind, data, err := conn.ReadMessage()
 		if err != nil {
+			if ctx.Err() != nil {
+				log.Socket("WS CLOSE", sock, "closed: the tab left the page", nil)
+			} else {
+				log.Socket("WS CLOSE", sock, "", err)
+			}
 			return
 		}
 		conn.SetReadDeadline(time.Now().Add(updateQuietTimeout))
 		if kind != websocket.TextMessage {
 			continue
 		}
+		log.Socket("WS RECV", sock, shortMessage(string(data)), nil)
 		if got, ok := strings.CutPrefix(string(data), updatePrefix); ok && ctx.Err() == nil && b.OnUpdate != nil && strings.TrimSpace(got) == pageURL {
 			b.OnUpdate(tabID, pageURL)
 		}
 	}
+}
+
+// shortMessage is a message for the console on one line, cut short.
+func shortMessage(s string) string {
+	s = strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ").Replace(s)
+	if r := []rune(s); len(r) > 300 {
+		s = string(r[:300]) + "…"
+	}
+	return s
 }
