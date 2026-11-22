@@ -158,6 +158,7 @@ function convertBar(convert) {
     return el('p', {className: 'convert-bar'},
         el('button', {type: 'button', className: 'primary', textContent: 'Convert to markdown', title: 'Map the page\'s headings, lists, links, tables and so on to markdown', onclick: convert.rules}),
         ai,
+        convert.open ? el('button', {type: 'button', textContent: 'Open in browser', title: 'Show this page in your default web browser', onclick: convert.open}) : '',
     );
 }
 

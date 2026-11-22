@@ -11,6 +11,9 @@ const (
 	// KindExternal is the answer to a clicked link in Bonbon mode that turned out to be a web page: it belongs
 	// in the reader's own browser, and the tab stays where it was.
 	KindExternal Kind = "external"
+	// KindAnchor is the answer to a move inside the page already shown (a #link, or Back or Forward between two
+	// places on it): nothing is loaded again, only the address, the buttons and the scroll position change.
+	KindAnchor Kind = "anchor"
 )
 
 // Link is a hyperlink found on a page.

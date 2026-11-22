@@ -186,8 +186,18 @@ func (a *Core) Navigate(tab int, url string) page.Page {
 	}
 	return a.browser.Navigate(a.ctx, tab, url)
 }
-func (a *Core) Reload(tab int) page.Page  { return a.browser.Reload(a.ctx, tab) }
-func (a *Core) Back(tab int) page.Page    { return a.browser.Back(a.ctx, tab) }
+func (a *Core) Reload(tab int) page.Page { return a.browser.Reload(a.ctx, tab) }
+func (a *Core) Back(tab int) page.Page   { return a.browser.Back(a.ctx, tab) }
+
+// TabHistory is the list behind the Back and Forward buttons, for the menu a long press opens.
+func (a *Core) TabHistory(tab int) browser.TabHistory { return a.browser.TabHistory(tab) }
+
+// GoTo moves the tab to entry i of that list.
+func (a *Core) GoTo(tab, i int) page.Page { return a.browser.GoTo(a.ctx, tab, i) }
+
+// Anchor records a move to a place on the page the tab shows (a #link): an entry in the history, nothing loaded.
+func (a *Core) Anchor(tab int, url string) page.Page { return a.browser.Anchor(tab, url) }
+
 func (a *Core) Forward(tab int) page.Page { return a.browser.Forward(a.ctx, tab) }
 
 func (a *Core) History() []history.Entry { return a.browser.History() }

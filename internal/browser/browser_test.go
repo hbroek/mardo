@@ -292,3 +292,64 @@ func TestEditablePageCarriesEditAddressAndVersion(t *testing.T) {
 		t.Errorf("read-only page offers editing: %+v", p)
 	}
 }
+
+// A #link on the page is a history entry, as in any browser; Back and Forward between places on one page load nothing.
+func TestAnchorsAreHistoryEntries(t *testing.T) {
+	srv := testServer()
+	defer srv.Close()
+	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
+	ctx := context.Background()
+
+	if p := b.Anchor(1, srv.URL+"/md#a"); p.Kind != page.KindError {
+		t.Errorf("an anchor with no page shown: %+v", p)
+	}
+	b.Navigate(ctx, 1, srv.URL+"/md")
+	p := b.Anchor(1, srv.URL+"/md#a")
+	if p.Kind != page.KindAnchor || p.URL != srv.URL+"/md#a" || !p.CanBack || p.CanForward {
+		t.Errorf("anchor = %+v", p)
+	}
+	if p = b.Anchor(1, srv.URL+"/md#a"); p.CanBack != true { // the same place again is not another entry
+		t.Errorf("same anchor = %+v", p)
+	}
+	b.Anchor(1, srv.URL+"/md#b")
+	if p = b.Anchor(1, srv.URL+"/md2#x"); p.Kind != page.KindError { // not on this page
+		t.Errorf("another page's anchor: %+v", p)
+	}
+	if p = b.Back(ctx, 1); p.Kind != page.KindAnchor || p.URL != srv.URL+"/md#a" || !p.CanForward {
+		t.Errorf("back to #a = %+v", p)
+	}
+	if p = b.Back(ctx, 1); p.Kind != page.KindAnchor || p.URL != srv.URL+"/md" || p.CanBack {
+		t.Errorf("back to the top = %+v", p)
+	}
+	if p = b.Forward(ctx, 1); p.Kind != page.KindAnchor || p.URL != srv.URL+"/md#a" {
+		t.Errorf("forward = %+v", p)
+	}
+	// Leaving the page and coming back loads it again.
+	b.Navigate(ctx, 1, srv.URL+"/md2")
+	if p = b.Back(ctx, 1); p.Kind != page.KindMarkdown || p.Title != "Doc" {
+		t.Errorf("back across pages = %+v", p)
+	}
+}
+
+func TestTabHistoryListAndGoTo(t *testing.T) {
+	srv := testServer()
+	defer srv.Close()
+	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
+	ctx := context.Background()
+	b.Navigate(ctx, 1, srv.URL+"/md")
+	b.Anchor(1, srv.URL+"/md#a")
+	b.Navigate(ctx, 1, srv.URL+"/md2")
+	h := b.TabHistory(1)
+	if len(h.Items) != 3 || h.Current != 2 || h.Items[0].Title != "Doc" || h.Items[1].Title != "Doc #a" || h.Items[2].Title != "Two" {
+		t.Fatalf("list = %+v", h)
+	}
+	if p := b.GoTo(ctx, 1, 1); p.URL != srv.URL+"/md#a" || p.Kind != page.KindMarkdown || !p.CanBack || !p.CanForward {
+		t.Errorf("goto #a = %+v", p)
+	}
+	if p := b.GoTo(ctx, 1, 0); p.Kind != page.KindAnchor || p.URL != srv.URL+"/md" || p.CanBack || !p.CanForward {
+		t.Errorf("goto the top = %+v", p)
+	}
+	if p := b.GoTo(ctx, 1, 9); p.Kind != page.KindError {
+		t.Errorf("goto nowhere = %+v", p)
+	}
+}

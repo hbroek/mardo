@@ -1,7 +1,7 @@
 import './style.css';
 import './schemes.css';
 import './pagestyles.css';
-import {RenderPreview, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions, Favicon, ConnectOffer, ConnectStatus} from '../wailsjs/go/main/App';
+import {RenderPreview, Anchor, GoTo, TabHistory, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions, Favicon, ConnectOffer, ConnectStatus} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn, BrowserOpenURL} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -17,7 +17,7 @@ import {initMenu, showCredentialState} from './theme.js';
 import {initAI, openAI, aiReady, newRequestId, cancelRequest} from './ai.js';
 import {initAsk, refreshAsk, toggleAsk, askNow} from './ask.js';
 import {initReading, selectedText} from './reading.js';
-import {initContextMenu} from './contextmenu.js';
+import {initContextMenu, popupMenu} from './contextmenu.js';
 import {fragmentText} from './textlink.js';
 import {initSplitters} from './splitter.js';
 import {initCompare, openCompare} from './compare.js';
@@ -414,7 +414,7 @@ function render() {
     const body = (
         !p ? view.welcome()
             : p.kind === 'markdown' ? (showSource ? view.source(p, editor()) : view.markdown(p))
-            : p.kind === 'fallback' ? view.fallback(p, (origin) => openCredentials({origin}), {rules: () => convertPage('rules'), ai: () => convertPage('ai'), aiAvailable: aiReady()})
+            : p.kind === 'fallback' ? view.fallback(p, (origin) => openCredentials({origin}), {rules: () => convertPage('rules'), ai: () => convertPage('ai'), aiAvailable: aiReady(), open: /^https?:\/\//i.test(p.url) ? () => BrowserOpenURL(p.url) : null})
             : view.error(p, () => goActive((id) => Navigate(id, p.url)), (page) => openCredentials({origin: page.origin, kind: page.authScheme === 'basic' ? 'basic' : page.authScheme === 'bearer' ? 'bearer' : 'cookie'}), {offer: (o) => ConnectOffer(o), start: (o) => signInWith(o)}));
     const extras = [active?.draft != null ? null : copyBar(p), variantBar(p), ownAddressBar(p), searchSwitch(p), // no copy button over the text box while editing
         active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
@@ -695,7 +695,9 @@ async function go(tab, action, restoreScroll = false) {
     renderTabs();
     try {
         const p = await action();
-        if (p && mine === tab.seq && tabs.includes(tab)) { // null: nothing to show, the tab stays as it is
+        if (p?.kind === 'anchor' && mine === tab.seq && tabs.includes(tab)) { // another place on the same page
+            moveWithin(tab, p, restoreScroll);
+        } else if (p && mine === tab.seq && tabs.includes(tab)) { // null: nothing to show, the tab stays as it is
             show(tab, p);
             if (restoreScroll) restoreScrollOf(tab, p);
         }
@@ -714,6 +716,34 @@ async function go(tab, action, restoreScroll = false) {
 function goActive(fn, restoreScroll = false) {
     const tab = active;
     return go(tab, () => fn(tab.id), restoreScroll);
+}
+
+/** The element a #fragment names: by id, or an anchor with that name. */
+function fragmentTarget(fragment) {
+    let f = fragment;
+    try { f = decodeURIComponent(fragment); } catch { /* used as it is */ }
+    return document.getElementById(f) ?? [...content.querySelectorAll('a[name]')].find((x) => x.name === f) ?? null;
+}
+
+/**
+ * A move to another place on the page that is shown (a #link, or Back and Forward between two of them): the page
+ * stays, and the address, the buttons and the scroll position follow. With `restore`, the reader goes back to where
+ * they were when they left that entry; otherwise to the place the address names.
+ */
+function moveWithin(tab, p, restore) {
+    tab.page = {...tab.page, url: p.url, canBack: p.canBack, canForward: p.canForward};
+    if (tab !== active) { saveTabs(); return; }
+    address.value = displayAddress(p.url);
+    $('back').disabled = !p.canBack;
+    $('forward').disabled = !p.canForward;
+    const hash = p.url.includes('#') ? p.url.slice(p.url.indexOf('#') + 1) : '';
+    const saved = tab.scrolls?.get(p.url);
+    if (restore && saved != null) content.scrollTop = saved;
+    else if (hash && !hash.startsWith(':~:')) (fragmentTarget(hash) ?? content).scrollIntoView?.();
+    else content.scrollTop = 0;
+    tab.scroll = content.scrollTop;
+    renderTabs();
+    updateBookmarkIndicator();
 }
 
 /** After Back or Forward: the page is scrolled to where it was when the reader left it. */
@@ -815,6 +845,7 @@ function renderTabs() {
             text.textContent = label;
             el.append(text, close);
             el.addEventListener('click', () => activate(t));
+            el.addEventListener('contextmenu', (e) => tabMenu(e, t));
             el.addEventListener('auxclick', (e) => { if (e.button === 1) { e.preventDefault(); closeTab(t); } });
             el.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(t); }
@@ -843,9 +874,9 @@ function activate(tab) {
 /** Opens a tab, loading `url` in it when given. A background tab does not take over the window. */
 const newTab = async () => ({id: await NewTab(), page: null, pending: '', summary: null, chat: null, chatTried: '', showSource: false, seq: 0, loading: false, scroll: 0});
 
-async function openTab(url = '', {background = false} = {}) {
+async function openTab(url = '', {background = false, atEnd = false} = {}) {
     const tab = await newTab();
-    const at = active ? tabs.indexOf(active) + 1 : tabs.length; // next to the current one
+    const at = active && !atEnd ? tabs.indexOf(active) + 1 : tabs.length; // next to the current one, except for a new empty tab: that goes last
     tabs.splice(at, 0, tab);
     if (!background || !active) activate(tab);
     renderTabs();
@@ -871,12 +902,31 @@ function closeTab(tab) {
     }
 }
 
+/** Closes several tabs at once; `keep` is the tab to show afterwards when the one shown is among them. */
+function closeTabs(list, keep) {
+    for (const t of list) { CloseTab(t.id); tabs.splice(tabs.indexOf(t), 1); }
+    if (list.includes(active)) { active = null; activate(keep); } else renderTabs();
+}
+
+/** The right-click menu of a tab. */
+function tabMenu(e, t) {
+    e.preventDefault();
+    const i = tabs.indexOf(t);
+    const others = tabs.filter((x) => x !== t);
+    const right = tabs.slice(i + 1);
+    popupMenu(e.clientX, e.clientY, [
+        ['Close Tab', () => closeTab(t)],
+        ['Close Other Tabs', () => closeTabs(others, t), {disabled: !others.length}],
+        ['Close Tabs to the Right', () => closeTabs(right, t), {disabled: !right.length}],
+    ]);
+}
+
 function stepTab(by) {
     if (tabs.length < 2) return;
     activate(tabs[(tabs.indexOf(active) + by + tabs.length) % tabs.length]);
 }
 
-$('tab-new').addEventListener('click', () => openTab());
+$('tab-new').addEventListener('click', () => openTab('', {atEnd: true}));
 
 // --- AI summary ---
 
@@ -933,6 +983,38 @@ address.addEventListener('keydown', (e) => {
 });
 address.addEventListener('focus', () => address.select());
 $('back').addEventListener('click', () => goActive(Back, true));
+
+/** A long press (or a right click) on Back or Forward lists the nearest fifteen places behind it; choosing one goes there. */
+function historyMenu(button, direction) {
+    let timer = 0;
+    let fired = false;
+    const show = async () => {
+        fired = true;
+        if (!active || button.disabled) return;
+        const h = await TabHistory(active.id).catch(() => null);
+        if (!h) return;
+        const rows = h.items.map((item, i) => ({item, i})).filter(({i}) => (direction < 0 ? i < h.current : i > h.current));
+        if (direction < 0) rows.reverse();
+        rows.splice(15); // the nearest fifteen, as browsers show
+        const at = button.getBoundingClientRect();
+        popupMenu(at.left, at.bottom + 4, rows.map(({item, i}) => {
+            const text = item.title || displayAddress(item.url);
+            return [text.length > 70 ? `${text.slice(0, 69)}\u2026` : text, () => goActive((id) => GoTo(id, i), true)];
+        }));
+    };
+    button.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 || button.disabled) return;
+        fired = false;
+        timer = setTimeout(show, 500);
+    });
+    for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) button.addEventListener(ev, () => clearTimeout(timer));
+    button.addEventListener('click', (e) => { // the press that opened the list is not also a click on the button
+        if (fired) { e.preventDefault(); e.stopImmediatePropagation(); fired = false; }
+    }, true);
+    button.addEventListener('contextmenu', (e) => { e.preventDefault(); show(); });
+}
+historyMenu($('back'), -1);
+historyMenu($('forward'), 1);
 $('forward').addEventListener('click', () => goActive(Forward, true));
 $('reload').addEventListener('click', () => goActive(Reload, true));
 sourceBtn.addEventListener('click', () => (sourceBtn.classList.contains('pencil') ? toggleEdit() : toggleSource()));
@@ -955,9 +1037,18 @@ content.addEventListener('click', (e) => {
     }
     e.preventDefault();
     const href = a.getAttribute('href');
-    if (href.startsWith('#')) {
-        const frag = decodeURIComponent(href.slice(1));
-        (document.getElementById(frag) ?? [...content.querySelectorAll('a[name]')].find((x) => x.name === frag))?.scrollIntoView();
+    const here = currentPage()?.url ?? '';
+    const sameFragment = href.startsWith('#') ? href : (here && a.href.includes('#') && a.href.split('#')[0] === here.split('#')[0]) ? a.href.slice(a.href.indexOf('#')) : '';
+    if (sameFragment && here && !e.metaKey && !e.ctrlKey) { // a place on this page: a history entry, as in any browser
+        const target = here.split('#')[0] + sameFragment;
+        goActive(async (id) => {
+            const p = await Anchor(id, target);
+            if (p.kind === 'anchor') return p;
+            fragmentTarget(sameFragment.slice(1))?.scrollIntoView(); // the history does not know this page: just scroll
+            return null;
+        });
+    } else if (href.startsWith('#')) {
+        fragmentTarget(href.slice(1))?.scrollIntoView();
     } else if (e.metaKey || e.ctrlKey) {
         openTab(a.href, {background: true}); // Cmd/Ctrl+click: a tab in the background
     } else {
@@ -1012,7 +1103,7 @@ finder.hooks.checkpoint = () => { if (active?.draft != null) { remember(active);
 
 // What the macOS menu bar does: its items have the shortcuts, and send their id here.
 const menuActions = {
-    'new-tab': () => openTab(),
+    'new-tab': () => openTab('', {atEnd: true}),
     'close-page': closePage,
     'close-tab': () => closeTab(active),
     'new-document': newDocument,
@@ -1135,7 +1226,7 @@ document.addEventListener('keydown', (e) => {
     else if (mod && !e.shiftKey && key === 's') savePage();
     else if (mod && !e.shiftKey && key === 'o') openFile();
     else if (mod && !e.shiftKey && key === 'n') newDocument();
-    else if (mod && key === 't') openTab();
+    else if (mod && key === 't') openTab('', {atEnd: true});
     else if (mod && key === 'w') closeTab(active);
     else if (e.ctrlKey && e.key === 'Tab') stepTab(e.shiftKey ? -1 : 1);
     else if (mod && e.shiftKey && (e.key === '{' || e.key === '[')) stepTab(-1);

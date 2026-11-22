@@ -324,3 +324,16 @@ func TestPagesCannotNameTheAppsGlobals(t *testing.T) {
 		t.Errorf("an ordinary anchor, or the heading, was lost: %s", h)
 	}
 }
+
+func TestHeadingAddresses(t *testing.T) {
+	u, _ := url.Parse("https://a.com/p")
+	h, _, _ := Markdown([]byte("# Henry's Dashboard\n\n## [Recent](/app/recent)\n\n## Top *Rated* `x`\n\n## Same\n\n## Same\n\n## Same\n\n## 100% ünï\n"), u)
+	for _, want := range []string{`id="henrys-dashboard"`, `id="recent"`, `id="top-rated-x"`, `id="same"`, `id="same-1"`, `id="same-2"`, `id="100-ünï"`} {
+		if !strings.Contains(h, want) {
+			t.Errorf("lacks %s in\n%s", want, h)
+		}
+	}
+	if strings.Contains(h, `id="recentapp`) {
+		t.Errorf("a link's address got into a heading's: %s", h)
+	}
+}

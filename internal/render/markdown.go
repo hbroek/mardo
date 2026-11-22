@@ -7,8 +7,10 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync/atomic"
+	"unicode"
 
 	"mardo/internal/fetch"
 	"mardo/internal/imgproxy"
@@ -16,16 +18,19 @@ import (
 
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	ghtml "github.com/yuin/goldmark/renderer/html"
+	gtext "github.com/yuin/goldmark/text"
+	"github.com/yuin/goldmark/util"
 	xhtml "golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
 
 var md = goldmark.New(
 	goldmark.WithExtensions(extension.GFM, extension.Footnote),
-	goldmark.WithParserOptions(parser.WithAutoHeadingID()),
+	goldmark.WithParserOptions(parser.WithASTTransformers(util.Prioritized(headingIDs{}, 100))),
 	// Raw HTML in markdown is passed on, and cleaned by the policy below like everything else.
 	goldmark.WithRendererOptions(ghtml.WithUnsafe()),
 )
@@ -33,7 +38,7 @@ var md = goldmark.New(
 // mdStrict is md for Bonbon mode: raw HTML in the text is left out instead of passed on.
 var mdStrict = goldmark.New(
 	goldmark.WithExtensions(extension.GFM, extension.Footnote),
-	goldmark.WithParserOptions(parser.WithAutoHeadingID()),
+	goldmark.WithParserOptions(parser.WithASTTransformers(util.Prioritized(headingIDs{}, 100))),
 )
 
 // Bonbon is Bonbon mode: a page is markdown only. HTML in the text is dropped, SVG pictures are links, a
@@ -421,4 +426,64 @@ func bonbonPicture(p *xhtml.Node) {
 	if alt := strings.TrimSpace(attrOf(first, "alt")); alt != "" {
 		p.Attr = append(p.Attr, xhtml.Attribute{Key: "data-caption", Val: alt})
 	}
+}
+
+// headingIDs gives each heading the address every markdown tool gives it (GitHub's way): the heading's words, in
+// lower case, with dashes between them and the punctuation gone. goldmark's own would put the destination of a link
+// in a heading into the name ("## [Recent](/app/recent)" would be "recentapprecent"), so a link to #recent, which
+// is what other readers and the page's author expect, would go nowhere. A second heading with the same words gets
+// -1, then -2.
+type headingIDs struct{}
+
+func (headingIDs) Transform(doc *ast.Document, reader gtext.Reader, pc parser.Context) {
+	seen := map[string]int{}
+	src := reader.Source()
+	_ = ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		h, ok := n.(*ast.Heading)
+		if !ok || !entering {
+			return ast.WalkContinue, nil
+		}
+		var words bytes.Buffer
+		_ = ast.Walk(h, func(c ast.Node, in bool) (ast.WalkStatus, error) {
+			if !in {
+				return ast.WalkContinue, nil
+			}
+			switch t := c.(type) {
+			case *ast.Text:
+				words.Write(t.Segment.Value(src))
+				if t.SoftLineBreak() || t.HardLineBreak() {
+					words.WriteByte(' ')
+				}
+			case *ast.String:
+				words.Write(t.Value)
+			}
+			return ast.WalkContinue, nil
+		})
+		id := slug(words.String())
+		if n := seen[id]; n > 0 {
+			seen[id] = n + 1
+			id = id + "-" + strconv.Itoa(n)
+		} else {
+			seen[id] = 1
+		}
+		h.SetAttributeString("id", []byte(id))
+		return ast.WalkSkipChildren, nil
+	})
+}
+
+// slug is a heading's words as an address: letters and digits in lower case, "-" and "_" kept, spaces as dashes.
+func slug(words string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(strings.TrimSpace(words)) {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_':
+			b.WriteRune(r)
+		case unicode.IsSpace(r):
+			b.WriteByte('-')
+		}
+	}
+	if b.Len() == 0 {
+		return "heading"
+	}
+	return b.String()
 }

@@ -41,6 +41,18 @@ func (s *Stack) Back() (string, bool) {
 	return s.urls[s.pos], true
 }
 
+// URLs returns every entry, oldest first, and the index of the current one.
+func (s *Stack) URLs() ([]string, int) { return append([]string(nil), s.urls...), s.pos }
+
+// MoveTo makes entry i the current one and returns its URL.
+func (s *Stack) MoveTo(i int) (string, bool) {
+	if i < 0 || i >= len(s.urls) {
+		return "", false
+	}
+	s.pos = i
+	return s.urls[i], true
+}
+
 // Forward moves one entry forward and returns its URL.
 func (s *Stack) Forward() (string, bool) {
 	if !s.CanForward() {

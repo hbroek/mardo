@@ -7,6 +7,7 @@ import {bookmarks} from '../models';
 import {auth} from '../models';
 import {history} from '../models';
 import {fetch} from '../models';
+import {browser} from '../models';
 
 export function AISettings():Promise<core.AIInfo>;
 
@@ -15,6 +16,8 @@ export function About(arg1:number):Promise<page.Page>;
 export function Actions():Promise<Array<core.ActionInfo>>;
 
 export function ActionsFolder():Promise<string>;
+
+export function Anchor(arg1:number,arg2:string):Promise<page.Page>;
 
 export function ApplyFiling(arg1:Array<core.Move>):Promise<core.MoveResult>;
 
@@ -83,6 +86,8 @@ export function ForgetConversations():Promise<number>;
 export function Forward(arg1:number):Promise<page.Page>;
 
 export function FullHistory(arg1:number):Promise<page.Page>;
+
+export function GoTo(arg1:number,arg2:number):Promise<page.Page>;
 
 export function History():Promise<Array<history.Entry>>;
 
@@ -163,6 +168,8 @@ export function SuggestBookmark(arg1:string,arg2:string):Promise<ai.Suggestion>;
 export function SuggestFolders(arg1:string,arg2:Array<core.FilingInput>,arg3:Array<string>,arg4:string):Promise<Array<core.FolderChoice>>;
 
 export function SummarizePage(arg1:string,arg2:string):Promise<core.AISummary>;
+
+export function TabHistory(arg1:number):Promise<browser.TabHistory>;
 
 export function TakeOpenRequests():Promise<Array<string>>;
 

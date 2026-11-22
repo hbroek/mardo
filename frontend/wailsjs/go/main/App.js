@@ -18,6 +18,10 @@ export function ActionsFolder() {
   return window['go']['main']['App']['ActionsFolder']();
 }
 
+export function Anchor(arg1, arg2) {
+  return window['go']['main']['App']['Anchor'](arg1, arg2);
+}
+
 export function ApplyFiling(arg1) {
   return window['go']['main']['App']['ApplyFiling'](arg1);
 }
@@ -152,6 +156,10 @@ export function Forward(arg1) {
 
 export function FullHistory(arg1) {
   return window['go']['main']['App']['FullHistory'](arg1);
+}
+
+export function GoTo(arg1, arg2) {
+  return window['go']['main']['App']['GoTo'](arg1, arg2);
 }
 
 export function History() {
@@ -312,6 +320,10 @@ export function SuggestFolders(arg1, arg2, arg3, arg4) {
 
 export function SummarizePage(arg1, arg2) {
   return window['go']['main']['App']['SummarizePage'](arg1, arg2);
+}
+
+export function TabHistory(arg1) {
+  return window['go']['main']['App']['TabHistory'](arg1);
 }
 
 export function TakeOpenRequests() {

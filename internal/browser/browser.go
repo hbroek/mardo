@@ -229,11 +229,90 @@ func (b *Browser) Back(ctx context.Context, tabID int) page.Page {
 	t := b.tab(tabID)
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	from := t.stack.Current()
 	u, ok := t.stack.Back()
 	if !ok {
 		return b.state(tabID, t, page.Page{URL: t.stack.Current(), Kind: page.KindError, Error: "no earlier page"})
 	}
+	if sameDocument(from, u) { // another place on the same page: nothing to load
+		return t.withState(page.Page{URL: u, Kind: page.KindAnchor})
+	}
 	return b.state(tabID, t, b.record(b.load(ctx, u)))
+}
+
+// HistoryItem is one entry in a tab's back/forward list.
+type HistoryItem struct {
+	URL   string `json:"url"`
+	Title string `json:"title"`
+}
+
+// TabHistory is a tab's back/forward list, oldest first, and which entry is the current one.
+type TabHistory struct {
+	Items   []HistoryItem `json:"items"`
+	Current int           `json:"current"`
+}
+
+// TabHistory lists what Back and Forward lead to, with the titles the visit log knows.
+func (b *Browser) TabHistory(tabID int) TabHistory {
+	t := b.tab(tabID)
+	t.mu.Lock()
+	urls, pos := t.stack.URLs()
+	t.mu.Unlock()
+	titles := map[string]string{}
+	for _, e := range b.history.Entries() {
+		if _, ok := titles[e.URL]; !ok {
+			titles[e.URL] = e.Title
+		}
+	}
+	out := TabHistory{Current: pos}
+	for _, u := range urls {
+		base, frag, hasFrag := strings.Cut(u, "#")
+		title := titles[u]
+		if title == "" {
+			title = titles[base]
+		}
+		if hasFrag && title != "" && !strings.HasPrefix(frag, ":~:") {
+			title += " #" + frag
+		}
+		out.Items = append(out.Items, HistoryItem{URL: u, Title: title})
+	}
+	return out
+}
+
+// GoTo moves a tab to entry i of its back/forward list, as pressing Back or Forward that many times would.
+func (b *Browser) GoTo(ctx context.Context, tabID, i int) page.Page {
+	t := b.tab(tabID)
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	from := t.stack.Current()
+	u, ok := t.stack.MoveTo(i)
+	if !ok {
+		return b.state(tabID, t, page.Page{URL: from, Kind: page.KindError, Error: "no such entry"})
+	}
+	if sameDocument(from, u) {
+		return t.withState(page.Page{URL: u, Kind: page.KindAnchor})
+	}
+	return b.state(tabID, t, b.record(b.load(ctx, u)))
+}
+
+// sameDocument says whether two addresses are the same page, apart from the part after the #.
+func sameDocument(a, b string) bool {
+	a, _, _ = strings.Cut(a, "#")
+	b, _, _ = strings.Cut(b, "#")
+	return a != "" && a == b
+}
+
+// Anchor records a move to a place on the page the tab shows, as a browser does: it is an entry in the history, so
+// that Back returns to where the reader was. Nothing is loaded. The address is the page's own with the new fragment.
+func (b *Browser) Anchor(tabID int, rawURL string) page.Page {
+	t := b.tab(tabID)
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if !sameDocument(t.stack.Current(), rawURL) {
+		return page.Page{URL: t.stack.Current(), Kind: page.KindError, Error: "that place is not on the page shown"}
+	}
+	t.stack.Visit(rawURL)
+	return t.withState(page.Page{URL: rawURL, Kind: page.KindAnchor})
 }
 
 // Forward loads the next entry.
@@ -241,9 +320,13 @@ func (b *Browser) Forward(ctx context.Context, tabID int) page.Page {
 	t := b.tab(tabID)
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	from := t.stack.Current()
 	u, ok := t.stack.Forward()
 	if !ok {
 		return b.state(tabID, t, page.Page{URL: t.stack.Current(), Kind: page.KindError, Error: "no later page"})
+	}
+	if sameDocument(from, u) {
+		return t.withState(page.Page{URL: u, Kind: page.KindAnchor})
 	}
 	return b.state(tabID, t, b.record(b.load(ctx, u)))
 }
