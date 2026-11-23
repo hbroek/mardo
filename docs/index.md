@@ -4,12 +4,13 @@
 
 Mardo is a small browser and author for markdown. It asks servers for markdown, shows it cleanly, and saves your changes back where the server allows.
 
-Free and open source (MIT). macOS, Windows, Linux, iPhone and iPad.
+Free and open source (MIT). macOS, Windows, Linux, iPhone, iPad and Android.
 
 ![Mardo on a Mac, showing a markdown page with its toolbar, tabs and address bar](https://mardo.henryvandenbroek.com/mardo-desktop.jpg)
 
 - [Download Mardo](https://github.com/hbroek/mardo/releases/latest)
 - [Mardo on the App Store](https://apps.apple.com/app/id6830193468)
+- [Mardo on Google Play](https://play.google.com/store/apps/details?id=com.henryvandenbroek.mardo)
 - [View on GitHub](https://github.com/hbroek/mardo)
 - [Where can I find markdown on the web?](find-markdown.md)
 - [Privacy policy](privacy.md)
@@ -85,6 +86,7 @@ Pick your system on the [latest release page](https://github.com/hbroek/mardo/re
 - **Windows** (64-bit). Not code-signed yet, so SmartScreen may warn about an unknown publisher: choose More info, then Run anyway.
 - **Linux** (64-bit, GTK and WebKit). A tarball with an installer script and desktop entry. Needs `libgtk-3` and `libwebkit2gtk-4.1`.
 - **iPhone and iPad** ([App Store](https://apps.apple.com/app/id6830193468)). The same core runs in an iOS app with a thumb-friendly layout and Apple Intelligence built in.
+- **Android** ([Google Play](https://play.google.com/store/apps/details?id=com.henryvandenbroek.mardo)). The same core runs in an Android app with the same thumb-friendly layout as the iPhone.
 
 ---
 

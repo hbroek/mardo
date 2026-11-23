@@ -1,6 +1,6 @@
 # Mardo privacy policy
 
-Last updated 4 November 2026. Mardo is a free, open source markdown browser for macOS, Windows, Linux, iPhone and iPad, made by Henry van den Broek.
+Last updated 23 November 2026. Mardo is a free, open source markdown browser for macOS, Windows, Linux, iPhone, iPad and Android, made by Henry van den Broek.
 
 ## The short version
 

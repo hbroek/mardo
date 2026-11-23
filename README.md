@@ -1,6 +1,6 @@
 # Mardo
 
-**Website and downloads: [mardo.henryvandenbroek.com](https://mardo.henryvandenbroek.com/)** · [iPhone and iPad: App Store](https://apps.apple.com/app/id6830193468)
+**Website and downloads: [mardo.henryvandenbroek.com](https://mardo.henryvandenbroek.com/)** · [iPhone and iPad: App Store](https://apps.apple.com/app/id6830193468) · [Android: Google Play](https://play.google.com/store/apps/details?id=com.henryvandenbroek.mardo)
 
 A small desktop browser and author for markdown: read pages, and write them back where the server allows. It asks servers for markdown, renders it, and falls back to a
 title plus link list when a page is not markdown. Go backend, HTML/CSS/JS frontend, built with
