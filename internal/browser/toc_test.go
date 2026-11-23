@@ -320,3 +320,39 @@ func TestSiteThatAsksForAnAddressOfItsOwn(t *testing.T) {
 		t.Errorf("the site is already there: %q", got)
 	}
 }
+
+// The address bar says beforehand that Enter also asks the site's search: in Bonbon mode, on a site that has one.
+func TestSiteSearchHostForTheAddressBar(t *testing.T) {
+	srv, _ := siteWithSearch(t)
+	host := strings.TrimPrefix(srv.URL, "http://")
+	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
+	b.SetSearcher(func(ctx context.Context, q string) (string, error) { return "# Results for x\n\nNothing found.\n", nil })
+	id := b.NewTab()
+	ctx := context.Background()
+	b.Navigate(ctx, id, srv.URL+"/blog/p.md")
+	if got := b.SiteSearchHost(ctx, id); got != "" {
+		t.Errorf("outside Bonbon mode: %q", got)
+	}
+	b.SetBonbon(true)
+	defer b.SetBonbon(false)
+	if got := b.SiteSearchHost(ctx, id); got != host {
+		t.Errorf("on the site: %q, want %q", got, host)
+	}
+	b.Navigate(ctx, id, "rust") // the results page keeps the site's search for the next one
+	if got := b.SiteSearchHost(ctx, id); got != host {
+		t.Errorf("on the results: %q, want %q", got, host)
+	}
+	plain := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "bonbon.json") {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/markdown")
+		w.Write([]byte("# Plain\n"))
+	}))
+	defer plain.Close()
+	b.Navigate(ctx, id, plain.URL+"/p.md")
+	if got := b.SiteSearchHost(ctx, id); got != "" {
+		t.Errorf("a site without a search: %q", got)
+	}
+}

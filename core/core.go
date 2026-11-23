@@ -192,6 +192,9 @@ func (a *Core) Back(tab int) page.Page   { return a.browser.Back(a.ctx, tab) }
 // TabHistory is the list behind the Back and Forward buttons, for the menu a long press opens.
 func (a *Core) TabHistory(tab int) browser.TabHistory { return a.browser.TabHistory(tab) }
 
+// SiteSearchHost is the site whose search the address bar of the tab also asks ("" when none), for its hint.
+func (a *Core) SiteSearchHost(tab int) string { return a.browser.SiteSearchHost(a.ctx, tab) }
+
 // GoTo moves the tab to entry i of that list.
 func (a *Core) GoTo(tab, i int) page.Page { return a.browser.GoTo(a.ctx, tab, i) }
 

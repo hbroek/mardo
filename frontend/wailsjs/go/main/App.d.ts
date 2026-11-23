@@ -157,6 +157,8 @@ export function SetViewShown(arg1:string,arg2:boolean):Promise<void>;
 
 export function ShareItem(arg1:string):Promise<void>;
 
+export function SiteSearchHost(arg1:number):Promise<string>;
+
 export function StyleSheet(arg1:string):Promise<string>;
 
 export function StyleSheets():Promise<Array<core.StyleInfo>>;

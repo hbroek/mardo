@@ -1,7 +1,7 @@
 import './style.css';
 import './schemes.css';
 import './pagestyles.css';
-import {RenderPreview, Anchor, GoTo, TabHistory, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions, Favicon, ConnectOffer, ConnectStatus} from '../wailsjs/go/main/App';
+import {RenderPreview, SiteSearchHost, Anchor, GoTo, TabHistory, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions, Favicon, ConnectOffer, ConnectStatus} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn, BrowserOpenURL} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -655,7 +655,22 @@ function searchSwitch(p) {
 }
 
 /** Puts the active tab's page on screen: address bar, buttons, content. */
+/** The address bar says when Enter also asks the site's own search (Bonbon mode, bonbon.json urlSearch). */
+const DEFAULT_PLACEHOLDER = address.placeholder;
+let hintSeq = 0;
+function refreshSearchHint() {
+    const mine = ++hintSeq;
+    const tab = active;
+    const apply = (host) => {
+        address.classList.toggle('site-search', Boolean(host));
+        address.placeholder = host ? `Enter a URL, or search bookmarks, history and ${host}` : DEFAULT_PLACEHOLDER;
+    };
+    if (!tab || !document.documentElement.classList.contains('bonbon-mode') || !tab.page?.url) { apply(''); return; }
+    SiteSearchHost(tab.id).then((host) => { if (mine === hintSeq) apply(host); }).catch(() => { if (mine === hintSeq) apply(''); });
+}
+
 function display() {
+    refreshSearchHint();
     const p = currentPage();
     const url = p?.url ?? active?.pending ?? '';
     address.value = url ? displayAddress(url) : '';
@@ -982,6 +997,11 @@ address.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { const url = real(address.value); goActive((id) => Navigate(id, url)); }
 });
 address.addEventListener('focus', () => address.select());
+// A click that gives the field focus keeps the whole address selected (the mouse-up would otherwise put the caret
+// there); a click in a field that already has focus places the caret as usual.
+let addressFocusedByClick = false;
+address.addEventListener('mousedown', () => { addressFocusedByClick = document.activeElement !== address; });
+address.addEventListener('mouseup', (e) => { if (addressFocusedByClick) e.preventDefault(); addressFocusedByClick = false; });
 $('back').addEventListener('click', () => goActive(Back, true));
 
 /** A long press (or a right click) on Back or Forward lists the nearest fifteen places behind it; choosing one goes there. */
@@ -1169,7 +1189,7 @@ menuActions['select-all'] = selectAll;
 EventsOn('menu', (id) => menuActions[id]?.());
 
 // Bonbon mode: markdown only. The page is loaded again so it shows in the new mode.
-const showBonbon = (on) => document.documentElement.classList.toggle('bonbon-mode', !!on);
+const showBonbon = (on) => { document.documentElement.classList.toggle('bonbon-mode', !!on); refreshSearchHint(); };
 Bonbon().then(showBonbon).catch(() => {});
 // The site says the page of a tab changed (Bonbon live updates): load it again where the reader is, unless the
 // reader is editing it, and say nothing if that fails.

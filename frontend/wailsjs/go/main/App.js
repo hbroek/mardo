@@ -298,6 +298,10 @@ export function ShareItem(arg1) {
   return window['go']['main']['App']['ShareItem'](arg1);
 }
 
+export function SiteSearchHost(arg1) {
+  return window['go']['main']['App']['SiteSearchHost'](arg1);
+}
+
 export function StyleSheet(arg1) {
   return window['go']['main']['App']['StyleSheet'](arg1);
 }

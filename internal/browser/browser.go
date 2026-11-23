@@ -54,6 +54,25 @@ func (b *Browser) siteSearchFor(ctx context.Context, current, query string) stri
 	return b.siteConfig(ctx, current).searchEndpoint()
 }
 
+// SiteSearchHost is the name of the site whose own search words typed in the address bar of this tab also ask, or ""
+// when there is none: not in Bonbon mode, or the site has no search. It is the answer siteSearchFor gives, so the
+// address bar can say beforehand what Enter will do.
+func (b *Browser) SiteSearchHost(ctx context.Context, tabID int) string {
+	t := b.tab(tabID)
+	t.mu.Lock()
+	current := t.stack.Current()
+	t.mu.Unlock()
+	endpoint := b.siteSearchFor(ctx, current, "words")
+	if endpoint == "" {
+		return ""
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return ""
+	}
+	return u.Host
+}
+
 // splitSearchURL takes a results page's address apart into its words and the site search it also asked.
 func splitSearchURL(raw, prefix string) (query, site string) {
 	rest := strings.TrimPrefix(raw, prefix)
