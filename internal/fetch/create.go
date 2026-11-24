@@ -30,6 +30,28 @@ func allowsOnWeb(res *Result, method string) bool {
 	return allows(res.Header, method)
 }
 
+// writeClient is the client for a change (PUT, POST, DELETE): it does not follow a redirect. A 307 or 308 would send
+// the same change, with its text, to the address the server names, which can be another site; the reader approved
+// this server only. The answer is read as it is, and a redirect is an error (see redirected).
+func (f *Fetcher) writeClient() *http.Client {
+	c := *f.client
+	c.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	return &c
+}
+
+// redirected is the error for a change the server answered with a redirect: nothing was changed, and Mardo does not
+// send it on. It is nil for any other answer.
+func redirected(resp *http.Response, what string) error {
+	if resp.StatusCode < 300 || resp.StatusCode > 399 {
+		return nil
+	}
+	where := resp.Header.Get("Location")
+	if where == "" {
+		where = "another address"
+	}
+	return fmt.Errorf("the server redirected %s to %s, which is not followed for a change", what, where)
+}
+
 // serverSaid is the server's own words about why it refused: the message of a JSON body, else its text, cut short.
 func serverSaid(body []byte) string {
 	var j map[string]any
@@ -85,14 +107,14 @@ func (f *Fetcher) Create(ctx context.Context, rawURL string, body []byte) (strin
 	if f.auth != nil {
 		f.auth.Apply(req)
 	}
-	resp, err := f.client.Do(req)
+	resp, err := f.writeClient().Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
 	answer, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-	if resp.Request.Method != http.MethodPost { // a redirect turned it into a GET: nothing was added
-		return "", fmt.Errorf("the server redirected the new page to %s, which is not supported", resp.Request.URL)
+	if err := redirected(resp, "the new page"); err != nil {
+		return "", err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return "", refusal("add the page", resp.StatusCode, answer)
@@ -139,14 +161,14 @@ func (f *Fetcher) Delete(ctx context.Context, rawURL, etag string) error {
 	if f.auth != nil {
 		f.auth.Apply(req)
 	}
-	resp, err := f.client.Do(req)
+	resp, err := f.writeClient().Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	answer, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-	if resp.Request.Method != http.MethodDelete {
-		return fmt.Errorf("the server redirected the delete to %s, which is not supported", resp.Request.URL)
+	if err := redirected(resp, "the delete"); err != nil {
+		return err
 	}
 	switch {
 	case resp.StatusCode >= 200 && resp.StatusCode < 300:

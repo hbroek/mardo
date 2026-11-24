@@ -259,13 +259,13 @@ func (f *Fetcher) Put(ctx context.Context, rawURL string, body []byte, etag stri
 	if f.auth != nil {
 		f.auth.Apply(req)
 	}
-	resp, err := f.client.Do(req)
+	resp, err := f.writeClient().Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.Request.Method != http.MethodPut { // a redirect turned it into a GET: nothing was saved
-		return fmt.Errorf("the server redirected the save to %s, which is not supported", resp.Request.URL)
+	if err := redirected(resp, "the save"); err != nil {
+		return err
 	}
 	switch {
 	case resp.StatusCode == http.StatusAccepted:

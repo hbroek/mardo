@@ -134,3 +134,29 @@ func TestLocalFileEditAndConflict(t *testing.T) {
 		}
 	}
 }
+
+// A change is never sent on to an address a redirect names, not even a 307 or 308, which keep the method and the
+// text: the other site would get the reader's page.
+func TestChangesAreNotFollowedThroughRedirects(t *testing.T) {
+	var elsewhere int
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { elsewhere++ }))
+	defer other.Close()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, other.URL+"/x", http.StatusTemporaryRedirect)
+	}))
+	defer srv.Close()
+	f := NewFetcher(nil, nil)
+	ctx := context.Background()
+	if err := f.Put(ctx, srv.URL+"/a.md", []byte("secret"), ""); err == nil || !strings.Contains(err.Error(), "redirected") {
+		t.Errorf("PUT: %v", err)
+	}
+	if _, err := f.Create(ctx, srv.URL+"/", []byte("secret")); err == nil || !strings.Contains(err.Error(), "redirected") {
+		t.Errorf("POST: %v", err)
+	}
+	if err := f.Delete(ctx, srv.URL+"/a.md", ""); err == nil || !strings.Contains(err.Error(), "redirected") {
+		t.Errorf("DELETE: %v", err)
+	}
+	if elsewhere != 0 {
+		t.Errorf("the other site was asked %d times", elsewhere)
+	}
+}
