@@ -420,11 +420,44 @@ function render() {
         active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
     content.replaceChildren(...extras, body);
     content.scrollTop = 0;
+    if (showSource && p?.kind === 'markdown' && !p.editUrl && active?.draft == null) offerSignInToEdit(p);
     const passage = p?.kind === 'markdown' && active?.draft == null ? fragmentText(p.url) : '';
     if (passage && active.passageOf !== p) { // an address that points at some text: show where
         active.passageOf = p;
         setTimeout(() => { if (currentPage() === p) finder.reveal(passage); }, 0);
     }
+}
+
+/**
+ * The source of a page the server does not let you change: when the site offers a sign-in, say that signing in may
+ * change that, and offer it. (The site is asked now, not for every page; the answer is kept for a while.) Signed in
+ * already, say that the site still does not allow it. Afterwards the page loads again, so the server can say.
+ */
+async function offerSignInToEdit(p) {
+    const origin = /^https?:\/\//i.test(p.url) ? originOf(p.url) : '';
+    if (!origin) return;
+    let offer;
+    try { offer = await ConnectOffer(origin); } catch { return; }
+    if (!offer?.available || currentPage() !== p || !active?.showSource || active.draft != null || p.editUrl) return;
+    if (content.querySelector('.signin-to-edit')) return;
+    const host = new URL(origin).host;
+    const bar = document.createElement('div');
+    bar.className = 'edit-bar signin-to-edit';
+    const note = document.createElement('span');
+    note.className = 'note';
+    if (offer.signedIn) {
+        note.textContent = `You are signed in to ${host}, but it does not let you change this page.`;
+        bar.append(note);
+    } else {
+        note.textContent = `${host} may let you change this page once you sign in.`;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'primary';
+        button.textContent = 'Sign in to edit';
+        button.addEventListener('click', () => signInWith(origin));
+        bar.append(button, note);
+    }
+    content.prepend(bar);
 }
 
 // A message from another part of the page (the AI settings), shown the way a toast is.
