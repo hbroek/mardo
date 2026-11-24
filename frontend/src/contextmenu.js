@@ -65,7 +65,7 @@ async function pngOf(url) {
  * `host` gives the menu what it acts on:
  * `page()` the active page; `open(url, newTab)`; `openAsWeb(url)`; `bookmark(url, title)`; `copy(text)`; `selected()` the selected text
  * in the page; `run(id)` a menu command such as 'reload' or 'find'; `ask(question)`; `translate()` the selection; `searchBookmarks(text)`;
- * `share(text)`; `toast(text, isError)`; `canGo(way)`; `canEdit()`; `hasMarkdown()`.
+ * `share(text)`; `toast(text, isError)`; `canGo(way)`; `canEdit()`; `addKinds()` (what the server lets be added here, each {name}), `addPage(i)` and `canDelete()`; `hasMarkdown()`.
  */
 export function initContextMenu(host) {
     if (hasDocuments()) return; // iPhone and iPad: a long press has the system's menu
@@ -154,6 +154,8 @@ export function initContextMenu(host) {
             ], [
                 ['Show Source', go('source')],
                 ['Edit Page', go('edit-page'), {disabled: !host.canEdit()}],
+                ...host.addKinds().map((k, i) => [`New ${k.name} Here…`, () => host.addPage(i)]),
+                ...(host.canDelete() ? [['Delete Page…', go('delete-page')]] : []),
             ], [
                 ['Summarize Page', go('summary'), {disabled: !p?.url}],
                 ['Outline of Page', go('ai-outline'), {disabled: !p?.url}],

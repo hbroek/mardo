@@ -910,6 +910,20 @@ export namespace page {
 	        this.href = source["href"];
 	    }
 	}
+	export class NewPage {
+	    name: string;
+	    template: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NewPage(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.template = source["template"];
+	    }
+	}
 	export class Page {
 	    url: string;
 	    kind: string;
@@ -924,6 +938,9 @@ export namespace page {
 	    negotiated: boolean;
 	    ownAddress: string;
 	    editUrl: string;
+	    canAdd: boolean;
+	    newPages: NewPage[];
+	    canDelete: boolean;
 	    etag: string;
 	    error: string;
 	    submitted: boolean;
@@ -952,6 +969,9 @@ export namespace page {
 	        this.negotiated = source["negotiated"];
 	        this.ownAddress = source["ownAddress"];
 	        this.editUrl = source["editUrl"];
+	        this.canAdd = source["canAdd"];
+	        this.newPages = this.convertValues(source["newPages"], NewPage);
+	        this.canDelete = source["canDelete"];
 	        this.etag = source["etag"];
 	        this.error = source["error"];
 	        this.submitted = source["submitted"];

@@ -396,6 +396,14 @@ func (b *Browser) load(ctx context.Context, rawURL string) page.Page {
 }
 
 func (b *Browser) loadPage(ctx context.Context, rawURL string, versions bool) page.Page {
+	p := b.loadPageAs(ctx, rawURL, versions)
+	if p.CanAdd {
+		p.NewPages = b.newPages(ctx, p.URL)
+	}
+	return p
+}
+
+func (b *Browser) loadPageAs(ctx context.Context, rawURL string, versions bool) page.Page {
 	if isSearchURL(rawURL) {
 		return b.loadSearch(ctx, rawURL)
 	}
@@ -481,7 +489,8 @@ func (b *Browser) markdownPageWith(p page.Page, res *fetch.Result, base *url.URL
 			p.Favicon = u.String()
 		}
 	}
-	if p.EditURL = fetch.Editable(res); p.EditURL != "" {
+	p.CanAdd, p.CanDelete = fetch.CanAdd(res), fetch.CanDelete(res)
+	if p.EditURL = fetch.Editable(res); p.EditURL != "" || p.CanDelete {
 		p.ETag = res.Header.Get("ETag")
 	}
 	if p.Title == "" {

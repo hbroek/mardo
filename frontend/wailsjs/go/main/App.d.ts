@@ -17,6 +17,8 @@ export function Actions():Promise<Array<core.ActionInfo>>;
 
 export function ActionsFolder():Promise<string>;
 
+export function AddPage(arg1:number,arg2:string,arg3:string):Promise<page.Page>;
+
 export function Anchor(arg1:number,arg2:string):Promise<page.Page>;
 
 export function ApplyFiling(arg1:Array<core.Move>):Promise<core.MoveResult>;
@@ -68,6 +70,8 @@ export function DeleteBookmark(arg1:string):Promise<void>;
 export function DeleteBookmarkFolder(arg1:string):Promise<void>;
 
 export function DeleteCredential(arg1:string):Promise<void>;
+
+export function DeletePage(arg1:number,arg2:string,arg3:string):Promise<page.Page>;
 
 export function DownloadAs(arg1:string):Promise<string>;
 

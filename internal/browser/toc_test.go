@@ -12,6 +12,7 @@ import (
 
 	"mardo/internal/fetch"
 	"mardo/internal/history"
+	"mardo/internal/page"
 )
 
 func tocServer(t *testing.T) (*httptest.Server, *int) {
@@ -354,5 +355,63 @@ func TestSiteSearchHostForTheAddressBar(t *testing.T) {
 	b.Navigate(ctx, id, plain.URL+"/p.md")
 	if got := b.SiteSearchHost(ctx, id); got != "" {
 		t.Errorf("a site without a search: %q", got)
+	}
+}
+
+// A site's bonbon.json (mardo.newPages) says what the reader may add where the server allows adding: the noun and the
+// starting text, inline or from a file on the site; a kind can be limited to a folder; a page without such a file
+// gets one plain page.
+func TestNewPagesFromTheSitesBonbonJSON(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/.well-known/bonbon.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"mardo": {"newPages": [
+			{"name": "post", "template": "---\ntitle: \n---\n"},
+			{"name": "wiki page", "urlTemplate": "/templates/wiki.md", "under": "/wiki/"},
+			{"name": "elsewhere", "urlTemplate": "http://other.test/x.md"}]}}`))
+	})
+	mux.HandleFunc("/templates/wiki.md", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("# Wiki template\n")) })
+	for _, path := range []string{"/", "/wiki/", "/plain/"} {
+		mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/markdown")
+			w.Header().Set("Allow", "GET, HEAD, POST")
+			w.Write([]byte("# A page\n"))
+		})
+	}
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
+	ctx := context.Background()
+	names := func(p page.Page) string {
+		var n []string
+		for _, k := range p.NewPages {
+			n = append(n, k.Name)
+		}
+		return strings.Join(n, ",")
+	}
+	home := b.load(ctx, srv.URL+"/")
+	if !home.CanAdd || names(home) != "post,elsewhere" || home.NewPages[1].Template != "---\ntitle: \n---\n\n" {
+		t.Errorf("the home page: %+v", home.NewPages)
+	}
+	wiki := b.load(ctx, srv.URL+"/wiki/")
+	if names(wiki) != "post,wiki page,elsewhere" || wiki.NewPages[1].Template != "# Wiki template\n" {
+		t.Errorf("under /wiki/: %+v", wiki.NewPages)
+	}
+	// No bonbon.json: one plain page.
+	bare := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "bonbon.json") {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/markdown")
+		w.Header().Set("Allow", "GET, POST")
+		w.Write([]byte("# Bare\n"))
+	}))
+	defer bare.Close()
+	if p := b.load(ctx, bare.URL+"/"); names(p) != "page" || p.NewPages[0].Template != "---\ntitle: \n---\n\n" {
+		t.Errorf("plain: %+v", p.NewPages)
+	}
+	// A page that does not allow adding has no kinds.
+	if p := b.load(ctx, srv.URL+"/templates/wiki.md"); p.CanAdd || len(p.NewPages) != 0 {
+		t.Errorf("not allowed: %+v", p)
 	}
 }

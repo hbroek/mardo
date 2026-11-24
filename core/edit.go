@@ -107,6 +107,35 @@ func (a *Core) SaveSource(tab int, pageURL, editURL, etag, text string) (page.Pa
 	return fresh, nil
 }
 
+// AddPage adds a page on the server the tab is on: text (markdown, with its front matter) is sent to pageURL with
+// POST, and the tab then shows the new page, at the address the server names. pageURL is the page that said it
+// allows adding (Allow: POST), such as a blog's home page.
+func (a *Core) AddPage(tab int, pageURL, text string) (page.Page, error) {
+	if len(text) > fetch.MaxBody {
+		return page.Page{}, fmt.Errorf("page larger than %d MB", fetch.MaxBody>>20)
+	}
+	where, err := a.fetcher.Create(a.ctx, pageURL, []byte(text))
+	if err != nil {
+		return page.Page{}, err
+	}
+	a.pageMu.Lock()
+	delete(a.pageCache, pageURL)
+	a.pageMu.Unlock()
+	return a.browser.Navigate(a.ctx, tab, where), nil
+}
+
+// DeletePage removes the page at pageURL from its server, then loads the address again, which the server now answers
+// as gone. etag is the version that was loaded.
+func (a *Core) DeletePage(tab int, pageURL, etag string) (page.Page, error) {
+	if err := a.fetcher.Delete(a.ctx, pageURL, etag); err != nil {
+		return page.Page{}, err
+	}
+	a.pageMu.Lock()
+	delete(a.pageCache, pageURL)
+	a.pageMu.Unlock()
+	return a.browser.Reload(a.ctx, tab), nil
+}
+
 // RenderPreview renders markdown the way the page will look, for the preview beside the editor.
 // Relative links and images are resolved against pageURL, the address of the page being edited
 // (empty or not an address for a page that was never saved).

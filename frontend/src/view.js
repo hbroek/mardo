@@ -132,7 +132,7 @@ export function source(p, ed) {
             el('button', {type: 'button', textContent: ed.diff ? 'Back to editing' : 'Show changes', disabled: ed.saving || (!changed && !ed.diff), onclick: ed.onDiff}),
             ...(split && !ed.diff ? split.buttons : []),
             ...(ed.diff ? [] : [sheet.button]),
-            el('span', {className: 'note', textContent: ed.aiDraft ? 'Drafted by AI. Review the changes, then Save; Cancel discards them.' : 'Ctrl/Cmd+S saves, Esc cancels.'})),
+            el('span', {className: 'note', textContent: ed.aiDraft ? 'Drafted by AI. Review the changes, then Save; Cancel discards them.' : ed.saveTo ? `Adds a new ${ed.saveName} to ${ed.saveTo}. Ctrl/Cmd+S saves, Esc cancels.` : 'Ctrl/Cmd+S saves, Esc cancels.'})),
         ed.error ? el('p', {className: 'error-text', textContent: ed.error}) : '',
         ed.diff ? changes(p.source, ed.draft) : (split?.body ?? area),
         ed.diff ? '' : sheet.panel);

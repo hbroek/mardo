@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"mardo/internal/fetch"
+	"mardo/internal/page"
 )
 
 // A site can describe itself in /.well-known/bonbon.json (a folder can have its own, beside its own toc.opml). Every
@@ -21,6 +22,11 @@ type SiteConfig struct {
 	URLUpdateSocket string `json:"urlUpdateSocket"` // a websocket that says when a page changed
 	URLMirrorOf     string `json:"urlMirrorOf"`     // the HTML site this one is the markdown version of
 	CName           string `json:"cname"`           // the name the owner would like for a site served from a repository
+
+	// Mardo holds what only Mardo reads, apart from the keys Bonbon defines.
+	Mardo struct {
+		NewPages []NewPageConfig `json:"newPages"` // the kinds of page the site lets a reader add, for its menus and templates
+	} `json:"mardo"`
 
 	url string // where it was read from; relative addresses in it are relative to it
 }
@@ -182,4 +188,88 @@ func (c *SiteConfig) ownAddress(base *url.URL) string {
 	}
 	u := url.URL{Scheme: "https", Host: strings.ToLower(c.CName), Path: "/" + strings.TrimPrefix(base.Path, folder), RawQuery: base.RawQuery}
 	return u.String()
+}
+
+// NewPageConfig is one kind of page a site lets the reader add (mardo.newPages in bonbon.json). Whether a page
+// allows adding is the server's answer (Allow: POST); this only says how it looks: a noun for the menus and the
+// text a new one starts from, inline (template) or a markdown file on the site (urlTemplate). under, when it is
+// set, limits the kind to pages below that path.
+type NewPageConfig struct {
+	Name        string `json:"name"`
+	Template    string `json:"template"`
+	URLTemplate string `json:"urlTemplate"`
+	Under       string `json:"under"`
+}
+
+const (
+	defaultNewPageName     = "page"
+	defaultNewPageTemplate = "---\ntitle: \n---\n\n"
+	maxNewPages            = 8
+	maxTemplate            = 64 << 10
+)
+
+// newPages is what the reader may add at pageURL, which has said it allows adding: the kinds the site's bonbon.json
+// names for that place, else one plain page. A template that cannot be read is replaced by the plain one.
+func (b *Browser) newPages(ctx context.Context, pageURL string) []page.NewPage {
+	plain := []page.NewPage{{Name: defaultNewPageName, Template: defaultNewPageTemplate}}
+	cfg := b.siteConfig(ctx, pageURL)
+	if cfg == nil || len(cfg.Mardo.NewPages) == 0 {
+		return plain
+	}
+	here, err := url.Parse(pageURL)
+	if err != nil {
+		return plain
+	}
+	var out []page.NewPage
+	seen := map[string]bool{}
+	for _, c := range cfg.Mardo.NewPages {
+		if len(out) == maxNewPages {
+			break
+		}
+		if c.Under != "" && !strings.HasPrefix(here.Path, c.Under) {
+			continue
+		}
+		name := strings.TrimSpace(c.Name)
+		if len([]rune(name)) > 40 {
+			name = string([]rune(name)[:40])
+		}
+		if name == "" {
+			name = defaultNewPageName
+		}
+		if seen[strings.ToLower(name)] {
+			continue
+		}
+		seen[strings.ToLower(name)] = true
+		text := c.Template
+		if text == "" && c.URLTemplate != "" {
+			text = b.readTemplate(ctx, cfg, c.URLTemplate)
+		}
+		if text == "" || len(text) > maxTemplate {
+			text = defaultNewPageTemplate
+		}
+		out = append(out, page.NewPage{Name: name, Template: text})
+	}
+	if len(out) == 0 {
+		return plain
+	}
+	return out
+}
+
+// readTemplate is the text of a template file named in bonbon.json: on the site of the file, and small.
+func (b *Browser) readTemplate(ctx context.Context, cfg *SiteConfig, ref string) string {
+	base, err := url.Parse(cfg.url)
+	if err != nil {
+		return ""
+	}
+	u, err := base.Parse(ref)
+	if err != nil || u.Host != base.Host || u.Scheme != base.Scheme {
+		return ""
+	}
+	ctx, cancel := context.WithTimeout(ctx, tocTimeout)
+	defer cancel()
+	res, err := b.fetcher.Get(ctx, u.String())
+	if err != nil || res.Status != http.StatusOK || len(res.Body) > maxTemplate {
+		return ""
+	}
+	return string(res.Body)
 }

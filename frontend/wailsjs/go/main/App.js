@@ -18,6 +18,10 @@ export function ActionsFolder() {
   return window['go']['main']['App']['ActionsFolder']();
 }
 
+export function AddPage(arg1, arg2, arg3) {
+  return window['go']['main']['App']['AddPage'](arg1, arg2, arg3);
+}
+
 export function Anchor(arg1, arg2) {
   return window['go']['main']['App']['Anchor'](arg1, arg2);
 }
@@ -120,6 +124,10 @@ export function DeleteBookmarkFolder(arg1) {
 
 export function DeleteCredential(arg1) {
   return window['go']['main']['App']['DeleteCredential'](arg1);
+}
+
+export function DeletePage(arg1, arg2, arg3) {
+  return window['go']['main']['App']['DeletePage'](arg1, arg2, arg3);
 }
 
 export function DownloadAs(arg1) {

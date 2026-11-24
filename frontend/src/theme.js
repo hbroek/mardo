@@ -140,7 +140,11 @@ export function initMenu(actions) {
             ...(!$('share').hidden ? [item('menuitem', 'Share\u2026', null, press('share'), icon('share'))] : []),
         ];
         // Reading comes first on a phone; writing is a section of its own at the end.
-        const writing = [newEntry, openEntry, saveEntry, ...(phone ? [item('menuitem', 'View source or edit', null, press('source'), icon('code'))] : [])];
+        const postEntries = [
+            ...actions.addKinds().map((k, i) => item('menuitem', `New ${k.name} here\u2026`, null, () => { close(); actions.addPage(i); }, icon('page'))),
+            ...(actions.canDelete() ? [item('menuitem', 'Delete this page\u2026', null, () => { close(); actions.deletePage(); }, icon('trash'))] : []),
+        ];
+        const writing = [newEntry, ...postEntries, openEntry, saveEntry, ...(phone ? [item('menuitem', 'View source or edit', null, press('source'), icon('code'))] : [])];
         const themeRows = [
             heading('Theme'),
             ...themes.map((t) => item('menuitemradio', t.name, t.id === theme, () => { applyTheme(t.id); build(); }, icon(t.icon))),

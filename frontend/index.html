@@ -165,6 +165,16 @@
         </div>
     </form>
 </dialog>
+<dialog id="delete-dialog" aria-labelledby="delete-title">
+    <h2 id="delete-title">Delete this page?</h2>
+    <p id="delete-text"></p>
+    <p id="delete-error" class="error-text" hidden></p>
+    <div class="dialog-actions">
+        <button type="button" id="delete-cancel">Cancel</button>
+        <span class="spacer"></span>
+        <button type="button" id="delete-go" class="danger">Delete</button>
+    </div>
+</dialog>
 <dialog id="unsaved-dialog" aria-labelledby="unsaved-title">
     <h2 id="unsaved-title">Unsaved changes</h2>
     <p>This page has changes that are not saved yet.</p>

@@ -1,7 +1,7 @@
 import './style.css';
 import './schemes.css';
 import './pagestyles.css';
-import {RenderPreview, SiteSearchHost, Anchor, GoTo, TabHistory, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions, Favicon, ConnectOffer, ConnectStatus} from '../wailsjs/go/main/App';
+import {RenderPreview, AddPage, DeletePage, SiteSearchHost, Anchor, GoTo, TabHistory, Navigate, Reload, Back, Forward, ClearHistory, FullHistory, About, BookmarkFor, NewTab, CloseTab, SummarizePage, ReadPage, SavePage, SaveSource, SetViewShown, PickFile, SaveNewDocument, TakeOpenRequests, NavigateAsIs, ShareItem, PrintNative, MarkdownVersions, SetMarkdownVersions, Bonbon, SetBonbon, FollowLink, StyleSheets, StyleSheet, OpenStylesFolder, ConvertPage, Actions, RunAction, OpenActionsFolder, EditActions, Favicon, ConnectOffer, ConnectStatus} from '../wailsjs/go/main/App';
 import {OnFileDrop, EventsOn, BrowserOpenURL} from '../wailsjs/runtime/runtime';
 import {friendly, real, hasDocuments} from './address.js';
 import * as view from './view.js';
@@ -58,6 +58,8 @@ function editor() {
         error: tab.saveError ?? '',
         diff: !!tab.showDiff,
         aiDraft: !!tab.aiDraft,
+        saveTo: tab.page?.addTo ? hostOf(tab.page.addTo) : '', // a new page: the site it is added to
+        saveName: tab.page?.addName ?? 'page',
         canUndo: !!tab.undo?.length,
         canRedo: !!tab.redo?.length,
         onUndo: () => undoDraft(tab, true),
@@ -365,7 +367,9 @@ async function saveEdit() {
     render();
     try {
         let fresh;
-        if (p.url === NEW_DOC) { // the first save asks where to put the file, and the tab then shows that file
+        if (p.addTo) { // a new page for a site: the server takes it and says where it is
+            fresh = await AddPage(tab.id, p.addTo, tab.draft);
+        } else if (p.url === NEW_DOC) { // the first save asks where to put the file, and the tab then shows that file
             const r = await SaveNewDocument(tab.id, tab.draft);
             if (r.canceled) { // no file chosen: still a draft
                 tab.saving = false;
@@ -384,7 +388,7 @@ async function saveEdit() {
         else if (fresh.submitted) { // the server queued the change: the page is the old text until someone approves it
             const note = fresh.submittedNote ? ` (${fresh.submittedNote.slice(0, 160)})` : '';
             toast(`Submitted for review${note}. The page shows your change once it is approved.`, false, 9000);
-        } else toast(p.url === NEW_DOC ? 'Saved.' : p.url.startsWith('file:') ? 'Saved the file.' : 'Saved to the server.');
+        } else toast(p.addTo ? `Added to ${hostOf(p.addTo)}.` : p.url === NEW_DOC ? 'Saved.' : p.url.startsWith('file:') ? 'Saved the file.' : 'Saved to the server.');
     } catch (e) {
         tab.saving = false;
         tab.saveError = String(e).replace(/^Error: /, '');
@@ -416,7 +420,7 @@ function render() {
             : p.kind === 'markdown' ? (showSource ? view.source(p, editor()) : view.markdown(p))
             : p.kind === 'fallback' ? view.fallback(p, (origin) => openCredentials({origin}), {rules: () => convertPage('rules'), ai: () => convertPage('ai'), aiAvailable: aiReady(), open: /^https?:\/\//i.test(p.url) ? () => BrowserOpenURL(p.url) : null})
             : view.error(p, () => goActive((id) => Navigate(id, p.url)), (page) => openCredentials({origin: page.origin, kind: page.authScheme === 'basic' ? 'basic' : page.authScheme === 'bearer' ? 'bearer' : 'cookie'}), {offer: (o) => ConnectOffer(o), start: (o) => signInWith(o)}));
-    const extras = [active?.draft != null ? null : copyBar(p), variantBar(p), ownAddressBar(p), searchSwitch(p), // no copy button over the text box while editing
+    const extras = [active?.draft != null ? null : copyBar(p), addBar(p), variantBar(p), ownAddressBar(p), searchSwitch(p), // no copy button over the text box while editing
         active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
     content.replaceChildren(...extras, body);
     content.scrollTop = 0;
@@ -489,6 +493,84 @@ async function newDocument() {
     renderTabs();
     $('content').querySelector('.source-edit')?.focus();
 }
+
+const hostOf = (address) => { try { return new URL(address).host; } catch { return address; } };
+
+// --- adding and deleting pages on a server that allows it (Allow: POST, Allow: DELETE) ---
+
+/** What can be added at the page: the kinds its site names (a post, a wiki page), each with the text it starts from. */
+const addKinds = () => {
+    const p = currentPage();
+    return p?.canAdd ? (p.newPages?.length ? p.newPages : [{name: 'page', template: '---\ntitle: \n---\n\n'}]) : [];
+};
+
+/** A new page of kind `i` for the site of the page: a draft in a tab of its own, saved to the server with POST. */
+async function addPage(i = 0) {
+    const from = currentPage();
+    const kind = addKinds()[i];
+    if (!kind) return;
+    const tab = await openTab();
+    tab.page = {kind: 'markdown', url: NEW_DOC, title: `New ${kind.name}`, html: '', source: '', editUrl: NEW_DOC, etag: '', addTo: from.url, addName: kind.name, canBack: false, canForward: false};
+    tab.showSource = true;
+    tab.draft = kind.template;
+    tab.editFromRendered = false;
+    tab.saveError = '';
+    display();
+    renderTabs();
+    const box = $('content').querySelector('.source-edit');
+    box?.focus();
+    const title = /^title:[ \t]*/m.exec(kind.template); // in the title, when the template has one
+    const at = title ? title.index + title[0].length : 0;
+    box?.setSelectionRange(at, at);
+}
+
+/** Over a page that allows adding: a button for each kind of page, and whose site it goes to. */
+function addBar(p) {
+    const kinds = addKinds();
+    if (p?.kind !== 'markdown' || !kinds.length || active?.draft != null || active?.showSource) return null;
+    const bar = document.createElement('div');
+    bar.className = 'edit-bar add-bar';
+    kinds.forEach((kind, i) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'primary';
+        button.textContent = `New ${kind.name} here`;
+        button.addEventListener('click', () => addPage(i));
+        bar.append(button);
+    });
+    const note = document.createElement('span');
+    note.className = 'note';
+    note.textContent = `${hostOf(p.url)} lets you add pages here.`;
+    bar.append(note);
+    return bar;
+}
+
+/** Asks, naming the page, then deletes it on the server. The tab then shows what the server says of it (gone). */
+function deletePage() {
+    const tab = active;
+    const p = tab?.page;
+    if (!p?.canDelete || tab.saving) return;
+    const dialog = $('delete-dialog');
+    $('delete-title').textContent = 'Delete this page?';
+    $('delete-text').textContent = `\u201c${p.title || p.url}\u201d will be deleted from ${hostOf(p.url)}. This cannot be undone.`;
+    $('delete-error').hidden = true;
+    $('delete-go').disabled = false;
+    $('delete-go').onclick = async () => {
+        $('delete-go').disabled = true;
+        try {
+            const fresh = await DeletePage(tab.id, p.url, p.etag ?? '');
+            dialog.close();
+            if (tabs.includes(tab)) show(tab, fresh);
+            toast(`Deleted from ${hostOf(p.url)}.`);
+        } catch (e) {
+            $('delete-go').disabled = false;
+            $('delete-error').textContent = String(e).replace(/^Error: /, '');
+            $('delete-error').hidden = false;
+        }
+    };
+    dialog.showModal();
+}
+$('delete-cancel').addEventListener('click', () => $('delete-dialog').close());
 
 /** Opens a local page (a file) chosen in the system's dialog, in the current tab. */
 async function openFile() {
@@ -1123,6 +1205,10 @@ const menuItems = {
     savePage,
     openFile,
     newDocument,
+    addKinds,
+    addPage,
+    deletePage,
+    canDelete: () => Boolean(currentPage()?.canDelete),
     markdownVersions: () => MarkdownVersions(),
     setMarkdownVersions: (on) => SetMarkdownVersions(on),
     bonbon: () => Bonbon(),
@@ -1182,6 +1268,7 @@ const menuActions = {
     console: toggleConsole,
     source: toggleSource,
     'edit-page': toggleEdit,
+    'delete-page': deletePage,
     ask: toggleAsk,
     summary: summarize,
     'ai-outline': () => aiTools.outline(),
@@ -1392,6 +1479,9 @@ initContextMenu({
     searchBookmarks: (text) => goActive((id) => Navigate(id, `?${text}`)),
     canGo: (way) => !$(way).disabled,
     canEdit: () => Boolean(currentPage()?.editUrl),
+    addKinds,
+    addPage,
+    canDelete: () => Boolean(currentPage()?.canDelete),
     hasMarkdown: () => Boolean(markdownSource(currentPage())),
 });
 const aiTools = initReading({page: currentPage, run: readPage, compare: openCompare, toast});
