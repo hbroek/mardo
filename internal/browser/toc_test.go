@@ -322,7 +322,7 @@ func TestSiteThatAsksForAnAddressOfItsOwn(t *testing.T) {
 	}
 }
 
-// The address bar says beforehand that Enter also asks the site's search: in Bonbon mode, on a site that has one.
+// The address bar says beforehand that Enter also asks the site's search: in either mode, on a site that has one.
 func TestSiteSearchHostForTheAddressBar(t *testing.T) {
 	srv, _ := siteWithSearch(t)
 	host := strings.TrimPrefix(srv.URL, "http://")
@@ -331,8 +331,8 @@ func TestSiteSearchHostForTheAddressBar(t *testing.T) {
 	id := b.NewTab()
 	ctx := context.Background()
 	b.Navigate(ctx, id, srv.URL+"/blog/p.md")
-	if got := b.SiteSearchHost(ctx, id); got != "" {
-		t.Errorf("outside Bonbon mode: %q", got)
+	if got := b.SiteSearchHost(ctx, id); got != host {
+		t.Errorf("outside Bonbon mode: %q, want %q", got, host)
 	}
 	b.SetBonbon(true)
 	defer b.SetBonbon(false)

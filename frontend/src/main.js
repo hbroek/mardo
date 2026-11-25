@@ -424,7 +424,7 @@ function render() {
         active?.summary ? view.summary(active.summary, closeSummary, cancelSummary) : null].filter(Boolean);
     content.replaceChildren(...extras, body);
     content.scrollTop = 0;
-    if (showSource && p?.kind === 'markdown' && !p.editUrl && active?.draft == null) offerSignInToEdit(p);
+    if (p?.kind === 'markdown' && !p.editUrl && active?.draft == null) offerSignInToEdit(p);
     const passage = p?.kind === 'markdown' && active?.draft == null ? fragmentText(p.url) : '';
     if (passage && active.passageOf !== p) { // an address that points at some text: show where
         active.passageOf = p;
@@ -433,8 +433,8 @@ function render() {
 }
 
 /**
- * The source of a page the server does not let you change: when the site offers a sign-in, say that signing in may
- * change that, and offer it. (The site is asked now, not for every page; the answer is kept for a while.) Signed in
+ * A page the server does not let you change: when the site offers a sign-in, the menu says so (in either view), and the
+ * source view has a bar that says signing in may change that and offers it. (The site is asked now, not for every page; the answer is kept for a while.) Signed in
  * already, say that the site still does not allow it. Afterwards the page loads again, so the server can say.
  */
 async function offerSignInToEdit(p) {
@@ -442,6 +442,7 @@ async function offerSignInToEdit(p) {
     if (!origin) return;
     let offer;
     try { offer = await ConnectOffer(origin); } catch { return; }
+    if (offer?.available && currentPage() === p) updateCredentialIndicator(); // the menu now says "Sign in with the site", in either view
     if (!offer?.available || currentPage() !== p || !active?.showSource || active.draft != null || p.editUrl) return;
     if (content.querySelector('.signin-to-edit')) return;
     const host = new URL(origin).host;
@@ -1200,6 +1201,7 @@ content.addEventListener('auxclick', (e) => { // middle click
 });
 
 const menuItems = {
+    signIn: (origin) => signInWith(origin), // the menu's "Sign in with the site…" starts the sign-in itself
     credentials: () => openCredentials({origin: originOf(currentPage()?.url ?? '').replace(/^null$/, '')}),
     ai: openAI,
     savePage,

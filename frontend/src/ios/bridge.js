@@ -71,4 +71,7 @@ export function OnFileDrop() {}
 export function OnFileDropOff() {}
 
 /** The right-click menu is not used on a phone; this keeps its import of Wails' runtime resolvable. */
-export function BrowserOpenURL(url) { window.open(url, '_blank'); }
+export function BrowserOpenURL(url) {
+    // A web view cannot open a new window by itself: the app opens the page (iPhone: a Safari sheet; Android: the browser).
+    call('OpenURL', [url]).catch(() => {});
+}

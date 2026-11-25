@@ -158,6 +158,12 @@ class MainActivity : AppCompatActivity() {
                 reply(id, "{\"ok\":null}")
                 return
             }
+            if (method == "OpenURL") { // a page of the web, in the browser (also the sign-in page of a site)
+                val url = runCatching { Uri.parse(JSONArray(args).getString(0)) }.getOrNull()
+                if (url != null && (url.scheme == "https" || url.scheme == "http")) runOnUiThread { runCatching { startActivity(Intent(Intent.ACTION_VIEW, url)) } }
+                reply(id, "{\"ok\":null}")
+                return
+            }
             // Off the main thread: a call can take as long as a page load or an AI answer, and the core may
             // ask for a file picker, which waits for the main thread.
             calls.execute {

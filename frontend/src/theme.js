@@ -120,7 +120,7 @@ export function initMenu(actions) {
 
     function build() {
         const creds = item('menuitem', credentialsLabel(), null,
-            () => { close(); actions.credentials(); }, icon('key'));
+            () => { close(); if (credentials.offered && !credentials.signedIn && !credentials.saved && actions.signIn) actions.signIn(credentials.origin); else actions.credentials(); }, icon('key'));
         const markdownEntry = item('menuitemcheckbox', 'Look for markdown versions of pages', markdownVersions, async () => { markdownVersions = !markdownVersions; try { await actions.setMarkdownVersions(markdownVersions); } catch { markdownVersions = !markdownVersions; } build(); });
         const bonbonEntry = item('menuitemcheckbox', 'Bonbon mode: markdown only', bonbon, async () => { bonbon = !bonbon; try { await actions.setBonbon(bonbon); } catch { bonbon = !bonbon; } build(); });
         const sendEntry = item('menuitemcheckbox', 'Send to toolbar', sendBar, () => { sendBar = !sendBar; actions.setSendBar(sendBar); build(); });

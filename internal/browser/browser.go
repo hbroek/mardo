@@ -40,11 +40,11 @@ func MeaningURL(query string) string { return meaningPrefix + url.QueryEscape(qu
 // "bookmarks:search?q=rust&site=https%3A%2F%2Fexample.org%2Fsearch". QueryEscape leaves no & in the words.
 const siteParam = "&site="
 
-// siteSearchFor is the address of the search of the site the tab is on, for words typed in the address bar. Only in
-// Bonbon mode, and for words, not for the list of all bookmarks. A results page that came from a site's search
-// keeps it for the next search.
+// siteSearchFor is the address of the search of the site the tab is on, for words typed in the address bar, in either
+// mode. Only for words, not for the list of all bookmarks. A results page that came from a site's search keeps it for
+// the next search.
 func (b *Browser) siteSearchFor(ctx context.Context, current, query string) string {
-	if !b.Bonbon() || strings.TrimSpace(query) == "" || current == "" {
+	if strings.TrimSpace(query) == "" || current == "" {
 		return ""
 	}
 	if isSearchURL(current) {
@@ -55,7 +55,7 @@ func (b *Browser) siteSearchFor(ctx context.Context, current, query string) stri
 }
 
 // SiteSearchHost is the name of the site whose own search words typed in the address bar of this tab also ask, or ""
-// when there is none: not in Bonbon mode, or the site has no search. It is the answer siteSearchFor gives, so the
+// when there is none: the site has no search. It is the answer siteSearchFor gives, so the
 // address bar can say beforehand what Enter will do.
 func (b *Browser) SiteSearchHost(ctx context.Context, tabID int) string {
 	t := b.tab(tabID)

@@ -42,7 +42,7 @@ async function refreshList() {
         del.textContent = c.oauth ? 'Sign out' : 'Remove';
         del.title = c.oauth ? 'Forget the sign-in here, and tell the site to end it' : '';
         del.onclick = async () => {
-            try { await DeleteCredential(c.origin); await refreshList(); offerSoon(); } catch (e) { say(String(e), true); }
+            try { await DeleteCredential(c.origin); await refreshList(); offerSoon(); onSaved(c.origin); /* the page loads again, now without the sign-in */ } catch (e) { say(String(e), true); }
         };
         li.append(label, edit, del);
         return li;
@@ -54,7 +54,6 @@ async function refreshList() {
 let offerTimer = 0;
 let offered = null; // what the site said, for the origin in the field
 
-const onPhone = () => document.documentElement.classList.contains('phone'); // the way back to the app needs the phone's own handling
 
 const hostOf = (origin) => { try { return new URL(origin).host; } catch { return origin; } };
 
@@ -69,7 +68,7 @@ async function showOffer() {
     const typed = $('cred-origin').value.trim();
     offered = null;
     box.hidden = true;
-    if (!typed || onPhone()) return;
+    if (!typed) return;
     let offer;
     try { offer = await ConnectOffer(typed); } catch { return; }
     if ($('cred-origin').value.trim() !== typed || !offer?.available) return; // the field moved on, or the site has none
