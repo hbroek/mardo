@@ -56,7 +56,7 @@ WRITE
 PRIVATE
 - No account, no ads, no tracking. Your bookmarks and settings stay on your device. Mardo is free and open source.
 
-**What's new (0.19.1)** (4000 max):
+**What's new (0.19.2)** (4000 max):
 ```
 - Sign in with a site: a site that offers OAuth signs you in with its own page, and Mardo keeps the sign-in safe. A bar on a page you cannot change offers "Sign in to edit".
 - Add and delete pages on a server that allows it, with the kinds of page the site names (a post, a wiki page) and a template to start from.
