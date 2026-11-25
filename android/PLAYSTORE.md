@@ -9,19 +9,20 @@ make android-bundle CODE=2        # CODE is the versionCode: it must go up with 
 ```
 
 The signed bundle is `android/app/build/outputs/bundle/release/app-release.aab`. The version name is
-`0.19.0` unless you pass `-PversionName=...` to Gradle. It is signed with the upload key from
+`0.19.1` unless you pass `-PversionName=...` to Gradle. It is signed with the upload key from
 `android/keystore.properties` and `android/mardo-upload.jks`. Neither is in the repository: keep a copy of
 both somewhere safe (a password manager). Google re-signs the app with its own key (Play App Signing),
 so a lost upload key can be reset through Play support, but it is a hassle.
 
 ## Release notes
 
-**What's new (0.19.0)** (500 max):
+**What's new (0.19.1)** (500 max):
 ```
 - Sign in with a site that offers OAuth, and "Sign in to edit" on a page you cannot change yet.
 - Add and delete pages on a server that allows it, with a template to start from.
 - A magnifier in the address bar shows when the site's own search is on.
 - Back and Forward remember anchors; a long press lists the pages behind.
+- Signing in works on the phone, and a site's own search works in either mode.
 - Fixes and polish.
 ```
 
