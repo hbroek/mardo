@@ -415,3 +415,31 @@ func TestNewPagesFromTheSitesBonbonJSON(t *testing.T) {
 		t.Errorf("not allowed: %+v", p)
 	}
 }
+
+// Outside Bonbon mode a site cannot send the words typed in the address bar to another host.
+func TestSiteSearchOnAnotherHostNeedsBonbonMode(t *testing.T) {
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { t.Errorf("another host was asked: %s", r.URL) }))
+	defer other.Close()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/.well-known/bonbon.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"urlSearch": "` + other.URL + `/search"}`))
+	})
+	mux.HandleFunc("/p.md", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/markdown")
+		w.Write([]byte("# P\n"))
+	})
+	site := httptest.NewServer(mux)
+	defer site.Close()
+	b := New(history.Open(""), fetch.NewFetcher(nil, nil))
+	id := b.NewTab()
+	ctx := context.Background()
+	b.Navigate(ctx, id, site.URL+"/p.md")
+	if got := b.SiteSearchHost(ctx, id); got != "" {
+		t.Errorf("outside Bonbon mode, a search on another host: %q", got)
+	}
+	b.SetBonbon(true)
+	defer b.SetBonbon(false)
+	if got := b.SiteSearchHost(ctx, id); got != strings.TrimPrefix(other.URL, "http://") {
+		t.Errorf("in Bonbon mode: %q", got)
+	}
+}

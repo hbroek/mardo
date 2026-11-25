@@ -51,7 +51,20 @@ func (b *Browser) siteSearchFor(ctx context.Context, current, query string) stri
 		_, site := splitSearchURL(current, searchPrefix)
 		return site
 	}
-	return b.siteConfig(ctx, current).searchEndpoint()
+	endpoint := b.siteConfig(ctx, current).searchEndpoint()
+	if endpoint != "" && !b.Bonbon() && !sameHost(endpoint, current) {
+		// Outside Bonbon mode a site you only visit must not name another host to hear what you type: that is for
+		// Bonbon mode, which the reader chose.
+		return ""
+	}
+	return endpoint
+}
+
+// sameHost says whether two addresses are on the same host and port.
+func sameHost(a, b string) bool {
+	ua, errA := url.Parse(a)
+	ub, errB := url.Parse(b)
+	return errA == nil && errB == nil && ua.Host != "" && strings.EqualFold(ua.Host, ub.Host)
 }
 
 // SiteSearchHost is the name of the site whose own search words typed in the address bar of this tab also ask, or ""
