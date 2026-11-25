@@ -12,7 +12,9 @@ title plus link list when a page is not markdown. Go backend, HTML/CSS/JS fronte
 - Requests `Accept: text/markdown`; renders markdown (GFM tables, task lists, footnotes) as sanitized HTML
 - **Source** button shows the raw markdown. When the server allows saving (`Allow: PUT`, optionally `Link: <…>; rel="edit"` on the same server), an
   **Edit** button turns it into an editor; saving sends `PUT` with the saved credentials and `If-Match` from the page's `ETag`,
-  and says so if the document changed in the meantime
+  and says so if the document changed in the meantime. A server can also say a page may be **added** under an address
+  (`Allow: POST`, answered with `201` and a `Location` on the same server) or **deleted** (`Allow: DELETE`, sent with `If-Match`):
+  the right-click menu and the ☰ menu then offer *New … here…* and *Delete this page…*. A save, add or delete is never sent on to another address when a server redirects it.
 - A native menu bar (File, Edit, View, Bookmarks, Tools; plus the app and Window menus on macOS) has the same actions as the toolbar and
   shortcuts; Edit > Select All selects the field, bookmarks, chat or page you are in. On Windows and Linux it lists the shortcuts and the
   page handles the keys; the ☰ menu stays everywhere
@@ -155,6 +157,7 @@ Open **Site credentials** in the ☰ menu (it is highlighted when the current si
 - **Cookies**: paste the `Cookie` request header from your browser's dev tools, or import a `cookies.txt`
   export (any "cookies.txt" browser extension) for that site. Only the cookies for the site you enter are kept.
 - **Bearer token** or **username & password** for sites with API tokens or basic auth.
+- **Sign in with the site** (OAuth) for a site that offers it (it publishes `/.well-known/oauth-authorization-server`): Mardo registers itself, opens the site's sign-in page in your browser, and keeps the token it gets in the keychain, renewing it when it runs out. A key in the address bar shows you are signed in. On a page the server does not let you change, a bar offers **Sign in to edit**.
 
 How credentials are handled:
 
@@ -258,6 +261,7 @@ Bonbon mode follows the [charter](https://github.com/scripting/myMarkdownBlog/bl
 - **Table of contents.** A page with no `urlPrev` or `urlNext` gets its arrows from the site's `/.well-known/toc.opml`, an OPML outline of its pages, newest first: the right arrow is the newer page. A folder can have a table of contents of its own, the nearest one that lists the page is used, and an `include` outline is followed on the same site only. The file is kept for ten minutes and the lookup is time limited.
 - **`/.well-known/bonbon.json`** (the nearest folder's) tells Mardo about the site:
   - `urlSearch`: words typed in the address bar also run the site's search (`?q=` and the words are added; a markdown page is expected back). Its results come first, under "From" and the search's host, ahead of your bookmarks and history, with links to each part. The search may be on another host than the site, and that host hears the words.
+  - `mardo.newPages`: the kinds of page a reader may add here (a post, a wiki page): each has a `name`, an optional `template` (the text, or a path on the same site to it) and an optional `under` folder. They only label and fill in the new page; whether adding is allowed is up to the server's `Allow: POST`.
   - `urlMirrorOf`: the HTML site this one is the markdown version of. A click on a link to a page there opens the page's markdown twin (`/2026/11/18.html` is `2026/11/18.md`), when it exists.
   - `cname`: the name the site's owner would like for it. A page read at another address (a repository's) gets a note with a link to the same page under that name; it is never shown as the page's address.
   - `urlUpdateSocket` (live updates) is read but not used yet.

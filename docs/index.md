@@ -21,7 +21,7 @@ Plain text pages load fast, read well and are easy to keep, copy and hand to an 
 
 - **Asks for markdown.** Sends `Accept: text/markdown`, and looks for a `.md` version of ordinary pages and a site's `llms.txt`. Tables, task lists and footnotes render properly.
 - **Convert any page.** No markdown version? One click maps an HTML page's headings, lists, links, images and tables to markdown, or has your AI model rewrite it.
-- **Write it back.** Where a server allows it, Mardo turns into an editor and saves with `PUT`, using your saved login and warning you if the page changed meanwhile.
+- **Write it back.** Where a server allows it, Mardo turns into an editor and saves with `PUT`, using your saved login (or signing in with the site) and warning you if the page changed meanwhile. Where it allows, you can add and delete pages too.
 - **Bookmarks that you own.** Folders, descriptions, keywords and search by typing in the address bar. Keep them on your computer or in a LinkaGoGo folder.
 - **Tabs and history.** Tabs with their own history, restored on the next start. Back, Forward and Reload return you to where you were scrolling. History is itself a markdown page you can save.
 - **Private by default.** Logins for each site go in your system keychain and are sent only to that exact site. Nothing is sent to an AI service until you allow it.

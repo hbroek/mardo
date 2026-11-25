@@ -56,17 +56,18 @@ WRITE
 PRIVATE
 - No account, no ads, no tracking. Your bookmarks and settings stay on your device. Mardo is free and open source.
 
-**What's new (0.18.0)** (4000 max):
+**What's new (0.19.0)** (4000 max):
 ```
-- Send to: a toolbar of actions (Menu > Send to toolbar) that sends the page, or the text you selected, to a service, an API or the clipboard. Search Google, Claude or ChatGPT for your selection, post a link, copy it as markdown. Edit the actions in Mardo with the pencil button, or make your own.
-- Bonbon mode: pages reload by themselves when the site says they changed, and keep your place.
-- data: addresses open as pages. Edit one and Mardo shows the new address to copy.
-- Front matter can nest, as {{page.source.url}}.
-- Interact with this page knows today's date, your cursor and earlier messages, and says why it cannot do something.
-- A markdown file with only front matter opens as its source.
+- Sign in with a site: a site that offers OAuth signs you in with its own page, and Mardo keeps the sign-in safe. A bar on a page you cannot change offers "Sign in to edit".
+- Add and delete pages on a server that allows it, with the kinds of page the site names (a post, a wiki page) and a template to start from.
+- Saves, adds and deletes are never sent on when a server redirects them.
+- A magnifier and the site's name in the address bar show when the site's own search is on. A tap in the address bar selects the whole address.
+- Back and Forward remember the anchors you followed, and a long press lists the pages behind.
+- A tab menu, addresses for headings, and a bookmarks toolbar under Send to.
 - Fixes and polish.
 ```
 
+Previous (0.18.0): Send to toolbar, pages that reload when the site says they changed, data: addresses, nested front matter.
 Previous (0.17.0): Bonbon mode, arrows from a site's table of contents, site search, page styles, and front matter macros. Before that (0.16.0): find in page, live preview, a cheatsheet, footnotes, and Back and Forward buttons.
 
 Earlier: 0.13.0 was the first release on iPhone and iPad.
