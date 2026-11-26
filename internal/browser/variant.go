@@ -106,6 +106,11 @@ func (b *Browser) markdownVersion(ctx context.Context, res *fetch.Result, on boo
 		if err != nil {
 			continue
 		}
+		if base.Scheme == "data" { // markdown inside the HTML page has no address of its own: its links are the page's
+			if base, err = url.Parse(res.URL); err != nil {
+				continue
+			}
+		}
 		p := b.markdownPage(page.Page{URL: got.URL, Status: got.Status, ContentType: got.ContentType}, got, base)
 		if p.Kind != page.KindMarkdown {
 			continue
